@@ -58,12 +58,17 @@ export default function RecoveryActions({
 
   if (!shipment && !incident) return null;
 
-  const display = resolveRecoveryDisplayStatus({ shipment, incident });
+  const display = resolveRecoveryDisplayStatus({
+    shipment,
+    incident,
+    driverNotification,
+  });
   const busy = analyzing || assigning || confirmingPickup || resolving;
   const available = getAvailableRecoveryAction({
     incident,
     shipment,
     recoveryAnalysis,
+    driverNotification,
   });
   const hasPlan = hasPersistedRecoveryPlan(recoveryAnalysis);
 
@@ -139,9 +144,13 @@ export default function RecoveryActions({
       <h3>Recovery Actions</h3>
 
       {isComplete ? (
-        <p className="ok-text recovery-complete-banner" role="status">
-          <strong>RECOVERY COMPLETE</strong>
-        </p>
+        <div className="recovery-complete-banner" role="status">
+          <p className="ok-text">
+            <strong>✓ RECOVERY COMPLETE</strong>
+          </p>
+          <p className="muted">The recovery workflow has been completed.</p>
+          <p className="muted cell-sub">Recovery actions are disabled.</p>
+        </div>
       ) : null}
 
       {!isComplete && display === 'ASSIGNED' ? (

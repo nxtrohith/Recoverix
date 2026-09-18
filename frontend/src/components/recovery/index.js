@@ -3,6 +3,7 @@ export { default as RecoveryActions } from './RecoveryActions';
 export { default as ShipmentSummary } from './ShipmentSummary';
 export { default as LocationDivergence } from './LocationDivergence';
 export { default as RouteSummary } from './RouteSummary';
+export { default as RecoveryTimeline } from './RecoveryTimeline';
 export { default as RecoveryStatus } from './RecoveryStatus';
 export { default as IncidentMetadata } from './IncidentMetadata';
 export { default as CandidateTypeBadge } from './CandidateTypeBadge';
@@ -10,11 +11,22 @@ export { default as CandidateCard } from './CandidateCard';
 export { default as ScoreBreakdown } from './ScoreBreakdown';
 export {
   RECOVERY_DISPLAY_STEPS,
+  RECOVERY_STATUS_CONTEXT,
+  RECOVERY_EVENT_TYPES,
   resolveRecoveryDisplayStatus,
   recoveryStepLabel,
   recoveryStepIndex,
+  getRecoveryTimelineSteps,
+  shouldShowRecoveryTimeline,
+  hasDriverContactRecord,
+  recoveryStatusContext,
+  recoveryStatusWaitingHint,
+  selectRecoveryEvents,
+  recoveryEventLabel,
+  recoveryEventDescription,
   firstPresent,
   formatTimestamp,
+  formatEventTime,
 } from './recoveryStatus';
 export {
   getAvailableRecoveryAction,
@@ -37,4 +49,5 @@ export {
   splitPathAtPickup,
   pathToLatLngs,
   nodeLatLng,
+  firstNonEmptyPath,
 } from './recoveryMapState';

@@ -152,6 +152,11 @@ def _option_doc_from_candidate(
         "candidateId": candidate.get("candidateId"),
         "pickupCase": candidate.get("pickupCase"),
         "recoveryPath": path,
+        "existingRouteNodes": list(candidate.get("existingRouteNodes") or []),
+        "vehicleToPickupPath": list(candidate.get("vehicleToPickupPath") or []),
+        "vehicleToDestinationPath": list(
+            candidate.get("vehicleToDestinationPath") or []
+        ),
         "pickupNode": pickup_node or (path[0] if path else None),
         "destinationNode": destination_node or (path[-1] if path else None),
         "driverId": driver_id,
@@ -198,6 +203,11 @@ def serialize_recovery_plan(option: dict[str, Any] | None) -> dict[str, Any] | N
         "candidateType": option.get("pickupCase"),
         "candidateId": option.get("candidateId"),
         "path": list(option.get("recoveryPath") or []),
+        "existingRouteNodes": list(option.get("existingRouteNodes") or []),
+        "vehicleToPickupPath": list(option.get("vehicleToPickupPath") or []),
+        "vehicleToDestinationPath": list(
+            option.get("vehicleToDestinationPath") or []
+        ),
         "score": option.get("totalScore"),
         "componentScores": option.get("componentScores"),
         "estimatedTime": option.get("estimatedTravelTimeMin"),
@@ -235,6 +245,11 @@ def selected_option_as_assignment(option: dict[str, Any]) -> dict[str, Any]:
         "candidateId": option.get("candidateId"),
         "vehicleId": str(option["vehicle"]) if option.get("vehicle") else None,
         "path": path,
+        "existingRouteNodes": list(option.get("existingRouteNodes") or []),
+        "vehicleToPickupPath": list(option.get("vehicleToPickupPath") or []),
+        "vehicleToDestinationPath": list(
+            option.get("vehicleToDestinationPath") or []
+        ),
         "pickupCase": option.get("pickupCase"),
         "score": option.get("totalScore"),
         "feasible": bool(option.get("isFeasible", True)),
@@ -482,6 +497,11 @@ def persist_analysis_plan(
                 "candidateId": cand.get("candidateId"),
                 "pickupCase": cand.get("pickupCase"),
                 "recoveryPath": path,
+                "existingRouteNodes": list(cand.get("existingRouteNodes") or []),
+                "vehicleToPickupPath": list(cand.get("vehicleToPickupPath") or []),
+                "vehicleToDestinationPath": list(
+                    cand.get("vehicleToDestinationPath") or []
+                ),
                 "pickupNode": path[0] if path else pickup_node,
                 "destinationNode": path[-1] if path else destination_node,
                 "driverId": cand.get("vehicleNumber"),

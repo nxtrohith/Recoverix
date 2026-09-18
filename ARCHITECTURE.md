@@ -186,27 +186,32 @@ and routes in a small number of MongoDB round-trips (not one query per document)
 
 ## Frontend (`frontend/`)
 
-Functional admin dashboard (intentionally basic UI). The React app calls the **Node gateway** (`VITE_API_BASE_URL`, default `http://127.0.0.1:3000`); it must not hardcode the FastAPI `:5055` URL in components.
+Marketing landing page + sidebar dashboard (navy/slate + amber theme). The React app calls the **Node gateway** (`VITE_API_BASE_URL`, default `http://127.0.0.1:3000`); it must not hardcode the FastAPI `:5055` URL in components. Routing via `react-router-dom`.
 
 | Path | Role |
 | --- | --- |
 | `frontend/src/api/client.js` | Centralized Node-gateway client (health, graph, hubs, vehicles, shipments, recovery, incidents) |
 | `frontend/src/types/api.ts` | TypeScript types for API response shapes (mirrors FastAPI / orchestrator JSON) |
 | `frontend/src/hooks/useRecoveryData.js` | Recovery data layer: loading/error/data, refresh, analyze/assign/pickup/resolve (no optimistic lifecycle) |
-| `frontend/src/App.jsx` | Dashboard shell + wiring for incident → assign → pickup → resolve workflow |
+| `frontend/src/App.jsx` | Route table: `/` landing, `/dashboard/*` nested dashboard routes |
+| `frontend/src/pages/LandingPage.jsx` | Truck-themed marketing landing (hero, features, process/stats, CTA) |
+| `frontend/src/layouts/DashboardLayout.jsx` | Sidebar shell + shared dashboard state/hooks; provides Outlet context |
+| `frontend/src/components/Sidebar.jsx` | Left nav (Overview, Shipments, Vehicles, Recovery, Search) |
+| `frontend/src/pages/*` | Overview / Shipments / Vehicles / Recovery / Search views consuming outlet context |
 | `frontend/src/components/*` | Header, MetricsBar, SearchPanel, LogisticsMap, ShipmentPanel, VehiclePanel, IncidentAlert, RecoveryCandidates, RecoveryPlan |
-| `frontend/src/components/recovery/*` | Operator recovery incident view, action panel (state-gated confirmations), timeline, candidate helpers, `recoveryMapState` (map overlay derivation) — assignment uses persisted plan only |
+| `frontend/src/components/recovery/*` | Operator recovery incident view, action panel (state-gated confirmations), `RecoveryTimeline` (backend-driven lifecycle + event history), candidate helpers, `recoveryMapState` (map overlay derivation) — assignment uses persisted plan only |
 
 Map data comes only from `GET /api/graph` (node lat/lon + edges). `LogisticsMap` overlays recovery context from existing API fields only:
 
 - expected route ← `shipment.plannedRoute` / `network.plannedRoute`
 - pickup / actual ← incident hub / `actualNode` / `currentNode`
-- recovery path ← assigned `incident.recoveryPath` or `selectedRecovery.path` / candidate `path` (optionally split at pickup for display)
-- vehicle existing movement ← `GET /api/vehicles/:id` `currentPath` when the recovery vehicle is loaded
+- recovery path ← assigned `incident.recoveryPath` or `selectedRecovery.path` / candidate `path`
+- path segments (when present) ← `vehicleToPickupPath`, `vehicleToDestinationPath`, `existingRouteNodes` from candidates / selectedRecovery / recoveryPlan / incident (sourced from candidate_generator; not recomputed in React)
+- vehicle existing movement ← `existingRouteNodes`, else `GET /api/vehicles/:id` `currentPath`
 - candidate type ← backend `pickupCase` / `candidateType` (`at_node` | `pass_through` | `detour`)
 
 Expanding a candidate in RecoveryCandidates previews that candidate’s backend `path` on the map (selected plan stays dominant). No client-side routing/scoring.
 
 ## Out of scope (for now)
 
-Auth, seed data, ML/RL optimizers, centrality dashboards, and visual polish of the admin UI.
+Auth, seed data, ML/RL optimizers, and centrality dashboards.

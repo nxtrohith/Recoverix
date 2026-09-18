@@ -155,6 +155,9 @@ def serialize_incident(db: Database, doc: dict[str, Any]) -> dict[str, Any]:
         "status": doc.get("status"),
         "selectedCandidateId": doc.get("selectedCandidateId"),
         "recoveryPath": list(doc.get("recoveryPath") or []),
+        "existingRouteNodes": list(doc.get("existingRouteNodes") or []),
+        "vehicleToPickupPath": list(doc.get("vehicleToPickupPath") or []),
+        "vehicleToDestinationPath": list(doc.get("vehicleToDestinationPath") or []),
         "pickupCase": doc.get("pickupCase"),
         "pickupNode": doc.get("pickupNode"),
         "destinationNode": doc.get("destinationNode"),
@@ -664,6 +667,11 @@ def assign_recovery(
                 "recoveryVehicle": recovery_vehicle_oid,
                 "recoveryDriverId": driver_id,
                 "recoveryPath": recovery_path,
+                "existingRouteNodes": list(selected.get("existingRouteNodes") or []),
+                "vehicleToPickupPath": list(selected.get("vehicleToPickupPath") or []),
+                "vehicleToDestinationPath": list(
+                    selected.get("vehicleToDestinationPath") or []
+                ),
                 "pickupCase": pickup,
                 "pickupNode": pickup_hub,
                 "destinationNode": destination,
