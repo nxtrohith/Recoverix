@@ -11,8 +11,8 @@
 | `telangana_edges` | Keep | Canonical persisted NetworkX topology edges, including observed distance, travel time, trip count, and route type. |
 | `routes` | Keep | Operational route instances: location references, vehicle, capacity/load, schedule, and status. |
 | `vehicles` | Keep | Operational fleet availability and capacity. |
-| `shipments` | Keep empty | Required Mongoose lifecycle entity; it is intentionally empty until a real demo scenario exists. |
-| `shipmentevents` | Keep empty | Required Mongoose audit trail for misplaced-shipment detection. |
+| `shipments` | Keep | Lifecycle entity; seed demo via `scripts/seed_demo_misplaced.py` (`SHP-DEMO-MISPLACED`) to show expected ≠ actual hubs. |
+| `shipmentevents` | Keep | Audit trail used to advance expectedNode along the planned route. |
 | `recoverycases` | Keep empty | Canonical Mongoose recovery-case collection. |
 | `recoveryoptions` | Keep empty | Canonical Mongoose recovery-option collection, with references and ranking fields. |
 

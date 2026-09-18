@@ -1,9 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   ApiError,
-  assignRecovery,
-  calculateRecovery,
-  getActiveIncidents,
   getApiBaseUrl,
   getGraph,
   getHealth,
@@ -12,8 +9,6 @@ import {
   getShipments,
   getVehicle,
   getVehicles,
-  resolveRecovery,
-  simulateIncident,
 } from './api/client';
 import Header from './components/Header';
 import IncidentAlert from './components/IncidentAlert';
@@ -24,6 +19,7 @@ import RecoveryPlan from './components/RecoveryPlan';
 import SearchPanel from './components/SearchPanel';
 import ShipmentPanel from './components/ShipmentPanel';
 import VehiclePanel from './components/VehiclePanel';
+import { useRecoveryData } from './hooks/useRecoveryData';
 import './App.css';
 
 function errMsg(err, fallback) {
@@ -50,156 +46,11 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchHint, setSearchHint] = useState('');
 
-  const [selectedShipment, setSelectedShipment] = useState(null);
-  const [shipmentLoading, setShipmentLoading] = useState(false);
-  const [shipmentError, setShipmentError] = useState(null);
-
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [vehicleLoading, setVehicleLoading] = useState(false);
   const [vehicleError, setVehicleError] = useState(null);
 
-  const [recoveryAnalysis, setRecoveryAnalysis] = useState(null);
-  const [recoveryLoading, setRecoveryLoading] = useState(false);
-  const [recoveryError, setRecoveryError] = useState(null);
-
-  const [activeIncident, setActiveIncident] = useState(null);
-  const [completionBanner, setCompletionBanner] = useState(null);
-  const [simulating, setSimulating] = useState(false);
-  const [assigning, setAssigning] = useState(false);
-  const [resolving, setResolving] = useState(false);
-  const [driverNotification, setDriverNotification] = useState(null);
-
   const [focusNodeId, setFocusNodeId] = useState(null);
-
-  const refreshHealth = useCallback(async () => {
-    setHealthLoading(true);
-    try {
-      const data = await getHealth();
-      setHealth(data);
-      setHealthError(null);
-    } catch (err) {
-      setHealth(null);
-      setHealthError(errMsg(err, 'Backend unavailable'));
-    } finally {
-      setHealthLoading(false);
-    }
-  }, []);
-
-  const loadDashboard = useCallback(async () => {
-    setGraphLoading(true);
-    setListsLoading(true);
-    setGraphError(null);
-    setListsError(null);
-
-    const results = await Promise.allSettled([
-      getGraph(),
-      getHubs(),
-      getVehicles(),
-      getShipments(),
-      getActiveIncidents(),
-    ]);
-
-    const [graphRes, hubsRes, vehiclesRes, shipmentsRes, incidentsRes] = results;
-
-    if (graphRes.status === 'fulfilled') {
-      setGraph(graphRes.value);
-    } else {
-      setGraph(null);
-      setGraphError(errMsg(graphRes.reason, 'Failed to load graph'));
-    }
-    setGraphLoading(false);
-
-    const listErrors = [];
-    if (hubsRes.status === 'fulfilled') {
-      setHubs(hubsRes.value?.hubs || []);
-    } else {
-      setHubs([]);
-      listErrors.push(`hubs: ${errMsg(hubsRes.reason, 'failed')}`);
-    }
-    if (vehiclesRes.status === 'fulfilled') {
-      setVehicles(vehiclesRes.value?.vehicles || []);
-    } else {
-      setVehicles([]);
-      listErrors.push(`vehicles: ${errMsg(vehiclesRes.reason, 'failed')}`);
-    }
-    if (shipmentsRes.status === 'fulfilled') {
-      setShipments(shipmentsRes.value?.shipments || []);
-    } else {
-      setShipments([]);
-      listErrors.push(`shipments: ${errMsg(shipmentsRes.reason, 'failed')}`);
-    }
-    if (incidentsRes.status === 'fulfilled') {
-      const incidents = incidentsRes.value?.incidents || [];
-      // If a shipment is already selected, keep its incident; else show newest
-      setActiveIncident((prev) => {
-        if (prev) {
-          const match = incidents.find((i) => i.incidentId === prev.incidentId);
-          return match || prev;
-        }
-        return incidents[0] || null;
-      });
-    }
-    setListsError(listErrors.length ? listErrors.join(' · ') : null);
-    setListsLoading(false);
-  }, []);
-
-  useEffect(() => {
-    refreshHealth();
-    loadDashboard();
-    const timer = setInterval(refreshHealth, 30000);
-    return () => clearInterval(timer);
-  }, [refreshHealth, loadDashboard]);
-
-  const loadShipment = useCallback(async (id) => {
-    if (!id) return;
-    setShipmentLoading(true);
-    setShipmentError(null);
-    setRecoveryError(null);
-    setCompletionBanner(null);
-    try {
-      const data = await getShipment(id);
-      setSelectedShipment(data);
-      const incident = data.activeIncident || null;
-      setActiveIncident(
-        incident && incident.status !== 'RESOLVED' ? incident : incident,
-      );
-      if (incident?.status === 'RESOLVED') {
-        setCompletionBanner({
-          trackingNumber: data.trackingNumber,
-          recoveryVehicleNumber: incident.recoveryVehicleNumber,
-          recoveryRouteLabel: (incident.recoveryPath || []).join(' → ') || null,
-          status: 'RECOVERED',
-        });
-      }
-      // Restore assigned recovery path on refresh from MongoDB incident
-      if (incident?.recoveryPath?.length) {
-        setRecoveryAnalysis((prev) => ({
-          ...(prev || {}),
-          status: 'RECOVERY_ASSIGNED',
-          selectedRecovery: {
-            candidateId: incident.selectedCandidateId,
-            vehicleId: incident.recoveryVehicleId,
-            vehicleNumber: incident.recoveryVehicleNumber,
-            path: incident.recoveryPath,
-            pickupCase: incident.pickupCase,
-          },
-          candidates: prev?.candidates || [],
-        }));
-      } else if (!incident || incident.status === 'RESOLVED') {
-        setRecoveryAnalysis(null);
-      }
-      if (data.currentNode) setFocusNodeId(data.currentNode);
-    } catch (err) {
-      setSelectedShipment(null);
-      if (err instanceof ApiError && err.status === 404) {
-        setShipmentError(`Shipment not found: ${id}`);
-      } else {
-        setShipmentError(errMsg(err, 'Failed to load shipment'));
-      }
-    } finally {
-      setShipmentLoading(false);
-    }
-  }, []);
 
   const loadVehicle = useCallback(async (id) => {
     if (!id) return;
@@ -221,138 +72,112 @@ export default function App() {
     }
   }, []);
 
-  const analyzeRecovery = useCallback(async () => {
-    const id = selectedShipment?.id || selectedShipment?.trackingNumber;
-    if (!id) {
-      setRecoveryError('Select a shipment before analyzing recovery.');
-      return;
-    }
-    setRecoveryLoading(true);
-    setRecoveryError(null);
-    try {
-      const data = await calculateRecovery(id);
-      setRecoveryAnalysis(data);
-      const path = data?.selectedRecovery?.path;
-      if (path?.length) setFocusNodeId(path[0]);
-      // Refresh shipment so lifecycle shows RECOVERY_ANALYSIS when applicable
-      await loadShipment(id);
-    } catch (err) {
-      setRecoveryAnalysis(null);
-      if (err instanceof ApiError && err.status === 404) {
-        setRecoveryError(`Shipment not found for recovery: ${id}`);
-      } else {
-        setRecoveryError(errMsg(err, 'Recovery analysis failed'));
-      }
-    } finally {
-      setRecoveryLoading(false);
-    }
-  }, [selectedShipment, loadShipment]);
+  const loadDashboardLists = useCallback(async () => {
+    setListsLoading(true);
+    setListsError(null);
 
-  const handleSimulateIncident = useCallback(async () => {
-    const id = selectedShipment?.id || selectedShipment?.trackingNumber;
-    if (!id) {
-      setShipmentError('Select a shipment before simulating an incident.');
-      return;
-    }
-    setSimulating(true);
-    setShipmentError(null);
-    setCompletionBanner(null);
-    setDriverNotification(null);
-    try {
-      const result = await simulateIncident(id, { autoAnalyze: false });
-      setActiveIncident(result.incident);
-      await loadShipment(id);
-      await loadDashboard();
-      setSearchHint(
-        `Incident ${result.incident?.incidentId} simulated — recovery required`,
-      );
-      // Trigger recovery engine as a separate step (keeps simulate fast / durable)
-      setRecoveryLoading(true);
-      try {
-        const data = await calculateRecovery(id);
-        setRecoveryAnalysis(data);
-        const path = data?.selectedRecovery?.path;
-        if (path?.length) setFocusNodeId(path[0]);
-        await loadShipment(id);
-      } catch (calcErr) {
-        setRecoveryError(errMsg(calcErr, 'Recovery analysis failed after incident'));
-      } finally {
-        setRecoveryLoading(false);
-      }
-    } catch (err) {
-      setShipmentError(errMsg(err, 'Failed to simulate incident'));
-    } finally {
-      setSimulating(false);
-    }
-  }, [selectedShipment, loadShipment, loadDashboard]);
+    const results = await Promise.allSettled([
+      getHubs(),
+      getVehicles(),
+      getShipments(),
+    ]);
 
-  const handleSelectRecovery = useCallback(
-    async (candidate) => {
-      const id = selectedShipment?.id || selectedShipment?.trackingNumber;
-      if (!id || !candidate) return;
-      setAssigning(true);
-      setRecoveryError(null);
-      try {
-        const result = await assignRecovery(id, {
-          candidateId: candidate.candidateId,
-          vehicleId: candidate.vehicleId,
-          path: candidate.path,
-          pickupCase: candidate.pickupCase,
-        });
-        setActiveIncident(result.incident);
-        setDriverNotification(result.driverNotification || null);
-        if (result.recovery) setRecoveryAnalysis(result.recovery);
-        if (result.assignment?.path?.length) {
-          setRecoveryAnalysis((prev) => ({
-            ...(prev || result.recovery || {}),
-            status: 'RECOVERY_ASSIGNED',
-            selectedRecovery: {
-              ...(prev?.selectedRecovery || {}),
-              ...result.assignment,
-            },
-          }));
-          setFocusNodeId(result.assignment.path[0]);
-        }
-        if (result.assignment?.vehicleId) {
-          await loadVehicle(result.assignment.vehicleId);
-        }
-        await loadShipment(id);
-        await loadDashboard();
-        setSearchHint(
-          `Recovery assigned to ${result.assignment?.vehicleNumber || result.assignment?.vehicleId}`,
-        );
-      } catch (err) {
-        setRecoveryError(errMsg(err, 'Failed to assign recovery'));
-      } finally {
-        setAssigning(false);
-      }
-    },
-    [selectedShipment, loadShipment, loadVehicle, loadDashboard],
-  );
+    const [hubsRes, vehiclesRes, shipmentsRes] = results;
+    const listErrors = [];
 
-  const handleMarkRecovered = useCallback(async () => {
-    const id = selectedShipment?.id || selectedShipment?.trackingNumber;
-    if (!id) return;
-    setResolving(true);
-    setRecoveryError(null);
-    try {
-      const result = await resolveRecovery(id);
-      setActiveIncident(result.incident);
-      setCompletionBanner({
-        trackingNumber: result.shipment?.trackingNumber,
-        recoveryVehicleNumber: result.completion?.recoveryVehicleNumber,
-        recoveryRouteLabel: result.completion?.recoveryRouteLabel,
-        status: result.completion?.status || 'RECOVERED',
-      });
-      await loadShipment(id);
-      await loadDashboard();
-      setSearchHint(`Recovery completed for ${result.shipment?.trackingNumber || id}`);
-    } catch (err) {
-      setRecoveryError(errMsg(err, 'Failed to mark recovered'));
-    } finally {
-      setResolving(false);
+    if (hubsRes.status === 'fulfilled') {
+      setHubs(hubsRes.value?.hubs || []);
+    } else {
+      setHubs([]);
+      listErrors.push(`hubs: ${errMsg(hubsRes.reason, 'failed')}`);
     }
-  }, [selectedShipment, loadShipment, loadDashboard]);
+    if (vehiclesRes.status === 'fulfilled') {
+      setVehicles(vehiclesRes.value?.vehicles || []);
+    } else {
+      setVehicles([]);
+      listErrors.push(`vehicles: ${errMsg(vehiclesRes.reason, 'failed')}`);
+    }
+    if (shipmentsRes.status === 'fulfilled') {
+      setShipments(shipmentsRes.value?.shipments || []);
+    } else {
+      setShipments([]);
+      listErrors.push(`shipments: ${errMsg(shipmentsRes.reason, 'failed')}`);
+    }
+
+    setListsError(listErrors.length ? listErrors.join(' · ') : null);
+    setListsLoading(false);
+  }, []);
+
+  const recovery = useRecoveryData({
+    onDashboardRefresh: loadDashboardLists,
+    onLoadVehicle: loadVehicle,
+    onFocusNode: setFocusNodeId,
+    onHint: setSearchHint,
+  });
+
+  const {
+    selectedShipment,
+    setSelectedShipment,
+    recoveryAnalysis,
+    activeIncident,
+    setActiveIncident,
+    completionBanner,
+    driverNotification,
+    shipmentLoading,
+    shipmentError,
+    setShipmentError,
+    recoveryLoading,
+    recoveryError,
+    simulating,
+    assigning,
+    confirmingPickup,
+    resolving,
+    loadShipment,
+    refreshActiveIncidents,
+    analyzeRecovery,
+    handleSimulateIncident,
+    handleSelectRecovery,
+    handleConfirmPickup,
+    handleMarkRecovered,
+    clearRecoverySelection,
+  } = recovery;
+
+  const refreshHealth = useCallback(async () => {
+    setHealthLoading(true);
+    try {
+      const data = await getHealth();
+      setHealth(data);
+      setHealthError(null);
+    } catch (err) {
+      setHealth(null);
+      setHealthError(errMsg(err, 'Backend unavailable'));
+    } finally {
+      setHealthLoading(false);
+    }
+  }, []);
+
+  const loadDashboard = useCallback(async () => {
+    setGraphLoading(true);
+    setGraphError(null);
+
+    const graphResult = await Promise.allSettled([getGraph()]);
+    if (graphResult[0].status === 'fulfilled') {
+      setGraph(graphResult[0].value);
+    } else {
+      setGraph(null);
+      setGraphError(errMsg(graphResult[0].reason, 'Failed to load graph'));
+    }
+    setGraphLoading(false);
+
+    await Promise.all([loadDashboardLists(), refreshActiveIncidents()]);
+  }, [loadDashboardLists, refreshActiveIncidents]);
+
+  useEffect(() => {
+    refreshHealth();
+    loadDashboard();
+    const timer = setInterval(refreshHealth, 30000);
+    return () => clearInterval(timer);
+  }, [refreshHealth, loadDashboard]);
 
   const handleSearchSubmit = useCallback(async () => {
     const q = searchQuery.trim();
@@ -366,11 +191,9 @@ export default function App() {
       const shipment = await getShipment(q);
       setSelectedShipment(shipment);
       setShipmentError(null);
-      setRecoveryAnalysis(null);
-      setRecoveryError(null);
-      setCompletionBanner(null);
+      clearRecoverySelection();
       const incident = shipment.activeIncident || null;
-      setActiveIncident(incident && incident.status !== 'RESOLVED' ? incident : incident);
+      setActiveIncident(incident);
       if (shipment.currentNode) setFocusNodeId(shipment.currentNode);
       setSearchHint(`Loaded shipment ${shipment.trackingNumber || shipment.id}`);
       await loadShipment(shipment.id);
@@ -432,7 +255,18 @@ export default function App() {
 
     setSearchHint(`No shipment, vehicle, or hub matched “${q}”.`);
     setShipmentError(`Shipment not found: ${q}`);
-  }, [searchQuery, shipments, vehicles, hubs, loadShipment, loadVehicle]);
+  }, [
+    searchQuery,
+    shipments,
+    vehicles,
+    hubs,
+    loadShipment,
+    loadVehicle,
+    setSelectedShipment,
+    setShipmentError,
+    clearRecoverySelection,
+    setActiveIncident,
+  ]);
 
   const incidentForAlert =
     activeIncident &&
@@ -488,18 +322,20 @@ export default function App() {
           shipment={selectedShipment}
           completion={completionBanner}
           onViewRecovery={analyzeRecovery}
+          onConfirmPickup={handleConfirmPickup}
           onMarkRecovered={handleMarkRecovered}
           recovering={recoveryLoading}
+          confirmingPickup={confirmingPickup}
           resolving={resolving}
         />
       ) : null}
 
       {driverNotification ? (
         <section className="panel driver-notify">
-          <h2>Driver Notification</h2>
+          <h2>Driver Contacted (Simulated)</h2>
           <p className="muted">
             Channel: {driverNotification.channel} · delivered:{' '}
-            {String(driverNotification.delivered)}
+            {String(driverNotification.delivered)} · not live telephony
           </p>
           <pre className="driver-message">{driverNotification.message}</pre>
         </section>
@@ -527,6 +363,8 @@ export default function App() {
             analyzing={recoveryLoading}
             onSimulateIncident={handleSimulateIncident}
             simulating={simulating}
+            onConfirmPickup={handleConfirmPickup}
+            confirmingPickup={confirmingPickup}
             onMarkRecovered={handleMarkRecovered}
             resolving={resolving}
           />
@@ -559,7 +397,8 @@ export default function App() {
           loading={recoveryLoading}
           error={recoveryError}
           assignedCandidateId={
-            incidentForAlert?.status === 'ASSIGNED'
+            incidentForAlert?.status === 'ASSIGNED' ||
+            incidentForAlert?.status === 'PICKUP_CONFIRMED'
               ? incidentForAlert.selectedCandidateId
               : null
           }
@@ -570,7 +409,11 @@ export default function App() {
           analysis={recoveryAnalysis}
           loading={recoveryLoading}
           error={recoveryError}
-          assigned={incidentForAlert?.status === 'ASSIGNED'}
+          assigned={
+            incidentForAlert?.status === 'ASSIGNED' ||
+            incidentForAlert?.status === 'PICKUP_CONFIRMED'
+          }
+          pickupConfirmed={incidentForAlert?.status === 'PICKUP_CONFIRMED'}
         />
       </div>
     </div>

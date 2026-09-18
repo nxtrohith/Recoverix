@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 # ---------------------------------------------------------------------------
@@ -179,6 +179,12 @@ class ShipmentDetailResponse(ShipmentListItem):
     originNode: Optional[str] = None
     destinationNode: Optional[str] = None
     currentNode: Optional[str] = None
+    # Expected (planned route) vs actual (last-confirmed) hubs
+    expectedNode: Optional[str] = None
+    actualNode: Optional[str] = None
+    expectedLocation: Optional[str] = None
+    plannedRoute: list[str] = Field(default_factory=list)
+    isMisplaced: Optional[bool] = None
     needsRecovery: bool
     events: list[ShipmentEventModel] = []
     createdAt: Optional[str] = None
@@ -205,3 +211,4 @@ class AssignRecoveryRequest(BaseModel):
     vehicleId: Optional[str] = None
     path: Optional[list[str]] = None
     pickupCase: Optional[str] = None
+    score: Optional[float] = None

@@ -9,6 +9,7 @@ export const SHIPMENT_EVENT_TYPES = [
   'delivered',
   'misplaced',
   'recovery_started',
+  'recovery_pickup_confirmed',
   'recovered',
   'status_update',
 ] as const;

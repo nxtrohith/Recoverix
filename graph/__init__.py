@@ -8,7 +8,12 @@ from graph.graph_queries import (
     shortest_path,
     shortest_path_details,
 )
-from graph.shipment_state import ShipmentState, get_shipment_state
+from graph.shipment_state import (
+    ShipmentState,
+    apply_shipment_event,
+    get_shipment_state,
+    sync_expected_location,
+)
 from graph.vehicle_state import (
     VehicleState,
     filter_capable_vehicles,
@@ -62,6 +67,8 @@ __all__ = [
     # Shipment state
     "ShipmentState",
     "get_shipment_state",
+    "apply_shipment_event",
+    "sync_expected_location",
     # Vehicle state
     "VehicleState",
     "get_active_vehicles",

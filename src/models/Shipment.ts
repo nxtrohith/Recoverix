@@ -27,10 +27,19 @@ const shipmentSchema = new Schema(
       ref: 'Location',
       required: true,
     },
+    // Actual / last-confirmed hub (updated by shipment events). Recovery pickup.
     currentLocation: {
       type: Schema.Types.ObjectId,
       ref: 'Location',
       required: true,
+    },
+    // Cache of route-progress expected hub (assignedRoute + on-route events).
+    // Authoritative expectedNode is derived at read time in shipment_state;
+    // sync_expected_location persists that derivation here.
+    expectedLocation: {
+      type: Schema.Types.ObjectId,
+      ref: 'Location',
+      required: false,
     },
     weight: { type: Number, required: true },
     volume: { type: Number, required: true },
@@ -58,6 +67,7 @@ shipmentSchema.index({ trackingNumber: 1 }, { unique: true });
 shipmentSchema.index({ status: 1, deadline: 1 });
 shipmentSchema.index({ assignedRoute: 1 });
 shipmentSchema.index({ currentLocation: 1 });
+shipmentSchema.index({ expectedLocation: 1 });
 
 export type IShipment = InferSchemaType<typeof shipmentSchema>;
 export type ShipmentDocument = HydratedDocument<IShipment>;

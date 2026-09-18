@@ -35,12 +35,15 @@ def build_recovery_assignment_message(
     pickup_hub: str | None,
     destination: str | None,
     recovery_route: list[str] | None,
-    required_action: str = "Pick up misplaced shipment and complete recovery route",
+    required_action: str = (
+        "Retrieve the misplaced shipment from the recovery node and carry it "
+        "using the selected piggyback movement"
+    ),
 ) -> str:
-    """Compose a concise driver-facing recovery assignment message."""
+    """Compose a concise driver-facing recovery assignment message (simulated)."""
     route = " → ".join(recovery_route) if recovery_route else "TBD"
     return (
-        "SHIPMENT RECOVERY ASSIGNMENT\n"
+        "SHIPMENT RECOVERY ASSIGNMENT (SIMULATED DRIVER CONTACT)\n"
         f"Shipment requiring recovery: {shipment_tracking or shipment_id}\n"
         f"Pickup hub: {pickup_hub or 'unknown'}\n"
         f"Destination: {destination or 'unknown'}\n"

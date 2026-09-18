@@ -11,6 +11,7 @@ export const INCIDENT_STATUSES = [
   'OPEN',
   'RECOVERY_REQUIRED',
   'ASSIGNED',
+  'PICKUP_CONFIRMED',
   'RESOLVED',
 ] as const;
 export type IncidentStatus = (typeof INCIDENT_STATUSES)[number];
@@ -42,14 +43,28 @@ const incidentSchema = new Schema(
       ref: 'Vehicle',
       required: false,
     },
+    // Hackathon: vehicle number is the driver handle (no separate Driver entity)
+    recoveryDriverId: { type: String, required: false },
     recoveryPath: { type: [String], default: [] },
     pickupCase: { type: String, required: false },
+    pickupNode: { type: String, required: false },
+    destinationNode: { type: String, required: false },
+    recoveryScore: { type: Number, required: false },
+    assignedAt: { type: Date, required: false },
+    pickupConfirmedAt: { type: Date, required: false },
     recoveryCase: {
       type: Schema.Types.ObjectId,
       ref: 'RecoveryCase',
       required: false,
     },
+    // Persisted selected RecoveryOption (set on analyze when a plan exists)
+    selectedRecoveryOption: {
+      type: Schema.Types.ObjectId,
+      ref: 'RecoveryOption',
+      required: false,
+    },
     driverMessage: { type: String, required: false },
+    analysisStatus: { type: String, required: false },
     resolvedAt: { type: Date, required: false },
   },
   { timestamps: true },

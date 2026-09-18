@@ -12,7 +12,13 @@ function fmt(value, digits = 1) {
   return Number(value).toFixed(digits);
 }
 
-export default function RecoveryPlan({ analysis, loading, error, assigned }) {
+export default function RecoveryPlan({
+  analysis,
+  loading,
+  error,
+  assigned,
+  pickupConfirmed,
+}) {
   if (loading) {
     return (
       <section className="panel">
@@ -67,17 +73,29 @@ export default function RecoveryPlan({ analysis, loading, error, assigned }) {
   const breakdown = selectedFull?.breakdown;
   const metrics = selectedFull?.metrics;
 
+  const planStatus = pickupConfirmed
+    ? 'PICKUP_CONFIRMED'
+    : assigned
+      ? 'RECOVERY_ASSIGNED'
+      : analysis.status;
+
   return (
     <section className="panel recovery-plan">
       <h2>Selected Recovery Plan</h2>
-      <p className={assigned ? 'ok-text' : 'ok-text'}>
-        Status: {assigned ? 'RECOVERY_ASSIGNED' : analysis.status}
-      </p>
+      <p className="ok-text">Status: {planStatus}</p>
       {analysis.selectionExplanation ? (
         <p className="muted">{analysis.selectionExplanation}</p>
       ) : null}
 
       <dl className="detail-grid">
+        <Field
+          label="Plan ID"
+          value={analysis.recoveryPlan?.id || selected.recoveryOptionId}
+        />
+        <Field
+          label="Plan status"
+          value={analysis.recoveryPlan?.status || selected.recoveryPlanStatus}
+        />
         <Field label="Candidate ID" value={selected.candidateId} />
         <Field label="Vehicle ID" value={selected.vehicleId} />
         <Field label="Vehicle number" value={selected.vehicleNumber} />
@@ -88,7 +106,9 @@ export default function RecoveryPlan({ analysis, loading, error, assigned }) {
           value={
             selected.estimatedDistance != null
               ? `${fmt(selected.estimatedDistance)} km`
-              : null
+              : analysis.recoveryPlan?.estimatedDistance != null
+                ? `${fmt(analysis.recoveryPlan.estimatedDistance)} km`
+                : null
           }
         />
         <Field
@@ -96,7 +116,9 @@ export default function RecoveryPlan({ analysis, loading, error, assigned }) {
           value={
             selected.estimatedTravelTimeMin != null
               ? `${fmt(selected.estimatedTravelTimeMin)} min`
-              : null
+              : analysis.recoveryPlan?.estimatedTime != null
+                ? `${fmt(analysis.recoveryPlan.estimatedTime)} min`
+                : null
           }
         />
         <Field
@@ -104,12 +126,26 @@ export default function RecoveryPlan({ analysis, loading, error, assigned }) {
           value={
             selected.estimatedCost != null
               ? fmt(selected.estimatedCost, 2)
-              : null
+              : analysis.recoveryPlan?.estimatedCost != null
+                ? fmt(analysis.recoveryPlan.estimatedCost, 2)
+                : null
           }
         />
-        <Field label="Score" value={selected.score != null ? fmt(selected.score, 4) : null} />
+        <Field
+          label="Score"
+          value={
+            selected.score != null
+              ? fmt(selected.score, 4)
+              : analysis.recoveryPlan?.score != null
+                ? fmt(analysis.recoveryPlan.score, 4)
+                : null
+          }
+        />
         <Field label="ETA" value={selected.estimatedArrival} />
-        <Field label="Explanation" value={selected.explanation} />
+        <Field
+          label="Explanation"
+          value={selected.explanation || analysis.recoveryPlan?.explanation}
+        />
         <Field
           label="Available capacity"
           value={
@@ -128,11 +164,13 @@ export default function RecoveryPlan({ analysis, loading, error, assigned }) {
         />
       </dl>
 
-      {breakdown ? (
+      {(breakdown || analysis.recoveryPlan?.componentScores) ? (
         <div className="breakdown">
           <h3>Score breakdown (from FastAPI)</h3>
           <ul>
-            {Object.entries(breakdown).map(([key, val]) => (
+            {Object.entries(
+              breakdown || analysis.recoveryPlan.componentScores,
+            ).map(([key, val]) => (
               <li key={key}>
                 <strong>{key}</strong>: {fmt(val, 4)}
               </li>

@@ -44,7 +44,7 @@ from graph.incident_service import (
     get_latest_incident_for_shipment,
     serialize_incident,
 )
-from graph.shipment_state import MISPLACED_STATUSES, DELAYED_STATUSES
+from graph.shipment_state import get_shipment_state
 
 
 # ---------------------------------------------------------------------------
@@ -424,29 +424,21 @@ def get_all_shipments(db: Database) -> ShipmentListResponse:
 
 def get_shipment_detail(db: Database, shipment_id: str) -> ShipmentDetailResponse | None:
     """Return full shipment with resolved locations + recent events."""
+    state = get_shipment_state(db, shipment_id)
+    if state is None:
+        return None
+
+    # Re-fetch raw doc for fields not on ShipmentState (timestamps, vehicle).
     try:
         query: dict[str, Any] = {"_id": ObjectId(shipment_id)}
     except Exception:
         query = {"trackingNumber": shipment_id}
-
     doc = db["shipments"].find_one(query)
     if doc is None:
         return None
 
     ship_oid = doc["_id"]
 
-    # Batch-load this shipment's locations
-    loc_ids: list[Any] = []
-    for field in ("origin", "destination", "currentLocation"):
-        if doc.get(field):
-            loc_ids.append(doc[field])
-    locs = _load_locations_map(db, loc_ids)
-
-    origin_name, origin_node, _ = _loc_info(locs, doc.get("origin"))
-    dest_name, dest_node, _ = _loc_info(locs, doc.get("destination"))
-    curr_name, curr_node, _ = _loc_info(locs, doc.get("currentLocation"))
-
-    # Events (most recent 20)
     event_docs = list(
         db["shipmentevents"].find(
             {"shipment": ship_oid},
@@ -455,7 +447,6 @@ def get_shipment_detail(db: Database, shipment_id: str) -> ShipmentDetailRespons
         )
     )
 
-    # Batch-load event locations
     ev_loc_ids = [ev.get("location") for ev in event_docs if ev.get("location")]
     ev_locs = _load_locations_map(db, ev_loc_ids)
 
@@ -472,22 +463,15 @@ def get_shipment_detail(db: Database, shipment_id: str) -> ShipmentDetailRespons
                 type=ev.get("type", ""),
                 timestamp=_iso(ev.get("timestamp")),
                 location=loc_name,
-                notes=ev.get("notes"),
+                notes=ev.get("notes") or ev.get("description"),
             )
         )
 
-    latest_ev = event_docs[0] if event_docs else None
-    evt_type = latest_ev.get("type") if latest_ev else None
-    evt_time = _iso(latest_ev.get("timestamp")) if latest_ev else None
-
-    status: str = doc.get("status", "")
-    is_misplaced = status in MISPLACED_STATUSES or evt_type == "misplaced"
-    is_delayed = status in DELAYED_STATUSES
-    needs_recovery = is_misplaced or is_delayed
+    status = state.status
+    needs_recovery = state.needs_recovery
 
     active_incident = get_active_incident_for_shipment(db, ship_oid)
     incident_doc = active_incident
-    # Include latest resolved incident only while shipment is still recovered
     if incident_doc is None and status == "recovered":
         incident_doc = get_latest_incident_for_shipment(db, ship_oid)
 
@@ -499,7 +483,12 @@ def get_shipment_detail(db: Database, shipment_id: str) -> ShipmentDetailRespons
     lifecycle = _lifecycle_status(status, active_incident or (
         incident_doc if status == "recovered" else None
     ))
-    if lifecycle in ("MISPLACED", "RECOVERY_ANALYSIS", "RECOVERY_ASSIGNED"):
+    if lifecycle in (
+        "MISPLACED",
+        "RECOVERY_ANALYSIS",
+        "RECOVERY_ASSIGNED",
+        "PICKUP_CONFIRMED",
+    ):
         needs_recovery = True
 
     assigned_vehicle_id = doc.get("assignedVehicle")
@@ -512,24 +501,29 @@ def get_shipment_detail(db: Database, shipment_id: str) -> ShipmentDetailRespons
             assigned_vehicle_number = vdoc.get("vehicleNumber")
 
     return ShipmentDetailResponse(
-        id=str(ship_oid),
-        trackingNumber=doc.get("trackingNumber", ""),
-        origin=origin_name,
-        destination=dest_name,
-        currentLocation=curr_name,
+        id=state.shipment_id,
+        trackingNumber=state.tracking_number,
+        origin=state.origin_name,
+        destination=state.destination_name,
+        currentLocation=state.current_location_name,
         status=status,
-        priority=doc.get("priority", ""),
-        deadline=_iso(doc.get("deadline")),
-        weight=float(doc.get("weight") or 0),
-        latestEventType=evt_type,
-        latestEventTime=evt_time,
-        volume=float(doc.get("volume") or 0),
-        packageCount=int(doc.get("packageCount") or 0),
-        fragile=bool(doc.get("fragile", False)),
-        specialHandling=doc.get("specialHandling"),
-        originNode=origin_node,
-        destinationNode=dest_node,
-        currentNode=curr_node,
+        priority=state.priority,
+        deadline=_iso(state.deadline),
+        weight=state.weight,
+        latestEventType=state.latest_event_type,
+        latestEventTime=_iso(state.latest_event_time),
+        volume=state.volume,
+        packageCount=state.package_count,
+        fragile=state.fragile,
+        specialHandling=state.special_handling,
+        originNode=state.origin_node,
+        destinationNode=state.destination_node,
+        currentNode=state.current_node,
+        expectedNode=state.expected_node,
+        actualNode=state.actual_node,
+        expectedLocation=state.expected_location_name,
+        plannedRoute=list(state.planned_route_nodes),
+        isMisplaced=state.is_misplaced,
         needsRecovery=needs_recovery,
         events=events,
         createdAt=_iso(doc.get("createdAt")),

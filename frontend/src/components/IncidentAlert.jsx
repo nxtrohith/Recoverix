@@ -10,15 +10,17 @@ export default function IncidentAlert({
   shipment,
   completion,
   onViewRecovery,
+  onConfirmPickup,
   onMarkRecovered,
   recovering,
+  confirmingPickup,
   resolving,
 }) {
   if (completion) {
     return (
       <section className="incident-alert incident-alert-ok" role="status">
         <div className="incident-alert-header">
-          <strong>✓ Recovery Completed</strong>
+          <strong>✓ Incident Resolved</strong>
         </div>
         <dl className="incident-alert-grid">
           <div>
@@ -56,19 +58,33 @@ export default function IncidentAlert({
     shipment?.assignedVehicleNumber ||
     '—';
   const hub = incident.hubName || shipment?.currentLocation || '—';
-  const dest = incident.destinationName || shipment?.destination || '—';
+  const dest =
+    incident.destinationNode ||
+    incident.destinationName ||
+    shipment?.destination ||
+    '—';
 
   const isAssigned = incident.status === 'ASSIGNED';
+  const isPickupConfirmed = incident.status === 'PICKUP_CONFIRMED';
+  const isRecoveryActive = isAssigned || isPickupConfirmed;
+
+  let headline = '⚠ RECOVERY REQUIRED';
+  if (isPickupConfirmed) headline = '✓ PICKUP CONFIRMED (SIMULATED)';
+  else if (isAssigned) headline = '⟳ RECOVERY ASSIGNED · DRIVER CONTACTED';
 
   return (
     <section
-      className={`incident-alert ${isAssigned ? 'incident-alert-assigned' : 'incident-alert-warn'}`}
+      className={`incident-alert ${
+        isPickupConfirmed
+          ? 'incident-alert-ok'
+          : isAssigned
+            ? 'incident-alert-assigned'
+            : 'incident-alert-warn'
+      }`}
       role="alert"
     >
       <div className="incident-alert-header">
-        <strong>
-          {isAssigned ? '⟳ RECOVERY ASSIGNED' : '⚠ RECOVERY REQUIRED'}
-        </strong>
+        <strong>{headline}</strong>
         <span className="muted">
           {incident.incidentType || 'MISPLACED_SHIPMENT'} · {incident.incidentId}
         </span>
@@ -90,13 +106,13 @@ export default function IncidentAlert({
           <dt>Destination</dt>
           <dd>{dest}</dd>
         </div>
-        {isAssigned && incident.pickupCase ? (
+        {isRecoveryActive && incident.pickupCase ? (
           <div>
             <dt>Strategy</dt>
             <dd>{strategyLabel(incident.pickupCase)}</dd>
           </div>
         ) : null}
-        {isAssigned && incident.recoveryPath?.length ? (
+        {isRecoveryActive && incident.recoveryPath?.length ? (
           <div className="incident-route">
             <dt>Recovery Route</dt>
             <dd>{incident.recoveryPath.join(' → ')}</dd>
@@ -104,13 +120,22 @@ export default function IncidentAlert({
         ) : null}
       </dl>
       <div className="incident-alert-actions">
-        {!isAssigned ? (
+        {!isRecoveryActive ? (
           <>
             <span className="muted">Recovery analysis available.</span>
             <button type="button" className="primary" onClick={onViewRecovery} disabled={recovering}>
               {recovering ? 'Loading…' : 'View Recovery'}
             </button>
           </>
+        ) : isAssigned ? (
+          <button
+            type="button"
+            className="primary"
+            onClick={onConfirmPickup}
+            disabled={confirmingPickup}
+          >
+            {confirmingPickup ? 'Confirming…' : 'Confirm Pickup (Simulated)'}
+          </button>
         ) : (
           <button
             type="button"
@@ -118,7 +143,7 @@ export default function IncidentAlert({
             onClick={onMarkRecovered}
             disabled={resolving}
           >
-            {resolving ? 'Completing…' : 'Mark Recovered'}
+            {resolving ? 'Resolving…' : 'Resolve Incident'}
           </button>
         )}
       </div>

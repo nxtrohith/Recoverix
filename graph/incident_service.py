@@ -19,9 +19,26 @@ from graph.recovery_orchestrator import (
     ShipmentNotFoundError,
     analyze_shipment_recovery,
 )
+from graph.recovery_persistence import (
+    get_selected_recovery_option,
+    mark_option_status,
+    selected_option_as_assignment,
+    serialize_recovery_plan,
+)
 from graph.services.driver_communication import (
     build_recovery_assignment_message,
     send_driver_notification,
+)
+from graph.shipment_state import apply_shipment_event, sync_expected_location
+
+
+# Active (unresolved) incident statuses for the demo workflow:
+# OPEN / RECOVERY_REQUIRED → ASSIGNED → PICKUP_CONFIRMED → RESOLVED
+ACTIVE_INCIDENT_STATUSES = (
+    "OPEN",
+    "RECOVERY_REQUIRED",
+    "ASSIGNED",
+    "PICKUP_CONFIRMED",
 )
 
 
@@ -84,16 +101,22 @@ def _lifecycle_status(
     """
     Demo lifecycle derived from MongoDB shipment + incident (source of truth).
 
-    NORMAL → MISPLACED → RECOVERY_ANALYSIS → RECOVERY_ASSIGNED → RECOVERED
-    """
-    if shipment_status == "recovered":
-        return "RECOVERED"
+    NORMAL → MISPLACED → RECOVERY_ANALYSIS → RECOVERY_ASSIGNED
+      → PICKUP_CONFIRMED → RECOVERED
 
-    # Ignore historical resolved incidents once the shipment is no longer recovered
+    Incident DB status RESOLVED maps to lifecycle RECOVERED (end of demo).
+    Pickup confirmation does not resolve the incident.
+    """
+    # Resolved / no active incident
     if incident is None or incident.get("status") == "RESOLVED":
+        if shipment_status == "recovered":
+            return "RECOVERED"
         if shipment_status == "misplaced":
             return "MISPLACED"
         return "NORMAL"
+
+    if incident.get("status") == "PICKUP_CONFIRMED":
+        return "PICKUP_CONFIRMED"
 
     if incident.get("status") == "ASSIGNED":
         return "RECOVERY_ASSIGNED"
@@ -103,6 +126,8 @@ def _lifecycle_status(
             return "RECOVERY_ANALYSIS"
         return "MISPLACED"
 
+    if shipment_status == "recovered":
+        return "RECOVERED"
     if shipment_status == "misplaced":
         return "MISPLACED"
     return "NORMAL"
@@ -121,6 +146,8 @@ def serialize_incident(db: Database, doc: dict[str, Any]) -> dict[str, Any]:
         "vehicleNumber": _vehicle_number(db, vehicle_id),
         "recoveryVehicleId": str(recovery_vehicle_id) if recovery_vehicle_id else None,
         "recoveryVehicleNumber": _vehicle_number(db, recovery_vehicle_id),
+        "recoveryDriverId": doc.get("recoveryDriverId")
+        or _vehicle_number(db, recovery_vehicle_id),
         "incidentType": doc.get("incidentType"),
         "hubId": str(hub_id) if hub_id else None,
         "hubName": _loc_name(db, hub_id),
@@ -128,9 +155,22 @@ def serialize_incident(db: Database, doc: dict[str, Any]) -> dict[str, Any]:
         "selectedCandidateId": doc.get("selectedCandidateId"),
         "recoveryPath": list(doc.get("recoveryPath") or []),
         "pickupCase": doc.get("pickupCase"),
+        "pickupNode": doc.get("pickupNode"),
+        "destinationNode": doc.get("destinationNode"),
+        "recoveryScore": doc.get("recoveryScore"),
+        "recoveryCaseId": (
+            str(doc["recoveryCase"]) if doc.get("recoveryCase") else None
+        ),
+        "selectedRecoveryOptionId": (
+            str(doc["selectedRecoveryOption"])
+            if doc.get("selectedRecoveryOption")
+            else None
+        ),
         "driverMessage": doc.get("driverMessage"),
         "analysisStatus": doc.get("analysisStatus"),
         "lifecycleStatus": None,  # filled by callers with shipment context
+        "assignedAt": _iso(doc.get("assignedAt")),
+        "pickupConfirmedAt": _iso(doc.get("pickupConfirmedAt")),
         "createdAt": _iso(doc.get("createdAt") or doc.get("detectedAt")),
         "resolvedAt": _iso(doc.get("resolvedAt")),
         "updatedAt": _iso(doc.get("updatedAt")),
@@ -143,7 +183,7 @@ def get_active_incident_for_shipment(
     return db["incidents"].find_one(
         {
             "shipment": shipment_oid,
-            "status": {"$in": ["OPEN", "RECOVERY_REQUIRED", "ASSIGNED"]},
+            "status": {"$in": list(ACTIVE_INCIDENT_STATUSES)},
         },
         sort=[("createdAt", -1)],
     )
@@ -172,17 +212,21 @@ def simulate_misplaced_incident(
     """
     Mark an existing shipment as misplaced, record an incident, and
     optionally trigger the recovery engine.
+
+    Recovery / incident hub is the shipment's **actual** last-confirmed
+    location (``currentLocation``), not the planned expected hub.
     """
     shipment = _find_shipment(db, shipment_id)
     if shipment is None:
         raise ShipmentNotFoundError(shipment_id)
 
     ship_oid = shipment["_id"]
+    # actual / last-confirmed hub → recovery pickup node
     hub_id = shipment.get("currentLocation")
     if hub_id is None:
         raise RecoveryError(
             "INVALID_SHIPMENT_LOCATION",
-            "Shipment has no currentLocation hub",
+            "Shipment has no currentLocation (actual) hub",
             http_status=400,
         )
 
@@ -202,7 +246,7 @@ def simulate_misplaced_incident(
     db["incidents"].update_many(
         {
             "shipment": ship_oid,
-            "status": {"$in": ["OPEN", "RECOVERY_REQUIRED", "ASSIGNED"]},
+            "status": {"$in": list(ACTIVE_INCIDENT_STATUSES)},
         },
         {"$set": {"status": "RESOLVED", "resolvedAt": now, "updatedAt": now}},
     )
@@ -243,32 +287,31 @@ def simulate_misplaced_incident(
     insert_result = db["incidents"].insert_one(incident_doc)
     incident_doc["_id"] = insert_result.inserted_id
 
-    # Update shipment state (source of truth)
-    db["shipments"].update_one(
-        {"_id": ship_oid},
-        {
-            "$set": {
-                "status": "misplaced",
-                "updatedAt": now,
-                **({"assignedVehicle": vehicle_id} if vehicle_id else {}),
-            }
-        },
-    )
+    # Ensure expectedLocation is persisted before marking misplaced so
+    # actualNode vs expectedNode comparison is available.
+    if shipment.get("expectedLocation") is None:
+        sync_expected_location(db, ship_oid)
 
-    db["shipmentevents"].insert_one(
-        {
-            "shipment": ship_oid,
-            "type": "misplaced",
-            "location": hub_id,
-            "vehicle": vehicle_id,
-            "timestamp": now,
-            "description": (
-                f"Simulated MISPLACED_SHIPMENT incident {incident_id}"
-            ),
-            "createdAt": now,
-            "updatedAt": now,
-        }
+    # Update shipment state (source of truth) + audit event at actual hub
+    apply_shipment_event(
+        db,
+        ship_oid,
+        event_type="misplaced",
+        location_id=hub_id,
+        description=(
+            f"Simulated MISPLACED_SHIPMENT incident {incident_id} "
+            f"at actual hub {_loc_name(db, hub_id)}"
+        ),
+        timestamp=now,
+        vehicle_id=vehicle_id,
+        update_actual_location=True,
+        sync_expected=False,  # misplaced must not advance expected hub
     )
+    if vehicle_id is not None:
+        db["shipments"].update_one(
+            {"_id": ship_oid},
+            {"$set": {"assignedVehicle": vehicle_id, "updatedAt": now}},
+        )
 
     recovery: dict[str, Any] | None = None
     if auto_analyze:
@@ -305,6 +348,7 @@ def simulate_misplaced_incident(
             "status": updated_shipment.get("status"),
             "lifecycleStatus": incident_payload["lifecycleStatus"],
             "currentLocation": _loc_name(db, updated_shipment.get("currentLocation")),
+            "actualLocation": _loc_name(db, updated_shipment.get("currentLocation")),
             "destination": _loc_name(db, updated_shipment.get("destination")),
             "origin": _loc_name(db, updated_shipment.get("origin")),
             "assignedVehicleId": (
@@ -318,7 +362,10 @@ def simulate_misplaced_incident(
             "needsRecovery": True,
         },
         "recovery": recovery,
-        "message": "Incident simulated — recovery required",
+        "message": (
+            "Incident simulated — recovery required at actual/last-confirmed hub "
+            f"({_loc_name(db, hub_id)})"
+        ),
     }
 
 
@@ -335,14 +382,18 @@ def assign_recovery(
     vehicle_id: str | None = None,
     path: list[str] | None = None,
     pickup_case: str | None = None,
+    score: float | None = None,
 ) -> dict[str, Any]:
     """
     Validate a recovery option, assign it, notify driver.
 
-    When the client supplies a candidate from a prior calculate/analyze response
-    (candidateId + vehicleId + path), assignment is applied directly without
-    re-running the full scoring pipeline (hackathon latency). Otherwise the
-    orchestrator is invoked to pick the default selected option.
+    Preference order:
+      1. Persisted selected RecoveryOption (from prior analyze)
+      2. Client-supplied candidate snapshot (candidateId + vehicleId + path)
+      3. Re-run orchestrator only when neither is available
+
+    Assignment uses the persisted plan when present so the decision survives
+    beyond the analyze response and is not recomputed to a different candidate.
     """
     shipment = _find_shipment(db, shipment_id)
     if shipment is None:
@@ -359,8 +410,35 @@ def assign_recovery(
 
     analysis: dict[str, Any] | None = None
     selected: dict[str, Any] | None = None
+    persisted_option: dict[str, Any] | None = None
 
-    if candidate_id and vehicle_id and path:
+    # 1. Prefer persisted selected plan for this recovery case
+    persisted_option = get_selected_recovery_option(
+        db, _to_oid(incident.get("recoveryCase"))
+    )
+    if persisted_option is None and incident.get("selectedRecoveryOption"):
+        persisted_option = db["recoveryoptions"].find_one(
+            {"_id": incident["selectedRecoveryOption"]}
+        )
+
+    if persisted_option and persisted_option.get("status") in (
+        "proposed",
+        "selected",
+        "executing",
+    ):
+        persisted_as = selected_option_as_assignment(persisted_option)
+        # If client asked for a specific different candidate, honour override
+        client_override = bool(
+            candidate_id
+            and candidate_id != persisted_as.get("candidateId")
+            and vehicle_id
+            and path
+        )
+        if not client_override:
+            selected = persisted_as
+        # else fall through to client-provided path below
+
+    if selected is None and candidate_id and vehicle_id and path:
         # Client-provided option from prior recovery calculation
         recovery_vehicle_oid = _to_oid(vehicle_id)
         if recovery_vehicle_oid is None:
@@ -381,10 +459,11 @@ def assign_recovery(
             "vehicleId": str(recovery_vehicle_oid),
             "path": list(path),
             "pickupCase": pickup_case,
+            "score": score,
             "feasible": True,
         }
-    else:
-        # Re-run engine to choose / validate default selection
+    elif selected is None:
+        # Re-run engine only when no persisted plan and no client snapshot
         analysis = analyze_shipment_recovery(str(ship_oid))
         candidates = analysis.get("candidates") or []
         if candidate_id:
@@ -418,6 +497,10 @@ def assign_recovery(
                 )
                 if full:
                     selected = {**full, **selected}
+            # Prefer freshly persisted plan from this analyze pass
+            plan = analysis.get("recoveryPlan")
+            if plan and selected:
+                selected["recoveryOptionId"] = plan.get("id")
 
     if not selected:
         raise RecoveryError(
@@ -456,6 +539,12 @@ def assign_recovery(
         if recovery_path
         else _loc_name(db, shipment.get("destination"))
     )
+    driver_id = _vehicle_number(db, recovery_vehicle_oid)
+    recovery_score = selected.get("score")
+    if recovery_score is None and analysis:
+        sel = analysis.get("selectedRecovery") or {}
+        if sel.get("candidateId") == candidate:
+            recovery_score = sel.get("score")
 
     message = build_recovery_assignment_message(
         shipment_tracking=shipment.get("trackingNumber", ""),
@@ -471,8 +560,21 @@ def assign_recovery(
             "shipmentId": str(ship_oid),
             "incidentId": incident.get("incidentId"),
             "candidateId": candidate,
+            "pickupCase": pickup,
+            "pickupNode": pickup_hub,
+            "destinationNode": destination,
+            "simulated": True,
         },
     )
+
+    option_oid = _to_oid(selected.get("recoveryOptionId"))
+    if option_oid is None and persisted_option:
+        # Confirm fingerprint still matches
+        if (
+            persisted_option.get("candidateId") == candidate
+            or str(persisted_option.get("vehicle")) == str(recovery_vehicle_oid)
+        ):
+            option_oid = persisted_option["_id"]
 
     db["incidents"].update_one(
         {"_id": incident["_id"]},
@@ -481,9 +583,16 @@ def assign_recovery(
                 "status": "ASSIGNED",
                 "selectedCandidateId": candidate,
                 "recoveryVehicle": recovery_vehicle_oid,
+                "recoveryDriverId": driver_id,
                 "recoveryPath": recovery_path,
                 "pickupCase": pickup,
+                "pickupNode": pickup_hub,
+                "destinationNode": destination,
+                "recoveryScore": recovery_score,
+                "assignedAt": now,
+                "pickupConfirmedAt": None,
                 "driverMessage": notify.message,
+                "selectedRecoveryOption": option_oid,
                 "analysisStatus": (analysis or {}).get("status")
                 or incident.get("analysisStatus")
                 or "RECOVERY_PLAN_AVAILABLE",
@@ -503,10 +612,25 @@ def assign_recovery(
         },
     )
 
-    if incident.get("recoveryCase"):
+    case_oid = _to_oid(incident.get("recoveryCase"))
+    if option_oid:
+        mark_option_status(
+            db,
+            option_oid,
+            "executing",
+            case_status="option_selected",
+            case_oid=case_oid,
+        )
+    elif case_oid:
         db["recoverycases"].update_one(
-            {"_id": incident["recoveryCase"]},
-            {"$set": {"status": "option_selected", "updatedAt": now}},
+            {"_id": case_oid},
+            {
+                "$set": {
+                    "status": "option_selected",
+                    "selectedOption": option_oid,
+                    "updatedAt": now,
+                }
+            },
         )
 
     db["shipmentevents"].insert_one(
@@ -518,7 +642,164 @@ def assign_recovery(
             "timestamp": now,
             "description": (
                 f"Recovery assigned via candidate {candidate} "
-                f"vehicle {_vehicle_number(db, recovery_vehicle_oid)}"
+                f"vehicle {driver_id or recovery_vehicle_oid} "
+                f"(pickup={pickup_hub}, destination={destination})"
+            ),
+            "createdAt": now,
+            "updatedAt": now,
+        }
+    )
+
+    updated_incident = db["incidents"].find_one({"_id": incident["_id"]})
+    updated_shipment = db["shipments"].find_one({"_id": ship_oid})
+    assert updated_incident is not None and updated_shipment is not None
+
+    incident_payload = serialize_incident(db, updated_incident)
+    lifecycle = _lifecycle_status(updated_shipment.get("status", ""), updated_incident)
+    incident_payload["lifecycleStatus"] = lifecycle
+
+    plan_payload = None
+    if option_oid:
+        opt = db["recoveryoptions"].find_one({"_id": option_oid})
+        plan_payload = serialize_recovery_plan(opt)
+
+    return {
+        "incident": incident_payload,
+        "shipment": {
+            "id": str(ship_oid),
+            "trackingNumber": updated_shipment.get("trackingNumber"),
+            "status": updated_shipment.get("status"),
+            "lifecycleStatus": lifecycle,
+            "currentLocation": _loc_name(db, updated_shipment.get("currentLocation")),
+            "destination": _loc_name(db, updated_shipment.get("destination")),
+            "assignedVehicleId": str(recovery_vehicle_oid),
+            "assignedVehicleNumber": _vehicle_number(db, recovery_vehicle_oid),
+            "needsRecovery": True,
+        },
+        "assignment": {
+            "candidateId": candidate,
+            "vehicleId": str(recovery_vehicle_oid),
+            "vehicleNumber": driver_id,
+            "driverId": driver_id,
+            "path": recovery_path,
+            "pickupCase": pickup,
+            "pickupNode": pickup_hub,
+            "destinationNode": destination,
+            "recoveryScore": recovery_score,
+            "recoveryOptionId": str(option_oid) if option_oid else None,
+            "assignedAt": _iso(now),
+        },
+        "recoveryPlan": plan_payload,
+        "driverNotification": {
+            "vehicleId": notify.vehicle_id,
+            "message": notify.message,
+            "channel": notify.channel,
+            "delivered": notify.delivered,
+            "sentAt": notify.sent_at,
+            "detail": notify.detail,
+            "simulated": True,
+        },
+        "recovery": analysis,
+        "message": "Recovery assigned — simulated driver contact logged",
+    }
+
+
+# ---------------------------------------------------------------------------
+# Pickup confirmation (simulated driver confirmation)
+# ---------------------------------------------------------------------------
+
+
+def confirm_recovery_pickup(db: Database, shipment_id: str) -> dict[str, Any]:
+    """
+    Simulate driver confirmation that the misplaced shipment was picked up.
+
+    Does NOT integrate live GPS / telephony. Does NOT resolve the incident —
+    operator resolve remains a separate step after the shipment is recovered.
+    """
+    shipment = _find_shipment(db, shipment_id)
+    if shipment is None:
+        raise ShipmentNotFoundError(shipment_id)
+
+    ship_oid = shipment["_id"]
+    incident = get_active_incident_for_shipment(db, ship_oid)
+    if incident is None:
+        raise RecoveryError(
+            "NO_ACTIVE_INCIDENT",
+            f"No active incident for shipment {shipment_id}",
+            http_status=400,
+        )
+
+    status = incident.get("status")
+    if status == "PICKUP_CONFIRMED":
+        raise RecoveryError(
+            "PICKUP_ALREADY_CONFIRMED",
+            "Recovery pickup already confirmed for this incident",
+            http_status=400,
+        )
+    if status != "ASSIGNED":
+        raise RecoveryError(
+            "PICKUP_BEFORE_ASSIGNMENT",
+            "Cannot confirm pickup before a recovery candidate is assigned",
+            http_status=400,
+        )
+
+    recovery_vehicle_oid = _to_oid(incident.get("recoveryVehicle"))
+    if recovery_vehicle_oid is None:
+        recovery_vehicle_oid = _to_oid(shipment.get("assignedVehicle"))
+    if recovery_vehicle_oid is None:
+        raise RecoveryError(
+            "NO_RECOVERY_VEHICLE",
+            "Assigned incident has no recovery vehicle",
+            http_status=400,
+        )
+
+    now = _now()
+    pickup_location = shipment.get("currentLocation") or incident.get("hub")
+
+    db["incidents"].update_one(
+        {"_id": incident["_id"]},
+        {
+            "$set": {
+                "status": "PICKUP_CONFIRMED",
+                "pickupConfirmedAt": now,
+                "updatedAt": now,
+            }
+        },
+    )
+
+    # Shipment is recovered once pickup is confirmed; incident stays open until resolve
+    db["shipments"].update_one(
+        {"_id": ship_oid},
+        {
+            "$set": {
+                "status": "recovered",
+                "assignedVehicle": recovery_vehicle_oid,
+                "updatedAt": now,
+            }
+        },
+    )
+
+    if incident.get("recoveryCase"):
+        option_oid = _to_oid(incident.get("selectedRecoveryOption"))
+        mark_option_status(
+            db,
+            option_oid,
+            "executing",
+            case_status="in_progress",
+            case_oid=_to_oid(incident["recoveryCase"]),
+        )
+
+    db["shipmentevents"].insert_one(
+        {
+            "shipment": ship_oid,
+            "type": "recovery_pickup_confirmed",
+            "location": pickup_location,
+            "vehicle": recovery_vehicle_oid,
+            "timestamp": now,
+            "description": (
+                "Simulated driver confirmation: shipment picked up at recovery "
+                f"node {incident.get('pickupNode') or _loc_name(db, pickup_location)} "
+                f"by vehicle {_vehicle_number(db, recovery_vehicle_oid)}"
             ),
             "createdAt": now,
             "updatedAt": now,
@@ -546,23 +827,20 @@ def assign_recovery(
             "assignedVehicleNumber": _vehicle_number(db, recovery_vehicle_oid),
             "needsRecovery": True,
         },
-        "assignment": {
-            "candidateId": candidate,
+        "pickup": {
+            "confirmed": True,
+            "simulated": True,
+            "confirmedAt": _iso(now),
+            "pickupNode": updated_incident.get("pickupNode"),
+            "destinationNode": updated_incident.get("destinationNode"),
             "vehicleId": str(recovery_vehicle_oid),
             "vehicleNumber": _vehicle_number(db, recovery_vehicle_oid),
-            "path": recovery_path,
-            "pickupCase": pickup,
+            "eventType": "recovery_pickup_confirmed",
         },
-        "driverNotification": {
-            "vehicleId": notify.vehicle_id,
-            "message": notify.message,
-            "channel": notify.channel,
-            "delivered": notify.delivered,
-            "sentAt": notify.sent_at,
-            "detail": notify.detail,
-        },
-        "recovery": analysis,
-        "message": "Recovery assigned",
+        "message": (
+            "Simulated pickup confirmed — shipment recovered; "
+            "operator may resolve the incident"
+        ),
     }
 
 
@@ -572,7 +850,12 @@ def assign_recovery(
 
 
 def resolve_recovery(db: Database, shipment_id: str) -> dict[str, Any]:
-    """Mark shipment recovered and incident resolved."""
+    """
+    End of the demo recovery workflow: mark incident RESOLVED.
+
+    Prefer resolving after simulated pickup confirmation
+    (ASSIGNED → PICKUP_CONFIRMED → recovered shipment → RESOLVED).
+    """
     shipment = _find_shipment(db, shipment_id)
     if shipment is None:
         raise ShipmentNotFoundError(shipment_id)
@@ -580,7 +863,6 @@ def resolve_recovery(db: Database, shipment_id: str) -> dict[str, Any]:
     ship_oid = shipment["_id"]
     incident = get_active_incident_for_shipment(db, ship_oid)
     if incident is None:
-        # Allow resolving a recently assigned incident that might already be half-done
         incident = get_latest_incident_for_shipment(db, ship_oid)
         if incident is None or incident.get("status") == "RESOLVED":
             raise RecoveryError(
@@ -589,25 +871,44 @@ def resolve_recovery(db: Database, shipment_id: str) -> dict[str, Any]:
                 http_status=400,
             )
 
+    if incident.get("status") == "ASSIGNED":
+        raise RecoveryError(
+            "PICKUP_NOT_CONFIRMED",
+            "Confirm simulated driver pickup before resolving the incident",
+            http_status=400,
+        )
+    if incident.get("status") != "PICKUP_CONFIRMED":
+        raise RecoveryError(
+            "INVALID_INCIDENT_STATE",
+            f"Cannot resolve incident in status {incident.get('status')}",
+            http_status=400,
+        )
+
     now = _now()
+    recovery_vehicle = incident.get("recoveryVehicle") or shipment.get("assignedVehicle")
+
     db["incidents"].update_one(
         {"_id": incident["_id"]},
         {"$set": {"status": "RESOLVED", "resolvedAt": now, "updatedAt": now}},
     )
     db["shipments"].update_one(
         {"_id": ship_oid},
-        {"$set": {"status": "recovered", "updatedAt": now}},
+        {
+            "$set": {
+                "status": "recovered",
+                "assignedVehicle": recovery_vehicle,
+                "updatedAt": now,
+            }
+        },
     )
     if incident.get("recoveryCase"):
-        db["recoverycases"].update_one(
-            {"_id": incident["recoveryCase"]},
-            {
-                "$set": {
-                    "status": "resolved",
-                    "resolvedAt": now,
-                    "updatedAt": now,
-                }
-            },
+        option_oid = _to_oid(incident.get("selectedRecoveryOption"))
+        mark_option_status(
+            db,
+            option_oid,
+            "completed",
+            case_status="resolved",
+            case_oid=_to_oid(incident["recoveryCase"]),
         )
 
     db["shipmentevents"].insert_one(
@@ -615,9 +916,12 @@ def resolve_recovery(db: Database, shipment_id: str) -> dict[str, Any]:
             "shipment": ship_oid,
             "type": "recovered",
             "location": shipment.get("destination") or shipment.get("currentLocation"),
-            "vehicle": incident.get("recoveryVehicle") or shipment.get("assignedVehicle"),
+            "vehicle": recovery_vehicle,
             "timestamp": now,
-            "description": f"Recovery completed for incident {incident.get('incidentId')}",
+            "description": (
+                f"Incident {incident.get('incidentId')} resolved — "
+                "shipment continuing toward destination"
+            ),
             "createdAt": now,
             "updatedAt": now,
         }
@@ -663,15 +967,16 @@ def resolve_recovery(db: Database, shipment_id: str) -> dict[str, Any]:
             "recoveryRoute": path,
             "recoveryRouteLabel": " → ".join(path) if path else None,
             "status": "RECOVERED",
+            "resolved": True,
         },
-        "message": "Recovery completed",
+        "message": "Incident resolved — recovery workflow complete",
     }
 
 
 def list_active_incidents(db: Database) -> dict[str, Any]:
     docs = list(
         db["incidents"].find(
-            {"status": {"$in": ["OPEN", "RECOVERY_REQUIRED", "ASSIGNED"]}},
+            {"status": {"$in": list(ACTIVE_INCIDENT_STATUSES)}},
             sort=[("createdAt", -1)],
         )
     )

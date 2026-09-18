@@ -20,11 +20,13 @@ from graph.recovery_context import (
     get_recovery_context,
     get_recovery_context_from_state,
 )
+from graph.recovery_persistence import persist_analysis_plan
 from graph.recovery_scorer import (
     load_route_baselines,
     score_recovery_candidates,
 )
 from graph.shipment_state import ShipmentState, get_shipment_state
+from bson import ObjectId
 
 
 # ---------------------------------------------------------------------------
@@ -227,10 +229,11 @@ class RecoveryOrchestrator:
         *,
         identifier: str | None,
     ) -> dict[str, Any]:
-        # 3–4. Current location / destination
-        if not shipment.current_node:
+        # 3–4. Actual (pickup) location / destination — never use expectedNode
+        pickup_node = shipment.actual_node or shipment.current_node
+        if not pickup_node:
             raise InvalidShipmentLocationError(
-                "Shipment has no valid current location "
+                "Shipment has no valid actual/current location "
                 "(missing currentLocation or graphNodeKey)"
             )
         if not shipment.destination_node:
@@ -252,9 +255,9 @@ class RecoveryOrchestrator:
         G = cached.graph
         db = get_db()
 
-        if shipment.current_node not in G:
+        if pickup_node not in G:
             raise NodeNotInGraphError(
-                "Shipment current location", shipment.current_node
+                "Shipment actual/recovery location", pickup_node
             )
         if shipment.destination_node not in G:
             raise NodeNotInGraphError(
@@ -301,21 +304,29 @@ class RecoveryOrchestrator:
         else:
             status = "RECOVERY_PLAN_AVAILABLE"
 
-        return {
+        result: dict[str, Any] = {
             "shipment": {
                 "id": shipment.shipment_id,
                 "trackingNumber": shipment.tracking_number,
                 "status": shipment.status,
                 "currentLocation": shipment.current_location_name,
+                "expectedLocation": shipment.expected_location_name,
+                "actualLocation": shipment.current_location_name,
                 "destination": shipment.destination_name,
                 "priority": shipment.priority,
                 "deadline": _iso(shipment.deadline),
                 "weight": shipment.weight,
                 "volume": shipment.volume,
                 "needsRecovery": shipment.needs_recovery,
+                "isMisplaced": shipment.is_misplaced,
+                "expectedFromRoute": shipment.expected_from_route,
             },
             "network": {
+                # Pickup / recovery node = actual (last-confirmed) hub
                 "currentNode": shipment.current_node,
+                "actualNode": shipment.actual_node,
+                "expectedNode": shipment.expected_node,
+                "plannedRoute": list(shipment.planned_route_nodes),
                 "destinationNode": shipment.destination_node,
                 "candidateCount": len(scoring.candidates),
                 "feasibleCount": len(feasible),
@@ -329,7 +340,72 @@ class RecoveryOrchestrator:
             "selectionExplanation": scoring.selection_explanation,
             "reasons": reasons,
             "status": status,
+            "recoveryPlan": None,
         }
+
+        # Persist selected plan when analyzing a real shipment (not mock demos)
+        if identifier is not None:
+            result["recoveryPlan"] = self._persist_plan(
+                db, shipment, result
+            )
+
+        return result
+
+    def _persist_plan(
+        self,
+        db: Any,
+        shipment: ShipmentState,
+        result: dict[str, Any],
+    ) -> dict[str, Any] | None:
+        """Write selected recovery plan to recoverycases / recoveryoptions."""
+        ship_oid: ObjectId | None = None
+        try:
+            ship_oid = ObjectId(shipment.shipment_id)
+        except Exception:
+            ship_doc = db["shipments"].find_one(
+                {"trackingNumber": shipment.tracking_number}
+            )
+            if ship_doc:
+                ship_oid = ship_doc["_id"]
+        if ship_oid is None:
+            return None
+
+        ship_doc = db["shipments"].find_one({"_id": ship_oid}) or {
+            "_id": ship_oid,
+            "weight": shipment.weight,
+            "volume": shipment.volume,
+            "currentLocation": None,
+        }
+        # Inline lookup avoids circular import with incident_service
+        incident = db["incidents"].find_one(
+            {
+                "shipment": ship_oid,
+                "status": {
+                    "$in": [
+                        "OPEN",
+                        "RECOVERY_REQUIRED",
+                        "ASSIGNED",
+                        "PICKUP_CONFIRMED",
+                    ]
+                },
+            },
+            sort=[("createdAt", -1)],
+        )
+        try:
+            plan = persist_analysis_plan(
+                db,
+                shipment=ship_doc,
+                analysis=result,
+                incident=incident,
+            )
+        except Exception:
+            # Non-fatal — analysis response is still returned
+            return None
+
+        if plan and result.get("selectedRecovery"):
+            result["selectedRecovery"]["recoveryOptionId"] = plan.get("id")
+            result["selectedRecovery"]["recoveryPlanStatus"] = plan.get("status")
+        return plan
 
 
 # Module-level singleton for demos / API
@@ -354,8 +430,13 @@ def print_recovery_summary(result: dict[str, Any]) -> None:
     print(f"  Status           : {result['status']}")
     print(f"  Shipment         : {ship['id']} ({ship.get('trackingNumber')})")
     print(f"  Shipment status  : {ship['status']}  priority={ship['priority']}")
-    print(f"  Current location : {ship['currentLocation']} [{net['currentNode']}]")
+    print(f"  Expected hub     : {ship.get('expectedLocation')} [{net.get('expectedNode')}]")
+    print(f"  Actual hub       : {ship.get('actualLocation')} [{net.get('actualNode')}]")
+    print(f"  Recovery pickup  : {ship['currentLocation']} [{net['currentNode']}]")
     print(f"  Destination      : {ship['destination']} [{net['destinationNode']}]")
+    planned = net.get("plannedRoute") or []
+    if planned:
+        print(f"  Planned route    : {' → '.join(planned)}")
     print(f"  Deadline         : {ship.get('deadline')}")
     print(f"  Candidates       : {net['candidateCount']} "
           f"({net['feasibleCount']} feasible)")

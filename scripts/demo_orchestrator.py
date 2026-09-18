@@ -40,23 +40,44 @@ def _mock_shipment(G) -> ShipmentState:
     if len(nodes) < 2:
         raise RuntimeError("Graph has fewer than 2 nodes — cannot mock shipment.")
 
-    current_node = nodes[0]
-    destination_node = nodes[-1]
-    for src in nodes[:10]:
-        for dst in reversed(nodes[-10:]):
-            if src == dst:
+    hyd = "Hyderabad_Shamshbd_H (Telangana)"
+    expected = "Medchal_MROoffce_D (Telangana)"
+    dest = "Karimnagar_KamnHbRD_I (Telangana)"
+    actual = "Kamareddy_Devenply_I (Telangana)"
+
+    if all(n in G for n in (hyd, expected, dest, actual)):
+        origin_node, expected_node, destination_node, current_node = (
+            hyd,
+            expected,
+            dest,
+            actual,
+        )
+        planned = [hyd, expected, dest]
+    else:
+        current_node = nodes[0]
+        destination_node = nodes[-1]
+        for src in nodes[:10]:
+            for dst in reversed(nodes[-10:]):
+                if src == dst:
+                    continue
+                try:
+                    path = nx.shortest_path(G, src, dst, weight="avg_distance_km")
+                    if len(path) >= 2:
+                        current_node = src
+                        destination_node = dst
+                        break
+                except (nx.NetworkXNoPath, nx.NodeNotFound):
+                    continue
+            else:
                 continue
-            try:
-                path = nx.shortest_path(G, src, dst, weight="avg_distance_km")
-                if len(path) >= 2:
-                    current_node = src
-                    destination_node = dst
-                    break
-            except (nx.NetworkXNoPath, nx.NodeNotFound):
-                continue
-        else:
-            continue
-        break
+            break
+        origin_node = current_node
+        expected_node = destination_node
+        planned = [origin_node, destination_node]
+        for alt in nodes:
+            if alt not in (origin_node, destination_node) and alt in G:
+                current_node = alt
+                break
 
     return ShipmentState(
         shipment_id="MOCK-SHIPMENT-001",
@@ -69,17 +90,22 @@ def _mock_shipment(G) -> ShipmentState:
         package_count=3,
         fragile=False,
         special_handling=None,
-        origin_name=current_node,
+        origin_name=origin_node,
         destination_name=destination_node,
         current_location_name=current_node,
-        origin_node=current_node,
+        expected_location_name=expected_node,
+        origin_node=origin_node,
         destination_node=destination_node,
         current_node=current_node,
+        actual_node=current_node,
+        expected_node=expected_node,
+        planned_route_nodes=planned,
         latest_event_type="misplaced",
         latest_event_time=datetime.now(tz=timezone.utc),
         is_misplaced=True,
         is_delayed=False,
         needs_recovery=True,
+        expected_from_route=True,
     )
 
 
