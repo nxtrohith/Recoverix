@@ -1,37 +1,33 @@
-import { useState } from 'react';
+import { useState } from 'react'
+import { AlertTriangle, CheckCircle2, Phone } from 'lucide-react'
 import {
   getAvailableRecoveryAction,
   hasPersistedRecoveryPlan,
   buildAssignConfirmation,
   RECOVERY_ACTION_LABELS,
-} from './recovery/recoveryActions';
-import { firstPresent } from './recovery/recoveryStatus';
-import { candidateTypeLabel } from './recovery/candidateUtils';
+} from './recovery/recoveryActions'
+import { firstPresent } from './recovery/recoveryStatus'
+import { candidateTypeLabel } from './recovery/candidateUtils'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { DetailField, DetailGrid } from '@/components/ops/DetailField'
+import { StatusBadge } from '@/components/ops/StatusBadge'
+import { cn } from '@/lib/utils'
 
 function strategyLabel(pickupCase) {
-  if (!pickupCase) return 'Recovery';
-  if (pickupCase === 'at_node' || pickupCase === 'pass_through') return 'Piggyback';
-  if (pickupCase === 'detour') return 'Alternate Vehicle / Detour';
-  return pickupCase;
-}
-
-function ConfirmBlock({ title, children, onCancel, onConfirm, confirmLabel, busy }) {
-  return (
-    <div className="recovery-confirm" role="dialog" aria-label={title}>
-      <div className="recovery-confirm-card">
-        <h4>{title}</h4>
-        <div className="recovery-confirm-body">{children}</div>
-        <div className="recovery-action-buttons">
-          <button type="button" onClick={onCancel} disabled={busy}>
-            Cancel
-          </button>
-          <button type="button" className="primary" onClick={onConfirm} disabled={busy}>
-            {busy ? 'Working…' : confirmLabel}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+  if (!pickupCase) return 'Recovery'
+  if (pickupCase === 'at_node' || pickupCase === 'pass_through') return 'Piggyback'
+  if (pickupCase === 'detour') return 'Alternate Vehicle / Detour'
+  return pickupCase
 }
 
 export default function IncidentAlert({
@@ -49,71 +45,68 @@ export default function IncidentAlert({
   confirmingPickup,
   resolving,
 }) {
-  const [confirmKind, setConfirmKind] = useState(null);
+  const [confirmKind, setConfirmKind] = useState(null)
 
   if (completion) {
     return (
-      <section className="incident-alert incident-alert-ok" role="status">
-        <div className="incident-alert-header">
-          <strong>✓ Incident Resolved</strong>
-        </div>
-        <dl className="incident-alert-grid">
-          <div>
-            <dt>Shipment</dt>
-            <dd>{completion.trackingNumber || shipment?.trackingNumber || '—'}</dd>
-          </div>
-          <div>
-            <dt>Recovery Vehicle</dt>
-            <dd>{completion.recoveryVehicleNumber || '—'}</dd>
-          </div>
-          <div>
-            <dt>Recovery Route</dt>
-            <dd>{completion.recoveryRouteLabel || '—'}</dd>
-          </div>
-          <div>
-            <dt>Status</dt>
-            <dd>{completion.status || 'RECOVERED'}</dd>
-          </div>
-        </dl>
-        <p className="ok-text">RECOVERY COMPLETE</p>
-      </section>
-    );
+      <Alert className="bg-status-delivered/15">
+        <CheckCircle2 />
+        <AlertTitle>Incident resolved</AlertTitle>
+        <AlertDescription>
+          <DetailGrid className="mt-3 sm:grid-cols-2 xl:grid-cols-4">
+            <DetailField
+              label="Shipment"
+              value={completion.trackingNumber || shipment?.trackingNumber}
+            />
+            <DetailField
+              label="Recovery vehicle"
+              value={completion.recoveryVehicleNumber}
+            />
+            <DetailField
+              label="Recovery route"
+              value={completion.recoveryRouteLabel}
+            />
+            <DetailField label="Status" value={completion.status || 'RECOVERED'} />
+          </DetailGrid>
+        </AlertDescription>
+      </Alert>
+    )
   }
 
   if (!incident || incident.status === 'RESOLVED') {
-    return null;
+    return null
   }
 
   const tracking =
     shipment?.trackingNumber ||
     incident.shipmentTrackingNumber ||
-    incident.shipmentId;
+    incident.shipmentId
   const vehicle =
     incident.recoveryVehicleNumber ||
     incident.vehicleNumber ||
     shipment?.assignedVehicleNumber ||
-    '—';
-  const hub = incident.hubName || shipment?.currentLocation || '—';
+    '—'
+  const hub = incident.hubName || shipment?.currentLocation || '—'
   const dest =
     incident.destinationNode ||
     incident.destinationName ||
     shipment?.destination ||
-    '—';
+    '—'
 
-  const isAssigned = incident.status === 'ASSIGNED';
-  const isPickupConfirmed = incident.status === 'PICKUP_CONFIRMED';
-  const isRecoveryActive = isAssigned || isPickupConfirmed;
+  const isAssigned = incident.status === 'ASSIGNED'
+  const isPickupConfirmed = incident.status === 'PICKUP_CONFIRMED'
+  const isRecoveryActive = isAssigned || isPickupConfirmed
   const available = getAvailableRecoveryAction({
     incident,
     shipment,
     recoveryAnalysis,
-  });
-  const busy = recovering || assigning || confirmingPickup || resolving;
+  })
+  const busy = recovering || assigning || confirmingPickup || resolving
   const assignDetails = buildAssignConfirmation({
     analysis: recoveryAnalysis,
     vehicles,
     incident,
-  });
+  })
   const pickupHub =
     firstPresent(
       incident.pickupNode,
@@ -121,28 +114,28 @@ export default function IncidentAlert({
       shipment?.actualLocation,
       shipment?.currentLocation,
       hub,
-    ) || '—';
+    ) || '—'
 
-  let headline = '⚠ RECOVERY REQUIRED';
-  if (isPickupConfirmed) headline = '✓ PICKUP CONFIRMED (SIMULATED)';
-  else if (isAssigned) headline = '⟳ RECOVERY ASSIGNED · DRIVER CONTACTED';
+  let headline = 'Recovery required'
+  if (isPickupConfirmed) headline = 'Pickup confirmed'
+  else if (isAssigned) headline = 'Recovery assigned · driver contacted'
 
   const onPrimaryClick = () => {
-    if (!available || busy) return;
+    if (!available || busy) return
     if (available === 'analyze') {
-      if (onViewRecovery) onViewRecovery();
-      return;
+      if (onViewRecovery) onViewRecovery()
+      return
     }
-    setConfirmKind(available);
-  };
+    setConfirmKind(available)
+  }
 
   const runConfirmed = async () => {
-    const kind = confirmKind;
-    setConfirmKind(null);
-    if (kind === 'assign' && onAssign) await onAssign();
-    else if (kind === 'pickup' && onConfirmPickup) await onConfirmPickup();
-    else if (kind === 'resolve' && onMarkRecovered) await onMarkRecovered();
-  };
+    const kind = confirmKind
+    setConfirmKind(null)
+    if (kind === 'assign' && onAssign) await onAssign()
+    else if (kind === 'pickup' && onConfirmPickup) await onConfirmPickup()
+    else if (kind === 'resolve' && onMarkRecovered) await onMarkRecovered()
+  }
 
   const primaryLabel =
     available === 'analyze'
@@ -161,143 +154,153 @@ export default function IncidentAlert({
             ? resolving
               ? 'Resolving…'
               : RECOVERY_ACTION_LABELS.resolve
-            : null;
+            : null
 
   return (
-    <section
-      className={`incident-alert ${
-        isPickupConfirmed
-          ? 'incident-alert-ok'
-          : isAssigned
-            ? 'incident-alert-assigned'
-            : 'incident-alert-warn'
-      }`}
-      role="alert"
-    >
-      <div className="incident-alert-header">
-        <strong>{headline}</strong>
-        <span className="muted">
-          {incident.incidentType || 'MISPLACED_SHIPMENT'} · {incident.incidentId}
-        </span>
-      </div>
-      <dl className="incident-alert-grid">
-        <div>
-          <dt>Shipment</dt>
-          <dd>{tracking}</dd>
-        </div>
-        <div>
-          <dt>Vehicle</dt>
-          <dd>{vehicle}</dd>
-        </div>
-        <div>
-          <dt>Current Hub</dt>
-          <dd>{hub}</dd>
-        </div>
-        <div>
-          <dt>Destination</dt>
-          <dd>{dest}</dd>
-        </div>
-        {isRecoveryActive && incident.pickupCase ? (
-          <div>
-            <dt>Strategy</dt>
-            <dd>{strategyLabel(incident.pickupCase)}</dd>
-          </div>
-        ) : null}
-        {isRecoveryActive && incident.recoveryPath?.length ? (
-          <div className="incident-route">
-            <dt>Recovery Route</dt>
-            <dd>{incident.recoveryPath.join(' → ')}</dd>
-          </div>
-        ) : null}
-      </dl>
-      <div className="incident-alert-actions">
-        {available === 'analyze' || available === 'assign' ? (
-          <span className="muted">
-            {available === 'assign' && hasPersistedRecoveryPlan(recoveryAnalysis)
-              ? 'Selected recovery plan ready to assign.'
-              : 'Recovery analysis available.'}
-          </span>
-        ) : null}
-        {isAssigned && incident.driverMessage ? (
-          <span className="ok-text">✓ Driver contacted</span>
-        ) : null}
-        {available && primaryLabel ? (
-          <button
-            type="button"
-            className="primary"
-            onClick={onPrimaryClick}
-            disabled={busy}
-          >
-            {primaryLabel}
-          </button>
-        ) : null}
-      </div>
-
-      {confirmKind === 'assign' ? (
-        <ConfirmBlock
-          title={`Assign Vehicle ${assignDetails.vehicleLabel}?`}
-          onCancel={() => setConfirmKind(null)}
-          onConfirm={runConfirmed}
-          confirmLabel="Confirm Assignment"
-          busy={assigning}
-        >
-          <dl className="recovery-confirm-dl">
-            <div>
-              <dt>Pickup</dt>
-              <dd>{assignDetails.pickup}</dd>
-            </div>
-            <div>
-              <dt>Destination</dt>
-              <dd>{assignDetails.destination}</dd>
-            </div>
-            <div>
-              <dt>Driver</dt>
-              <dd>{assignDetails.driver}</dd>
-            </div>
-            <div>
-              <dt>Type</dt>
-              <dd>{assignDetails.typeLabel}</dd>
-            </div>
-            <div>
-              <dt>Score</dt>
-              <dd>{assignDetails.scoreLabel}</dd>
-            </div>
-          </dl>
-        </ConfirmBlock>
-      ) : null}
-
-      {confirmKind === 'pickup' ? (
-        <ConfirmBlock
-          title="Confirm pickup"
-          onCancel={() => setConfirmKind(null)}
-          onConfirm={runConfirmed}
-          confirmLabel="Confirm Pickup"
-          busy={confirmingPickup}
-        >
-          <p>
-            Confirm that the driver has picked up the misplaced shipment from{' '}
-            <strong>{pickupHub}</strong>?
+    <>
+      <Alert
+        className={cn(
+          isPickupConfirmed
+            ? 'bg-status-delivered/15'
+            : isAssigned
+              ? 'bg-status-recovering/15'
+              : 'bg-status-misplaced/10',
+        )}
+      >
+        <AlertTriangle />
+        <AlertTitle className="flex flex-wrap items-center gap-2">
+          <span>{headline}</span>
+          <StatusBadge
+            status={
+              isPickupConfirmed
+                ? 'recovering'
+                : isAssigned
+                  ? 'recovering'
+                  : 'misplaced'
+            }
+          />
+        </AlertTitle>
+        <AlertDescription>
+          <p className="text-xs text-muted-foreground">
+            {incident.incidentType || 'MISPLACED_SHIPMENT'} · {incident.incidentId}
           </p>
-          <p className="muted cell-sub">
-            Vehicle {vehicle}
-            {incident.pickupCase
-              ? ` · ${candidateTypeLabel(incident.pickupCase)}`
-              : ''}
-          </p>
-        </ConfirmBlock>
-      ) : null}
 
-      {confirmKind === 'resolve' ? (
-        <ConfirmBlock
-          title="Resolve this recovery incident?"
-          onCancel={() => setConfirmKind(null)}
-          onConfirm={runConfirmed}
-          confirmLabel="Resolve Incident"
-          busy={resolving}
-        >
-          <p>The shipment has completed the recovery workflow.</p>
-        </ConfirmBlock>
-      ) : null}
-    </section>
-  );
+          <DetailGrid className="mt-3 sm:grid-cols-2 xl:grid-cols-4">
+            <DetailField label="Shipment ID" value={tracking} />
+            <DetailField label="Truck" value={vehicle} />
+            <DetailField label="Last known location" value={hub} />
+            <DetailField label="Expected destination" value={dest} />
+            {isRecoveryActive && incident.pickupCase ? (
+              <DetailField
+                label="Strategy"
+                value={strategyLabel(incident.pickupCase)}
+              />
+            ) : null}
+            {isRecoveryActive && incident.recoveryPath?.length ? (
+              <DetailField
+                className="sm:col-span-2"
+                label="Recovery route"
+                value={incident.recoveryPath.join(' → ')}
+              />
+            ) : null}
+          </DetailGrid>
+
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            {available === 'analyze' || available === 'assign' ? (
+              <span className="text-xs text-muted-foreground">
+                {available === 'assign' && hasPersistedRecoveryPlan(recoveryAnalysis)
+                  ? 'Selected recovery plan ready to assign.'
+                  : 'Recovery analysis available.'}
+              </span>
+            ) : null}
+            {isAssigned && incident.driverMessage ? (
+              <Badge variant="neutral" className="bg-status-delivered/20 gap-1">
+                <Phone className="size-3" />
+                Driver contacted
+              </Badge>
+            ) : null}
+            {available && primaryLabel ? (
+              <Button
+                type="button"
+                size="sm"
+                onClick={onPrimaryClick}
+                disabled={busy}
+                className="ml-auto"
+              >
+                {primaryLabel}
+              </Button>
+            ) : null}
+          </div>
+        </AlertDescription>
+      </Alert>
+
+      <Dialog open={confirmKind === 'assign'} onOpenChange={(o) => !o && setConfirmKind(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Assign vehicle {assignDetails.vehicleLabel}?</DialogTitle>
+            <DialogDescription>
+              Confirm the persisted recovery plan assignment.
+            </DialogDescription>
+          </DialogHeader>
+          <DetailGrid className="sm:grid-cols-2">
+            <DetailField label="Pickup" value={assignDetails.pickup} />
+            <DetailField label="Destination" value={assignDetails.destination} />
+            <DetailField label="Driver" value={assignDetails.driver} />
+            <DetailField label="Type" value={assignDetails.typeLabel} />
+            <DetailField label="Score" value={assignDetails.scoreLabel} />
+          </DetailGrid>
+          <DialogFooter>
+            <Button type="button" variant="neutral" onClick={() => setConfirmKind(null)} disabled={assigning}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={runConfirmed} disabled={assigning}>
+              {assigning ? 'Working…' : 'Confirm assignment'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={confirmKind === 'pickup'} onOpenChange={(o) => !o && setConfirmKind(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm pickup</DialogTitle>
+            <DialogDescription>
+              Confirm that the driver has picked up the misplaced shipment from{' '}
+              <strong>{pickupHub}</strong>.
+              {incident.pickupCase
+                ? ` · ${candidateTypeLabel(incident.pickupCase)}`
+                : ''}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="neutral" onClick={() => setConfirmKind(null)} disabled={confirmingPickup}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={runConfirmed} disabled={confirmingPickup}>
+              {confirmingPickup ? 'Working…' : 'Confirm pickup'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={confirmKind === 'resolve'} onOpenChange={(o) => !o && setConfirmKind(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Resolve this recovery incident?</DialogTitle>
+            <DialogDescription>
+              The shipment has completed the recovery workflow.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="neutral" onClick={() => setConfirmKind(null)} disabled={resolving}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={runConfirmed} disabled={resolving}>
+              {resolving ? 'Working…' : 'Resolve incident'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  )
 }

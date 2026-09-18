@@ -1,19 +1,31 @@
-import { useState } from 'react';
+import { useState } from 'react'
+import { Package } from 'lucide-react'
 import {
   getAvailableRecoveryAction,
   buildAssignConfirmation,
   RECOVERY_ACTION_LABELS,
-} from './recovery/recoveryActions';
-import { firstPresent } from './recovery/recoveryStatus';
-
-function Field({ label, value }) {
-  return (
-    <div className="field">
-      <dt>{label}</dt>
-      <dd>{value == null || value === '' ? '—' : String(value)}</dd>
-    </div>
-  );
-}
+} from './recovery/recoveryActions'
+import { firstPresent } from './recovery/recoveryStatus'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { DetailField, DetailGrid } from '@/components/ops/DetailField'
+import { EmptyState } from '@/components/ops/EmptyState'
+import { StatusBadge } from '@/components/ops/StatusBadge'
+import { cn } from '@/lib/utils'
 
 const LIFECYCLE_STEPS = [
   'NORMAL',
@@ -22,44 +34,31 @@ const LIFECYCLE_STEPS = [
   'RECOVERY_ASSIGNED',
   'PICKUP_CONFIRMED',
   'RECOVERED',
-];
+]
 
 function LifecycleBar({ current }) {
-  const active = current || 'NORMAL';
-  const idx = LIFECYCLE_STEPS.indexOf(active);
+  const active = current || 'NORMAL'
+  const idx = LIFECYCLE_STEPS.indexOf(active)
   return (
-    <div className="lifecycle-bar" aria-label={`Lifecycle status ${active}`}>
+    <div
+      className="flex flex-wrap gap-1.5"
+      aria-label={`Lifecycle status ${active}`}
+    >
       {LIFECYCLE_STEPS.map((step, i) => (
         <span
           key={step}
-          className={`lifecycle-step ${i === idx ? 'lifecycle-active' : ''} ${
-            i < idx ? 'lifecycle-done' : ''
-          }`}
+          className={cn(
+            'rounded-base border-2 border-border px-2 py-1 text-[0.6rem] font-semibold uppercase tracking-[0.06em] transition-colors duration-200',
+            i === idx && 'bg-main shadow-shadow',
+            i < idx && 'bg-status-delivered/20',
+            i > idx && 'bg-secondary-background text-muted-foreground',
+          )}
         >
           {step.replace(/_/g, ' ')}
         </span>
       ))}
     </div>
-  );
-}
-
-function ConfirmBlock({ title, children, onCancel, onConfirm, confirmLabel, busy }) {
-  return (
-    <div className="recovery-confirm" role="dialog" aria-label={title}>
-      <div className="recovery-confirm-card">
-        <h4>{title}</h4>
-        <div className="recovery-confirm-body">{children}</div>
-        <div className="recovery-action-buttons">
-          <button type="button" onClick={onCancel} disabled={busy}>
-            Cancel
-          </button>
-          <button type="button" className="primary" onClick={onConfirm} disabled={busy}>
-            {busy ? 'Working…' : confirmLabel}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+  )
 }
 
 export default function ShipmentPanel({
@@ -80,252 +79,251 @@ export default function ShipmentPanel({
   onMarkRecovered,
   resolving,
 }) {
-  const [confirmKind, setConfirmKind] = useState(null);
+  const [confirmKind, setConfirmKind] = useState(null)
 
   if (loading) {
     return (
-      <section className="panel">
-        <h2>Shipment</h2>
-        <p className="muted">Loading shipment…</p>
-      </section>
-    );
+      <EmptyState
+        icon={<Package className="size-5" />}
+        title="Loading shipment"
+        description="Fetching the latest tracking and recovery state…"
+      />
+    )
   }
 
   if (error) {
     return (
-      <section className="panel">
-        <h2>Shipment</h2>
-        <p className="error-text">{error}</p>
-      </section>
-    );
+      <EmptyState
+        title="Couldn’t load shipment"
+        description={error}
+      />
+    )
   }
 
   if (!shipment) {
     return (
-      <section className="panel">
-        <h2>Shipment</h2>
-        <p className="muted">Select or search a shipment to view details.</p>
-      </section>
-    );
+      <EmptyState
+        icon={<Package className="size-5" />}
+        title="Select a shipment"
+        description="Pick one from the manifest to inspect routing, lifecycle, and recovery actions."
+      />
+    )
   }
 
-  const latestEvent = shipment.events?.[0];
-  const lifecycle = shipment.lifecycleStatus || 'NORMAL';
-  const flags = [];
-  if (shipment.needsRecovery) flags.push('NEEDS RECOVERY');
-  if (lifecycle !== 'NORMAL') flags.push(lifecycle.replace(/_/g, ' '));
+  const latestEvent = shipment.events?.[0]
+  const lifecycle = shipment.lifecycleStatus || 'NORMAL'
+  const flags = []
+  if (shipment.needsRecovery) flags.push('NEEDS RECOVERY')
+  if (lifecycle !== 'NORMAL') flags.push(lifecycle.replace(/_/g, ' '))
 
-  const resolvedIncident = incident || shipment.activeIncident || null;
+  const resolvedIncident = incident || shipment.activeIncident || null
   const available = getAvailableRecoveryAction({
     incident: resolvedIncident,
     shipment,
     recoveryAnalysis,
-  });
+  })
 
   const canSimulate =
-    lifecycle === 'NORMAL' || lifecycle === 'RECOVERED' || !shipment.needsRecovery;
-  const busy = analyzing || assigning || confirmingPickup || resolving || simulating;
+    lifecycle === 'NORMAL' || lifecycle === 'RECOVERED' || !shipment.needsRecovery
+  const busy = analyzing || assigning || confirmingPickup || resolving || simulating
   const assignDetails = buildAssignConfirmation({
     analysis: recoveryAnalysis,
     vehicles,
     incident: resolvedIncident,
-  });
+  })
   const pickupHub =
     firstPresent(
       resolvedIncident?.pickupNode,
       recoveryAnalysis?.recoveryPlan?.pickupNode,
       shipment.actualLocation,
       shipment.currentLocation,
-    ) || '—';
+    ) || '—'
 
   const onActionClick = (kind) => {
-    if (busy) return;
+    if (busy) return
     if (kind === 'analyze') {
-      if (onAnalyze) onAnalyze();
-      return;
+      if (onAnalyze) onAnalyze()
+      return
     }
-    setConfirmKind(kind);
-  };
+    setConfirmKind(kind)
+  }
 
   const runConfirmed = async () => {
-    const kind = confirmKind;
-    setConfirmKind(null);
-    if (kind === 'assign' && onAssign) await onAssign();
-    else if (kind === 'pickup' && onConfirmPickup) await onConfirmPickup();
-    else if (kind === 'resolve' && onMarkRecovered) await onMarkRecovered();
-  };
+    const kind = confirmKind
+    setConfirmKind(null)
+    if (kind === 'assign' && onAssign) await onAssign()
+    else if (kind === 'pickup' && onConfirmPickup) await onConfirmPickup()
+    else if (kind === 'resolve' && onMarkRecovered) await onMarkRecovered()
+  }
 
   return (
-    <section className="panel shipment-panel">
-      <div className="panel-header-row">
-        <h2>Shipment</h2>
-        <div className="panel-actions">
-          {canSimulate ? (
-            <button
-              type="button"
-              className="danger"
-              onClick={onSimulateIncident}
-              disabled={busy}
-            >
-              {simulating ? 'Simulating…' : 'Simulate Incident'}
-            </button>
-          ) : null}
-          {available === 'analyze' ? (
-            <button
-              type="button"
-              className="primary"
-              onClick={() => onActionClick('analyze')}
-              disabled={busy}
-            >
-              {analyzing ? 'Analyzing…' : RECOVERY_ACTION_LABELS.analyze}
-            </button>
-          ) : null}
-          {available === 'assign' ? (
-            <button
-              type="button"
-              className="primary"
-              onClick={() => onActionClick('assign')}
-              disabled={busy}
-            >
-              {assigning ? 'Assigning…' : RECOVERY_ACTION_LABELS.assign}
-            </button>
-          ) : null}
-          {available === 'pickup' ? (
-            <button
-              type="button"
-              className="primary"
-              onClick={() => onActionClick('pickup')}
-              disabled={busy}
-            >
-              {confirmingPickup ? 'Confirming…' : RECOVERY_ACTION_LABELS.pickup}
-            </button>
-          ) : null}
-          {available === 'resolve' ? (
-            <button
-              type="button"
-              className="primary"
-              onClick={() => onActionClick('resolve')}
-              disabled={busy}
-            >
-              {resolving ? 'Resolving…' : RECOVERY_ACTION_LABELS.resolve}
-            </button>
-          ) : null}
-        </div>
-      </div>
-
-      <LifecycleBar current={lifecycle} />
-
-      {flags.length > 0 ? (
-        <div className="status-flags">
-          {flags.map((f) => (
-            <span key={f} className="flag flag-warn">
-              {f}
-            </span>
-          ))}
-        </div>
-      ) : null}
-
-      {confirmKind === 'assign' ? (
-        <ConfirmBlock
-          title={`Assign Vehicle ${assignDetails.vehicleLabel}?`}
-          onCancel={() => setConfirmKind(null)}
-          onConfirm={runConfirmed}
-          confirmLabel="Confirm Assignment"
-          busy={assigning}
-        >
-          <dl className="recovery-confirm-dl">
-            <div>
-              <dt>Pickup</dt>
-              <dd>{assignDetails.pickup}</dd>
+    <>
+      <Card className="h-full shadow-none">
+        <CardHeader className="border-b-2 border-border">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="space-y-2">
+              <CardTitle className="text-lg tracking-tight">
+                {shipment.trackingNumber || shipment.id}
+              </CardTitle>
+              <div className="flex flex-wrap gap-2">
+                <StatusBadge status={shipment.status} />
+                <StatusBadge status={lifecycle} />
+              </div>
             </div>
-            <div>
-              <dt>Destination</dt>
-              <dd>{assignDetails.destination}</dd>
+            <div className="flex flex-wrap gap-2">
+              {canSimulate ? (
+                <Button
+                  type="button"
+                  variant="neutral"
+                  size="sm"
+                  onClick={onSimulateIncident}
+                  disabled={busy}
+                >
+                  {simulating ? 'Simulating…' : 'Simulate incident'}
+                </Button>
+              ) : null}
+              {available === 'analyze' ? (
+                <Button type="button" size="sm" onClick={() => onActionClick('analyze')} disabled={busy}>
+                  {analyzing ? 'Analyzing…' : RECOVERY_ACTION_LABELS.analyze}
+                </Button>
+              ) : null}
+              {available === 'assign' ? (
+                <Button type="button" size="sm" onClick={() => onActionClick('assign')} disabled={busy}>
+                  {assigning ? 'Assigning…' : RECOVERY_ACTION_LABELS.assign}
+                </Button>
+              ) : null}
+              {available === 'pickup' ? (
+                <Button type="button" size="sm" onClick={() => onActionClick('pickup')} disabled={busy}>
+                  {confirmingPickup ? 'Confirming…' : RECOVERY_ACTION_LABELS.pickup}
+                </Button>
+              ) : null}
+              {available === 'resolve' ? (
+                <Button type="button" size="sm" onClick={() => onActionClick('resolve')} disabled={busy}>
+                  {resolving ? 'Resolving…' : RECOVERY_ACTION_LABELS.resolve}
+                </Button>
+              ) : null}
             </div>
-            <div>
-              <dt>Driver</dt>
-              <dd>{assignDetails.driver}</dd>
-            </div>
-            <div>
-              <dt>Type</dt>
-              <dd>{assignDetails.typeLabel}</dd>
-            </div>
-            <div>
-              <dt>Score</dt>
-              <dd>{assignDetails.scoreLabel}</dd>
-            </div>
-          </dl>
-        </ConfirmBlock>
-      ) : null}
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-5 pt-5">
+          <LifecycleBar current={lifecycle} />
 
-      {confirmKind === 'pickup' ? (
-        <ConfirmBlock
-          title="Confirm pickup"
-          onCancel={() => setConfirmKind(null)}
-          onConfirm={runConfirmed}
-          confirmLabel="Confirm Pickup"
-          busy={confirmingPickup}
-        >
-          <p>
-            Confirm that the driver has picked up the misplaced shipment from{' '}
-            <strong>{pickupHub}</strong>?
-          </p>
-        </ConfirmBlock>
-      ) : null}
+          {flags.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {flags.map((f) => (
+                <Badge key={f} variant="neutral" className="bg-status-delayed/25 uppercase tracking-[0.06em]">
+                  {f}
+                </Badge>
+              ))}
+            </div>
+          ) : null}
 
-      {confirmKind === 'resolve' ? (
-        <ConfirmBlock
-          title="Resolve this recovery incident?"
-          onCancel={() => setConfirmKind(null)}
-          onConfirm={runConfirmed}
-          confirmLabel="Resolve Incident"
-          busy={resolving}
-        >
-          <p>The shipment has completed the recovery workflow.</p>
-        </ConfirmBlock>
-      ) : null}
+          <DetailGrid>
+            <DetailField label="ID" value={shipment.id} />
+            <DetailField label="Tracking" value={shipment.trackingNumber} />
+            <DetailField label="Status" value={shipment.status} />
+            <DetailField label="Lifecycle" value={lifecycle} />
+            <DetailField label="Current location" value={shipment.currentLocation} />
+            <DetailField label="Current node" value={shipment.currentNode} />
+            <DetailField
+              label="Expected location"
+              value={shipment.expectedLocation || shipment.expectedNode}
+            />
+            <DetailField label="Expected node" value={shipment.expectedNode} />
+            <DetailField
+              label="Actual location"
+              value={shipment.actualLocation || shipment.currentLocation}
+            />
+            <DetailField
+              label="Actual node"
+              value={shipment.actualNode || shipment.currentNode}
+            />
+            <DetailField label="Destination" value={shipment.destination} />
+            <DetailField label="Destination node" value={shipment.destinationNode} />
+            <DetailField label="Assigned vehicle" value={shipment.assignedVehicleNumber} />
+            <DetailField label="Priority" value={shipment.priority} />
+            <DetailField label="Deadline" value={shipment.deadline} />
+            <DetailField label="Weight" value={shipment.weight} />
+            <DetailField
+              className="sm:col-span-2"
+              label="Latest event"
+              value={
+                latestEvent
+                  ? `${latestEvent.type}${latestEvent.timestamp ? ` @ ${latestEvent.timestamp}` : ''}${
+                      latestEvent.location ? ` · ${latestEvent.location}` : ''
+                    }`
+                  : shipment.latestEventType
+                    ? `${shipment.latestEventType}${
+                        shipment.latestEventTime ? ` @ ${shipment.latestEventTime}` : ''
+                      }`
+                    : null
+              }
+            />
+          </DetailGrid>
+        </CardContent>
+      </Card>
 
-      <dl className="detail-grid">
-        <Field label="ID" value={shipment.id} />
-        <Field label="Tracking" value={shipment.trackingNumber} />
-        <Field label="Status" value={shipment.status} />
-        <Field label="Lifecycle" value={lifecycle} />
-        <Field label="Current location" value={shipment.currentLocation} />
-        <Field label="Current node" value={shipment.currentNode} />
-        <Field
-          label="Expected location"
-          value={shipment.expectedLocation || shipment.expectedNode}
-        />
-        <Field label="Expected node" value={shipment.expectedNode} />
-        <Field
-          label="Actual location"
-          value={shipment.actualLocation || shipment.currentLocation}
-        />
-        <Field
-          label="Actual node"
-          value={shipment.actualNode || shipment.currentNode}
-        />
-        <Field label="Destination" value={shipment.destination} />
-        <Field label="Destination node" value={shipment.destinationNode} />
-        <Field label="Assigned vehicle" value={shipment.assignedVehicleNumber} />
-        <Field label="Priority" value={shipment.priority} />
-        <Field label="Deadline" value={shipment.deadline} />
-        <Field label="Weight" value={shipment.weight} />
-        <Field
-          label="Latest event"
-          value={
-            latestEvent
-              ? `${latestEvent.type}${latestEvent.timestamp ? ` @ ${latestEvent.timestamp}` : ''}${
-                  latestEvent.location ? ` · ${latestEvent.location}` : ''
-                }`
-              : shipment.latestEventType
-                ? `${shipment.latestEventType}${
-                    shipment.latestEventTime ? ` @ ${shipment.latestEventTime}` : ''
-                  }`
-                : null
-          }
-        />
-      </dl>
-    </section>
-  );
+      <Dialog open={confirmKind === 'assign'} onOpenChange={(o) => !o && setConfirmKind(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Assign vehicle {assignDetails.vehicleLabel}?</DialogTitle>
+            <DialogDescription>Confirm the persisted recovery plan assignment.</DialogDescription>
+          </DialogHeader>
+          <DetailGrid className="sm:grid-cols-2">
+            <DetailField label="Pickup" value={assignDetails.pickup} />
+            <DetailField label="Destination" value={assignDetails.destination} />
+            <DetailField label="Driver" value={assignDetails.driver} />
+            <DetailField label="Type" value={assignDetails.typeLabel} />
+            <DetailField label="Score" value={assignDetails.scoreLabel} />
+          </DetailGrid>
+          <DialogFooter>
+            <Button type="button" variant="neutral" onClick={() => setConfirmKind(null)} disabled={assigning}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={runConfirmed} disabled={assigning}>
+              {assigning ? 'Working…' : 'Confirm assignment'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={confirmKind === 'pickup'} onOpenChange={(o) => !o && setConfirmKind(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm pickup</DialogTitle>
+            <DialogDescription>
+              Confirm pickup from <strong>{pickupHub}</strong>.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="neutral" onClick={() => setConfirmKind(null)} disabled={confirmingPickup}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={runConfirmed} disabled={confirmingPickup}>
+              {confirmingPickup ? 'Working…' : 'Confirm pickup'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={confirmKind === 'resolve'} onOpenChange={(o) => !o && setConfirmKind(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Resolve this recovery incident?</DialogTitle>
+            <DialogDescription>
+              The shipment has completed the recovery workflow.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="neutral" onClick={() => setConfirmKind(null)} disabled={resolving}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={runConfirmed} disabled={resolving}>
+              {resolving ? 'Working…' : 'Resolve incident'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  )
 }

@@ -186,7 +186,7 @@ and routes in a small number of MongoDB round-trips (not one query per document)
 
 ## Frontend (`frontend/`)
 
-Marketing landing page + sidebar dashboard (navy/slate + amber theme). The React app calls the **Node gateway** (`VITE_API_BASE_URL`, default `http://127.0.0.1:3000`); it must not hardcode the FastAPI `:5055` URL in components. Routing via `react-router-dom`.
+Marketing landing + logistics ops dashboard styled with **NeoBrutalism / shadcn** (`frontend/src/components/ui/*`, blue registry tokens in `frontend/src/index.css`). Semantic status/surface tokens live alongside the palette so colors can be refined globally later. The React app calls the **Node gateway** (`VITE_API_BASE_URL`, default `http://127.0.0.1:3000`); it must not hardcode the FastAPI `:5055` URL in components. Routing via `react-router-dom`.
 
 | Path | Role |
 | --- | --- |
@@ -194,11 +194,13 @@ Marketing landing page + sidebar dashboard (navy/slate + amber theme). The React
 | `frontend/src/types/api.ts` | TypeScript types for API response shapes (mirrors FastAPI / orchestrator JSON) |
 | `frontend/src/hooks/useRecoveryData.js` | Recovery data layer: loading/error/data, refresh, analyze/assign/pickup/resolve (no optimistic lifecycle) |
 | `frontend/src/App.jsx` | Route table: `/` landing, `/dashboard/*` nested dashboard routes |
-| `frontend/src/pages/LandingPage.jsx` | Truck-themed marketing landing (hero, features, process/stats, CTA) |
+| `frontend/src/pages/LandingPage.jsx` | NeoBrutalism marketing landing (brand hero, features, process/stats, CTA) |
 | `frontend/src/layouts/DashboardLayout.jsx` | Sidebar shell + shared dashboard state/hooks; provides Outlet context |
-| `frontend/src/components/Sidebar.jsx` | Left nav (Overview, Shipments, Vehicles, Recovery, Search) |
-| `frontend/src/pages/*` | Overview / Shipments / Vehicles / Recovery / Search views consuming outlet context |
-| `frontend/src/components/*` | Header, MetricsBar, SearchPanel, LogisticsMap, ShipmentPanel, VehiclePanel, IncidentAlert, RecoveryCandidates, RecoveryPlan |
+| `frontend/src/components/Sidebar.jsx` | Left nav (Overview, Shipments, Fleet, Hubs, Exceptions, Search) + global search |
+| `frontend/src/components/ui/*` | Installed NeoBrutalism/shadcn primitives (button, card, badge, alert, dialog, …) |
+| `frontend/src/components/ops/*` | Thin app helpers composing UI kit (PageHeader, KpiCard, StatusBadge, DetailField, EmptyState) |
+| `frontend/src/pages/*` | Overview / Shipments / Vehicles / Hubs / Recovery / Search views consuming outlet context |
+| `frontend/src/components/*` | MetricsBar, SearchPanel, LogisticsMap, ShipmentPanel, VehiclePanel, HubPanel, IncidentAlert, RecoveryCandidates, RecoveryPlan |
 | `frontend/src/components/recovery/*` | Operator recovery incident view, action panel (state-gated confirmations), `RecoveryTimeline` (backend-driven lifecycle + event history), candidate helpers, `recoveryMapState` (map overlay derivation) — assignment uses persisted plan only |
 
 Map data comes only from `GET /api/graph` (node lat/lon + edges). `LogisticsMap` overlays recovery context from existing API fields only:

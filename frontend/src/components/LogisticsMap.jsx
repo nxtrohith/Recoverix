@@ -190,27 +190,30 @@ export default function LogisticsMap({
 
   if (loading) {
     return (
-      <section className="map-panel panel">
-        <h2>Logistics Map</h2>
-        <p className="muted">Loading graph…</p>
+      <section className="map-workspace border-0 shadow-none">
+        <div className="flex h-72 items-center justify-center text-sm text-muted-foreground">
+          Loading network graph…
+        </div>
       </section>
     );
   }
 
   if (error) {
     return (
-      <section className="map-panel panel">
-        <h2>Logistics Map</h2>
-        <p className="error-text">{error}</p>
+      <section className="map-workspace border-0 shadow-none">
+        <div className="flex h-72 items-center justify-center px-6 text-center text-sm text-status-misplaced">
+          {error}
+        </div>
       </section>
     );
   }
 
   if (!graph?.nodes?.length) {
     return (
-      <section className="map-panel panel">
-        <h2>Logistics Map</h2>
-        <p className="muted">No graph nodes returned from /api/graph.</p>
+      <section className="map-workspace border-0 shadow-none">
+        <div className="flex h-72 items-center justify-center text-sm text-muted-foreground">
+          No graph nodes returned from /api/graph.
+        </div>
       </section>
     );
   }
@@ -220,43 +223,42 @@ export default function LogisticsMap({
   );
 
   return (
-    <section className="map-panel panel">
-      <h2>Logistics Map</h2>
-      <div className="map-legend">
-        <span><i className="swatch hub" /> hubs</span>
-        <span><i className="swatch edge" /> network</span>
-        <span><i className="swatch vehicle" /> vehicles</span>
-        <span><i className="swatch ship" /> shipment</span>
-        <span><i className="swatch dest" /> destination</span>
+    <section className="map-workspace border-0 shadow-none">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-b-2 border-border bg-background px-4 py-2.5 text-[0.7rem] font-medium uppercase tracking-[0.06em]">
+        <span><i className="map-swatch hub" /> hubs</span>
+        <span><i className="map-swatch edge" /> network</span>
+        <span><i className="map-swatch vehicle" /> vehicles</span>
+        <span><i className="map-swatch ship" /> shipment</span>
+        <span><i className="map-swatch dest" /> destination</span>
         {showRecoveryOverlays ? (
           <>
-            <span><i className="swatch expected-route" /> expected route</span>
-            <span><i className="swatch pickup" /> recovery pickup</span>
-            <span><i className="swatch recovery" /> recovery path</span>
-            <span><i className="swatch vehicle-route" /> vehicle route</span>
+            <span><i className="map-swatch expected-route" /> expected route</span>
+            <span><i className="map-swatch pickup" /> recovery pickup</span>
+            <span><i className="map-swatch recovery" /> recovery path</span>
+            <span><i className="map-swatch vehicle-route" /> vehicle route</span>
             {recovery.pickupCase ? (
-              <span className="map-legend-type">
+              <span className="normal-case tracking-normal text-muted-foreground">
                 type: {recovery.pickupCaseLabel}
               </span>
             ) : null}
           </>
         ) : (
-          <span><i className="swatch recovery" /> recovery path</span>
+          <span><i className="map-swatch recovery" /> recovery path</span>
         )}
       </div>
       {showRecoveryOverlays ? (
-        <p className="map-recovery-caption muted">
+        <p className="border-b-2 border-border bg-secondary-background px-4 py-2 text-xs text-muted-foreground">
           Hub positions from network graph — not live GPS.
           {recovery.pickupNode ? (
             <>
               {' '}
-              Pickup at <strong>{nodeLabel(nodeById, recovery.pickupNode)}</strong>
+              Pickup at <strong className="text-foreground">{nodeLabel(nodeById, recovery.pickupNode)}</strong>
               {recovery.expectedNode &&
               recovery.expectedNode !== recovery.pickupNode ? (
                 <>
                   {' '}
                   (expected was{' '}
-                  <strong>{nodeLabel(nodeById, recovery.expectedNode)}</strong>)
+                  <strong className="text-foreground">{nodeLabel(nodeById, recovery.expectedNode)}</strong>)
                 </>
               ) : null}
               .
