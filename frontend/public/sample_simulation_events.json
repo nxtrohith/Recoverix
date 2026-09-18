@@ -1,0 +1,158 @@
+[
+  {
+    "time": 0.0,
+    "type": "SHIPMENT_PICKUP",
+    "truck_id": "TRUCK_101",
+    "shipment_id": "SHIP_001",
+    "from": "Asifabad_PaikjNGR_D (Telangana)",
+    "to": "Karimnagar_KamnHbRD_I (Telangana)",
+    "current_node": "Asifabad_PaikjNGR_D (Telangana)",
+    "next_node": "Karimnagar_KamnHbRD_I (Telangana)"
+  },
+  {
+    "time": 0.0,
+    "type": "DELAY",
+    "truck_id": "TRUCK_101",
+    "shipment_id": "SHIP_001",
+    "from": "Asifabad_PaikjNGR_D (Telangana)",
+    "to": "Karimnagar_KamnHbRD_I (Telangana)",
+    "current_node": "Asifabad_PaikjNGR_D (Telangana)",
+    "next_node": "Karimnagar_KamnHbRD_I (Telangana)",
+    "duration": 15.0,
+    "reason": "Dock loading delay"
+  },
+  {
+    "time": 15.0,
+    "type": "TRUCK_DEPARTURE",
+    "truck_id": "TRUCK_101",
+    "shipment_id": "SHIP_001",
+    "from": "Asifabad_PaikjNGR_D (Telangana)",
+    "to": "Karimnagar_KamnHbRD_I (Telangana)",
+    "current_node": "Asifabad_PaikjNGR_D (Telangana)",
+    "next_node": "Karimnagar_KamnHbRD_I (Telangana)",
+    "travel_time": 242.29
+  },
+  {
+    "time": 30.0,
+    "type": "SHIPMENT_PICKUP",
+    "truck_id": "TRUCK_202",
+    "shipment_id": "SHIP_002",
+    "from": "Asifabad_PaikjNGR_D (Telangana)",
+    "to": "Mancherial_Hitech_D (Telangana)",
+    "current_node": "Asifabad_PaikjNGR_D (Telangana)",
+    "next_node": "Mancherial_Hitech_D (Telangana)"
+  },
+  {
+    "time": 30.0,
+    "type": "TRUCK_DEPARTURE",
+    "truck_id": "TRUCK_202",
+    "shipment_id": "SHIP_002",
+    "from": "Asifabad_PaikjNGR_D (Telangana)",
+    "to": "Mancherial_Hitech_D (Telangana)",
+    "current_node": "Asifabad_PaikjNGR_D (Telangana)",
+    "next_node": "Mancherial_Hitech_D (Telangana)",
+    "travel_time": 75.5
+  },
+  {
+    "time": 45.0,
+    "type": "SHIPMENT_PICKUP",
+    "truck_id": "TRUCK_303",
+    "shipment_id": "SHIP_003",
+    "from": "Hyderabad_Shamshbd_H (Telangana)",
+    "to": "Karimnagar_KamnHbRD_I (Telangana)",
+    "current_node": "Hyderabad_Shamshbd_H (Telangana)",
+    "next_node": "Karimnagar_KamnHbRD_I (Telangana)"
+  },
+  {
+    "time": 45.0,
+    "type": "TRUCK_DEPARTURE",
+    "truck_id": "TRUCK_303",
+    "shipment_id": "SHIP_003",
+    "from": "Hyderabad_Shamshbd_H (Telangana)",
+    "to": "Karimnagar_KamnHbRD_I (Telangana)",
+    "current_node": "Hyderabad_Shamshbd_H (Telangana)",
+    "next_node": "Karimnagar_KamnHbRD_I (Telangana)",
+    "travel_time": 222.0
+  },
+  {
+    "time": 105.5,
+    "type": "TRUCK_ARRIVAL",
+    "truck_id": "TRUCK_202",
+    "shipment_id": "SHIP_002",
+    "from": "Asifabad_PaikjNGR_D (Telangana)",
+    "to": "Mancherial_Hitech_D (Telangana)",
+    "current_node": "Mancherial_Hitech_D (Telangana)",
+    "next_node": null
+  },
+  {
+    "time": 105.5,
+    "type": "SHIPMENT_DELIVERY",
+    "truck_id": "TRUCK_202",
+    "shipment_id": "SHIP_002",
+    "from": "Asifabad_PaikjNGR_D (Telangana)",
+    "to": "Mancherial_Hitech_D (Telangana)",
+    "current_node": "Mancherial_Hitech_D (Telangana)",
+    "next_node": null
+  },
+  {
+    "time": 257.29,
+    "type": "TRUCK_ARRIVAL",
+    "truck_id": "TRUCK_101",
+    "shipment_id": "SHIP_001",
+    "from": "Asifabad_PaikjNGR_D (Telangana)",
+    "to": "Karimnagar_KamnHbRD_I (Telangana)",
+    "current_node": "Karimnagar_KamnHbRD_I (Telangana)",
+    "next_node": "Bellmpalli_BasthDPP_D (Telangana)"
+  },
+  {
+    "time": 257.29,
+    "type": "TRUCK_DEPARTURE",
+    "truck_id": "TRUCK_101",
+    "shipment_id": "SHIP_001",
+    "from": "Karimnagar_KamnHbRD_I (Telangana)",
+    "to": "Bellmpalli_BasthDPP_D (Telangana)",
+    "current_node": "Karimnagar_KamnHbRD_I (Telangana)",
+    "next_node": "Bellmpalli_BasthDPP_D (Telangana)",
+    "travel_time": 184.0
+  },
+  {
+    "time": 267.0,
+    "type": "TRUCK_ARRIVAL",
+    "truck_id": "TRUCK_303",
+    "shipment_id": "SHIP_003",
+    "from": "Hyderabad_Shamshbd_H (Telangana)",
+    "to": "Karimnagar_KamnHbRD_I (Telangana)",
+    "current_node": "Karimnagar_KamnHbRD_I (Telangana)",
+    "next_node": null
+  },
+  {
+    "time": 267.0,
+    "type": "SHIPMENT_DELIVERY",
+    "truck_id": "TRUCK_303",
+    "shipment_id": "SHIP_003",
+    "from": "Hyderabad_Shamshbd_H (Telangana)",
+    "to": "Karimnagar_KamnHbRD_I (Telangana)",
+    "current_node": "Karimnagar_KamnHbRD_I (Telangana)",
+    "next_node": null
+  },
+  {
+    "time": 441.29,
+    "type": "TRUCK_ARRIVAL",
+    "truck_id": "TRUCK_101",
+    "shipment_id": "SHIP_001",
+    "from": "Karimnagar_KamnHbRD_I (Telangana)",
+    "to": "Bellmpalli_BasthDPP_D (Telangana)",
+    "current_node": "Bellmpalli_BasthDPP_D (Telangana)",
+    "next_node": null
+  },
+  {
+    "time": 441.29,
+    "type": "SHIPMENT_DELIVERY",
+    "truck_id": "TRUCK_101",
+    "shipment_id": "SHIP_001",
+    "from": "Karimnagar_KamnHbRD_I (Telangana)",
+    "to": "Bellmpalli_BasthDPP_D (Telangana)",
+    "current_node": "Bellmpalli_BasthDPP_D (Telangana)",
+    "next_node": null
+  }
+]

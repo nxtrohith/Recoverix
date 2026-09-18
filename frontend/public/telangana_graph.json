@@ -1,0 +1,2060 @@
+{
+  "nodes": [
+    {
+      "id": "Asifabad_PaikjNGR_D (Telangana)",
+      "hub_name": "Asifabad_PaikjNGR_D (Telangana)",
+      "city": "Asifabad",
+      "facility_code": "PaikjNGR",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 19.35278403365173,
+      "longitude": 79.28816613876016
+    },
+    {
+      "id": "Banswada_Menagrdn_D (Telangana)",
+      "hub_name": "Banswada_Menagrdn_D (Telangana)",
+      "city": "Banswada",
+      "facility_code": "Menagrdn",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 18.380192651289835,
+      "longitude": 77.88843055714125
+    },
+    {
+      "id": "Bellmpalli_BasthDPP_D (Telangana)",
+      "hub_name": "Bellmpalli_BasthDPP_D (Telangana)",
+      "city": "Bellmpalli",
+      "facility_code": "BasthDPP",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 19.074176456360547,
+      "longitude": 79.47139354494158
+    },
+    {
+      "id": "Bhadrachalam_ITDARd_D (Telangana)",
+      "hub_name": "Bhadrachalam_ITDARd_D (Telangana)",
+      "city": "Bhadrachalam",
+      "facility_code": "ITDARd",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 17.677271001337143,
+      "longitude": 80.88719522983091
+    },
+    {
+      "id": "Bhupalpally_JwahrNGR_D (Telangana)",
+      "hub_name": "Bhupalpally_JwahrNGR_D (Telangana)",
+      "city": "Bhupalpally",
+      "facility_code": "JwahrNGR",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 18.42906317167448,
+      "longitude": 79.87334865856482
+    },
+    {
+      "id": "Bhuvanagiri_HBColny_D (Telangana)",
+      "hub_name": "Bhuvanagiri_HBColny_D (Telangana)",
+      "city": "Bhuvanagiri",
+      "facility_code": "HBColny",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 17.520226093975523,
+      "longitude": 78.9011005322842
+    },
+    {
+      "id": "Bijnapally_nagar_D (Telangana)",
+      "hub_name": "Bijnapally_nagar_D (Telangana)",
+      "city": "Bijnapally",
+      "facility_code": "nagar",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 16.561822129541696,
+      "longitude": 78.20198957894284
+    },
+    {
+      "id": "Bodhan_SuryaDPP_D (Telangana)",
+      "hub_name": "Bodhan_SuryaDPP_D (Telangana)",
+      "city": "Bodhan",
+      "facility_code": "SuryaDPP",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 18.64460408882242,
+      "longitude": 77.88118795782175
+    },
+    {
+      "id": "Chinnur_AsnsdhRD_D (Telangana)",
+      "hub_name": "Chinnur_AsnsdhRD_D (Telangana)",
+      "city": "Chinnur",
+      "facility_code": "AsnsdhRD",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 18.85643475593788,
+      "longitude": 79.79821933894183
+    },
+    {
+      "id": "Choutuppal_Nagaram_D (Telangana)",
+      "hub_name": "Choutuppal_Nagaram_D (Telangana)",
+      "city": "Choutuppal",
+      "facility_code": "Nagaram",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 17.25627435669288,
+      "longitude": 78.88703241203167
+    },
+    {
+      "id": "Devarakonda_DindiRD_D (Telangana)",
+      "hub_name": "Devarakonda_DindiRD_D (Telangana)",
+      "city": "Devarakonda",
+      "facility_code": "DindiRD",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 16.699013909686588,
+      "longitude": 78.89877755427752
+    },
+    {
+      "id": "DhrmpuriTS_HanumDPP_D (Telangana)",
+      "hub_name": "DhrmpuriTS_HanumDPP_D (Telangana)",
+      "city": "DhrmpuriTS",
+      "facility_code": "HanumDPP",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 18.94129328249807,
+      "longitude": 79.10374627853591
+    },
+    {
+      "id": "Ghanpur_Palakrty_D (Telangana)",
+      "hub_name": "Ghanpur_Palakrty_D (Telangana)",
+      "city": "Ghanpur",
+      "facility_code": "Palakrty",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 18.32276324250147,
+      "longitude": 79.86907225059049
+    },
+    {
+      "id": "Ghatkesar_Central_D_1 (Telangana)",
+      "hub_name": "Ghatkesar_Central_D_1 (Telangana)",
+      "city": "Ghatkesar",
+      "facility_code": "Central",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 17.46024082441883,
+      "longitude": 78.69033757517472
+    },
+    {
+      "id": "Haliya_PeroorRD_D (Telangana)",
+      "hub_name": "Haliya_PeroorRD_D (Telangana)",
+      "city": "Haliya",
+      "facility_code": "PeroorRD",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 16.790665044459466,
+      "longitude": 79.30817359359797
+    },
+    {
+      "id": "Husnabad_Greenmkt_D (Telangana)",
+      "hub_name": "Husnabad_Greenmkt_D (Telangana)",
+      "city": "Husnabad",
+      "facility_code": "Greenmkt",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 18.13272585805759,
+      "longitude": 79.19495189098062
+    },
+    {
+      "id": "Hyd_Chandanagar_Dc (Telangana)",
+      "hub_name": "Hyd_Chandanagar_Dc (Telangana)",
+      "city": "Hyd",
+      "facility_code": "Chandanagar",
+      "hub_type": "Distribution Center",
+      "state": "Telangana",
+      "latitude": 17.34136681821619,
+      "longitude": 78.46960862560402
+    },
+    {
+      "id": "Hyd_LB-Nagar_Dc (Telangana)",
+      "hub_name": "Hyd_LB-Nagar_Dc (Telangana)",
+      "city": "Hyd",
+      "facility_code": "LB-Nagar",
+      "hub_type": "Distribution Center",
+      "state": "Telangana",
+      "latitude": 17.34937342725625,
+      "longitude": 78.48478948438236
+    },
+    {
+      "id": "Hyd_Trimulgherry_Dc (Telangana)",
+      "hub_name": "Hyd_Trimulgherry_Dc (Telangana)",
+      "city": "Hyd",
+      "facility_code": "Trimulgherry",
+      "hub_type": "Distribution Center",
+      "state": "Telangana",
+      "latitude": 17.368333170212672,
+      "longitude": 78.45984903604958
+    },
+    {
+      "id": "Hyd_Uppal_Dc (Telangana)",
+      "hub_name": "Hyd_Uppal_Dc (Telangana)",
+      "city": "Hyd",
+      "facility_code": "Uppal",
+      "hub_type": "Distribution Center",
+      "state": "Telangana",
+      "latitude": 17.37077318597574,
+      "longitude": 78.46201612108783
+    },
+    {
+      "id": "Hyderabad_Alwal_I (Telangana)",
+      "hub_name": "Hyderabad_Alwal_I (Telangana)",
+      "city": "Hyderabad",
+      "facility_code": "Alwal",
+      "hub_type": "Intermediate",
+      "state": "Telangana",
+      "latitude": 17.35764423561074,
+      "longitude": 78.46402620025776
+    },
+    {
+      "id": "Hyderabad_Alwal_L (Telangana)",
+      "hub_name": "Hyderabad_Alwal_L (Telangana)",
+      "city": "Hyderabad",
+      "facility_code": "Alwal",
+      "hub_type": "Unknown",
+      "state": "Telangana",
+      "latitude": 17.362373813611693,
+      "longitude": 78.48683105224661
+    },
+    {
+      "id": "Hyderabad_Bownplly_C (Telangana)",
+      "hub_name": "Hyderabad_Bownplly_C (Telangana)",
+      "city": "Hyderabad",
+      "facility_code": "Bownplly",
+      "hub_type": "Collection",
+      "state": "Telangana",
+      "latitude": 17.371399782233578,
+      "longitude": 78.47998619024773
+    },
+    {
+      "id": "Hyderabad_Chikdply_C (Telangana)",
+      "hub_name": "Hyderabad_Chikdply_C (Telangana)",
+      "city": "Hyderabad",
+      "facility_code": "Chikdply",
+      "hub_type": "Collection",
+      "state": "Telangana",
+      "latitude": 17.370880554155843,
+      "longitude": 78.48163794609718
+    },
+    {
+      "id": "Hyderabad_Chikdply_I (Telangana)",
+      "hub_name": "Hyderabad_Chikdply_I (Telangana)",
+      "city": "Hyderabad",
+      "facility_code": "Chikdply",
+      "hub_type": "Intermediate",
+      "state": "Telangana",
+      "latitude": 17.351607313559594,
+      "longitude": 78.46378482218115
+    },
+    {
+      "id": "Hyderabad_Kondapur_D (Telangana)",
+      "hub_name": "Hyderabad_Kondapur_D (Telangana)",
+      "city": "Hyderabad",
+      "facility_code": "Kondapur",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 17.352299334693313,
+      "longitude": 78.482868806733
+    },
+    {
+      "id": "Hyderabad_Mhdiptnm_C (Telangana)",
+      "hub_name": "Hyderabad_Mhdiptnm_C (Telangana)",
+      "city": "Hyderabad",
+      "facility_code": "Mhdiptnm",
+      "hub_type": "Collection",
+      "state": "Telangana",
+      "latitude": 17.358526993522165,
+      "longitude": 78.49331775939669
+    },
+    {
+      "id": "Hyderabad_North_D_2 (Telangana)",
+      "hub_name": "Hyderabad_North_D_2 (Telangana)",
+      "city": "Hyderabad",
+      "facility_code": "North",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 17.35097079346834,
+      "longitude": 78.46116089836075
+    },
+    {
+      "id": "Hyderabad_PndrgNgr_DC (Telangana)",
+      "hub_name": "Hyderabad_PndrgNgr_DC (Telangana)",
+      "city": "Hyderabad",
+      "facility_code": "PndrgNgr",
+      "hub_type": "Distribution Center",
+      "state": "Telangana",
+      "latitude": 17.368810513848466,
+      "longitude": 78.48927296192034
+    },
+    {
+      "id": "Hyderabad_Shamshbd_H (Telangana)",
+      "hub_name": "Hyderabad_Shamshbd_H (Telangana)",
+      "city": "Hyderabad",
+      "facility_code": "Shamshbd",
+      "hub_type": "Hub",
+      "state": "Telangana",
+      "latitude": 17.36772982370641,
+      "longitude": 78.48586377297703
+    },
+    {
+      "id": "Hyderabad_Shamshbd_P (Telangana)",
+      "hub_name": "Hyderabad_Shamshbd_P (Telangana)",
+      "city": "Hyderabad",
+      "facility_code": "Shamshbd",
+      "hub_type": "Unknown",
+      "state": "Telangana",
+      "latitude": 17.3769534785343,
+      "longitude": 78.4729825212773
+    },
+    {
+      "id": "Hyderabad_South_D_12 (Telangana)",
+      "hub_name": "Hyderabad_South_D_12 (Telangana)",
+      "city": "Hyderabad",
+      "facility_code": "South",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 17.344809883262112,
+      "longitude": 78.46816113115192
+    },
+    {
+      "id": "Hyderabad_South_D_4 (Telangana)",
+      "hub_name": "Hyderabad_South_D_4 (Telangana)",
+      "city": "Hyderabad",
+      "facility_code": "South",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 17.370372443513638,
+      "longitude": 78.45923895870058
+    },
+    {
+      "id": "Hyderabad_South_R_11 (Telangana)",
+      "hub_name": "Hyderabad_South_R_11 (Telangana)",
+      "city": "Hyderabad",
+      "facility_code": "South",
+      "hub_type": "Unknown",
+      "state": "Telangana",
+      "latitude": 17.36194378569906,
+      "longitude": 78.48429299815116
+    },
+    {
+      "id": "Hyderabad_Tolichwk_I (Telangana)",
+      "hub_name": "Hyderabad_Tolichwk_I (Telangana)",
+      "city": "Hyderabad",
+      "facility_code": "Tolichwk",
+      "hub_type": "Intermediate",
+      "state": "Telangana",
+      "latitude": 17.355521094990422,
+      "longitude": 78.48568167140868
+    },
+    {
+      "id": "Hyderabad_Tolichwk_L (Telangana)",
+      "hub_name": "Hyderabad_Tolichwk_L (Telangana)",
+      "city": "Hyderabad",
+      "facility_code": "Tolichwk",
+      "hub_type": "Unknown",
+      "state": "Telangana",
+      "latitude": 17.365304515824825,
+      "longitude": 78.49290947567596
+    },
+    {
+      "id": "Hyderabad_Uppal_I (Telangana)",
+      "hub_name": "Hyderabad_Uppal_I (Telangana)",
+      "city": "Hyderabad",
+      "facility_code": "Uppal",
+      "hub_type": "Intermediate",
+      "state": "Telangana",
+      "latitude": 17.36996471476187,
+      "longitude": 78.46484534830036
+    },
+    {
+      "id": "Hyderabad_Uppal_L (Telangana)",
+      "hub_name": "Hyderabad_Uppal_L (Telangana)",
+      "city": "Hyderabad",
+      "facility_code": "Uppal",
+      "hub_type": "Unknown",
+      "state": "Telangana",
+      "latitude": 17.35277622981908,
+      "longitude": 78.46249672208181
+    },
+    {
+      "id": "Jadcherla_Badeplly_D (Telangana)",
+      "hub_name": "Jadcherla_Badeplly_D (Telangana)",
+      "city": "Jadcherla",
+      "facility_code": "Badeplly",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 16.782451690868132,
+      "longitude": 78.1302608758202
+    },
+    {
+      "id": "Jagtial_Aravind_D (Telangana)",
+      "hub_name": "Jagtial_Aravind_D (Telangana)",
+      "city": "Jagtial",
+      "facility_code": "Aravind",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 18.82019516486256,
+      "longitude": 78.9274781291185
+    },
+    {
+      "id": "Jammikunta_ConduDPP_D (Telangana)",
+      "hub_name": "Jammikunta_ConduDPP_D (Telangana)",
+      "city": "Jammikunta",
+      "facility_code": "ConduDPP",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 18.27803291803855,
+      "longitude": 79.46919488543207
+    },
+    {
+      "id": "Jangaon_Hanmkond_D (Telangana)",
+      "hub_name": "Jangaon_Hanmkond_D (Telangana)",
+      "city": "Jangaon",
+      "facility_code": "Hanmkond",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 17.730223865747845,
+      "longitude": 79.23110362133492
+    },
+    {
+      "id": "JoguGadwal_ColctrOf_D (Telangana)",
+      "hub_name": "JoguGadwal_ColctrOf_D (Telangana)",
+      "city": "JoguGadwal",
+      "facility_code": "ColctrOf",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 16.22516255391841,
+      "longitude": 77.80280409369476
+    },
+    {
+      "id": "Kadthal_GndhiDPP_D (Telangana)",
+      "hub_name": "Kadthal_GndhiDPP_D (Telangana)",
+      "city": "Kadthal",
+      "facility_code": "GndhiDPP",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 19.062193156275747,
+      "longitude": 78.3528688603199
+    },
+    {
+      "id": "Kaghaznagar_Central_DPP_1 (Telangana)",
+      "hub_name": "Kaghaznagar_Central_DPP_1 (Telangana)",
+      "city": "Kaghaznagar",
+      "facility_code": "Central",
+      "hub_type": "Unknown",
+      "state": "Telangana",
+      "latitude": 19.363972292073715,
+      "longitude": 79.49336145631315
+    },
+    {
+      "id": "Kalwakurthy_VidyaNGR_D (Telangana)",
+      "hub_name": "Kalwakurthy_VidyaNGR_D (Telangana)",
+      "city": "Kalwakurthy",
+      "facility_code": "VidyaNGR",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 16.6846941264902,
+      "longitude": 78.49841896157186
+    },
+    {
+      "id": "Kamareddy_Devenply_I (Telangana)",
+      "hub_name": "Kamareddy_Devenply_I (Telangana)",
+      "city": "Kamareddy",
+      "facility_code": "Devenply",
+      "hub_type": "Intermediate",
+      "state": "Telangana",
+      "latitude": 18.320267429269844,
+      "longitude": 78.04021068033718
+    },
+    {
+      "id": "Karimnagar_DC (Telangana)",
+      "hub_name": "Karimnagar_DC (Telangana)",
+      "city": "Karimnagar",
+      "facility_code": "",
+      "hub_type": "Distribution Center",
+      "state": "Telangana",
+      "latitude": 18.447542290877305,
+      "longitude": 79.13817374109215
+    },
+    {
+      "id": "Karimnagar_KamnHbRD_I (Telangana)",
+      "hub_name": "Karimnagar_KamnHbRD_I (Telangana)",
+      "city": "Karimnagar",
+      "facility_code": "KamnHbRD",
+      "hub_type": "Intermediate",
+      "state": "Telangana",
+      "latitude": 18.450098802962064,
+      "longitude": 79.13243159039331
+    },
+    {
+      "id": "Khammam_NSTRoad_I (Telangana)",
+      "hub_name": "Khammam_NSTRoad_I (Telangana)",
+      "city": "Khammam",
+      "facility_code": "NSTRoad",
+      "hub_type": "Intermediate",
+      "state": "Telangana",
+      "latitude": 17.264836507038044,
+      "longitude": 80.14666977225352
+    },
+    {
+      "id": "Khanpur_Nrsampt_D (Telangana)",
+      "hub_name": "Khanpur_Nrsampt_D (Telangana)",
+      "city": "Khanpur",
+      "facility_code": "Nrsampt",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 19.51475956612027,
+      "longitude": 78.81178040749589
+    },
+    {
+      "id": "Kodad_VidyaNgr_D (Telangana)",
+      "hub_name": "Kodad_VidyaNgr_D (Telangana)",
+      "city": "Kodad",
+      "facility_code": "VidyaNgr",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 16.9883859252832,
+      "longitude": 79.96100615443964
+    },
+    {
+      "id": "Koratla_BhemuDPP_D (Telangana)",
+      "hub_name": "Koratla_BhemuDPP_D (Telangana)",
+      "city": "Koratla",
+      "facility_code": "BhemuDPP",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 19.66096647374832,
+      "longitude": 78.54385300782202
+    },
+    {
+      "id": "Kusumnchi_SKRoad_D (Telangana)",
+      "hub_name": "Kusumnchi_SKRoad_D (Telangana)",
+      "city": "Kusumnchi",
+      "facility_code": "SKRoad",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 17.237265339215767,
+      "longitude": 79.97615291674748
+    },
+    {
+      "id": "Luxettipet_ShivaDPP_D (Telangana)",
+      "hub_name": "Luxettipet_ShivaDPP_D (Telangana)",
+      "city": "Luxettipet",
+      "facility_code": "ShivaDPP",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 19.37782414420973,
+      "longitude": 78.77662975479656
+    },
+    {
+      "id": "Mahabubnagar_DC (Telangana)",
+      "hub_name": "Mahabubnagar_DC (Telangana)",
+      "city": "Mahabubnagar",
+      "facility_code": "",
+      "hub_type": "Distribution Center",
+      "state": "Telangana",
+      "latitude": 16.70554985744098,
+      "longitude": 77.95022909471699
+    },
+    {
+      "id": "Mahadevpur_Kataram_D (Telangana)",
+      "hub_name": "Mahadevpur_Kataram_D (Telangana)",
+      "city": "Mahadevpur",
+      "facility_code": "Kataram",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 18.71778486111877,
+      "longitude": 79.98525509439324
+    },
+    {
+      "id": "Mahbubabad_Yellanda_D (Telangana)",
+      "hub_name": "Mahbubabad_Yellanda_D (Telangana)",
+      "city": "Mahbubabad",
+      "facility_code": "Yellanda",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 17.611705637857657,
+      "longitude": 79.9901617811523
+    },
+    {
+      "id": "Mancherial_Hitech_D (Telangana)",
+      "hub_name": "Mancherial_Hitech_D (Telangana)",
+      "city": "Mancherial",
+      "facility_code": "Hitech",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 18.97638462110728,
+      "longitude": 79.5354456808908
+    },
+    {
+      "id": "Manthani_Chaitnya_D (Telangana)",
+      "hub_name": "Manthani_Chaitnya_D (Telangana)",
+      "city": "Manthani",
+      "facility_code": "Chaitnya",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 18.64231675982335,
+      "longitude": 79.65848015407266
+    },
+    {
+      "id": "Manuguru_AskNagar_D (Telangana)",
+      "hub_name": "Manuguru_AskNagar_D (Telangana)",
+      "city": "Manuguru",
+      "facility_code": "AskNagar",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 17.93955302424917,
+      "longitude": 80.80264544561099
+    },
+    {
+      "id": "Medak_Dwaraka_D (Telangana)",
+      "hub_name": "Medak_Dwaraka_D (Telangana)",
+      "city": "Medak",
+      "facility_code": "Dwaraka",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 17.94024726010293,
+      "longitude": 78.19668834347144
+    },
+    {
+      "id": "Medchal_MROoffce_D (Telangana)",
+      "hub_name": "Medchal_MROoffce_D (Telangana)",
+      "city": "Medchal",
+      "facility_code": "MROoffce",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 17.64723437508252,
+      "longitude": 78.48436218118583
+    },
+    {
+      "id": "Metpally_GunjRDPP_D (Telangana)",
+      "hub_name": "Metpally_GunjRDPP_D (Telangana)",
+      "city": "Metpally",
+      "facility_code": "GunjRDPP",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 18.20278061658922,
+      "longitude": 78.90547546538458
+    },
+    {
+      "id": "Miryalguda_Ragvendr_D (Telangana)",
+      "hub_name": "Miryalguda_Ragvendr_D (Telangana)",
+      "city": "Miryalguda",
+      "facility_code": "Ragvendr",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 16.88348884402452,
+      "longitude": 79.54360376433385
+    },
+    {
+      "id": "Mothkur_Mainroad_D (Telangana)",
+      "hub_name": "Mothkur_Mainroad_D (Telangana)",
+      "city": "Mothkur",
+      "facility_code": "Mainroad",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 17.424092522363765,
+      "longitude": 79.27416536589165
+    },
+    {
+      "id": "Mulugu_LaxmiNGR_D (Telangana)",
+      "hub_name": "Mulugu_LaxmiNGR_D (Telangana)",
+      "city": "Mulugu",
+      "facility_code": "LaxmiNGR",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 18.328559667078622,
+      "longitude": 80.33237736667553
+    },
+    {
+      "id": "Nalgonda_HydRoad_DC (Telangana)",
+      "hub_name": "Nalgonda_HydRoad_DC (Telangana)",
+      "city": "Nalgonda",
+      "facility_code": "HydRoad",
+      "hub_type": "Distribution Center",
+      "state": "Telangana",
+      "latitude": 17.06319997948369,
+      "longitude": 79.2745402578994
+    },
+    {
+      "id": "Narayankhed_Datatrya_D (Telangana)",
+      "hub_name": "Narayankhed_Datatrya_D (Telangana)",
+      "city": "Narayankhed",
+      "facility_code": "Datatrya",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 18.05075940030932,
+      "longitude": 77.78471406605965
+    },
+    {
+      "id": "Narsapur_Xroad_D (Telangana)",
+      "hub_name": "Narsapur_Xroad_D (Telangana)",
+      "city": "Narsapur",
+      "facility_code": "Xroad",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 17.7395213928978,
+      "longitude": 78.26840888559927
+    },
+    {
+      "id": "Parkal_AmbedDPP_D (Telangana)",
+      "hub_name": "Parkal_AmbedDPP_D (Telangana)",
+      "city": "Parkal",
+      "facility_code": "AmbedDPP",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 18.183019893199486,
+      "longitude": 79.70345736455334
+    },
+    {
+      "id": "Patancheru_Ameenpur_I (Telangana)",
+      "hub_name": "Patancheru_Ameenpur_I (Telangana)",
+      "city": "Patancheru",
+      "facility_code": "Ameenpur",
+      "hub_type": "Intermediate",
+      "state": "Telangana",
+      "latitude": 17.526840452219922,
+      "longitude": 78.2860660030113
+    },
+    {
+      "id": "Peddapalli_UdaynDPP_D (Telangana)",
+      "hub_name": "Peddapalli_UdaynDPP_D (Telangana)",
+      "city": "Peddapalli",
+      "facility_code": "UdaynDPP",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 18.609921001541903,
+      "longitude": 79.5006444929805
+    },
+    {
+      "id": "Ramagundam_Pdmavati_D (Telangana)",
+      "hub_name": "Ramagundam_Pdmavati_D (Telangana)",
+      "city": "Ramagundam",
+      "facility_code": "Pdmavati",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 18.744740915280186,
+      "longitude": 79.4745567859353
+    },
+    {
+      "id": "Rayaparthi_Perkadrd_D (Telangana)",
+      "hub_name": "Rayaparthi_Perkadrd_D (Telangana)",
+      "city": "Rayaparthi",
+      "facility_code": "Perkadrd",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 17.706415196354843,
+      "longitude": 79.61871035251701
+    },
+    {
+      "id": "Sangareddy_Pothredy_D (Telangana)",
+      "hub_name": "Sangareddy_Pothredy_D (Telangana)",
+      "city": "Sangareddy",
+      "facility_code": "Pothredy",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 17.884925318496858,
+      "longitude": 77.82221613640688
+    },
+    {
+      "id": "Sathupally_VidyaNGR_D (Telangana)",
+      "hub_name": "Sathupally_VidyaNGR_D (Telangana)",
+      "city": "Sathupally",
+      "facility_code": "VidyaNGR",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 17.197388630261894,
+      "longitude": 80.84024890645638
+    },
+    {
+      "id": "Shadnagar_Central_D_1 (Telangana)",
+      "hub_name": "Shadnagar_Central_D_1 (Telangana)",
+      "city": "Shadnagar",
+      "facility_code": "Central",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 17.076044785089426,
+      "longitude": 78.21303459242776
+    },
+    {
+      "id": "Shamshabad_Lngrguda_D (Telangana)",
+      "hub_name": "Shamshabad_Lngrguda_D (Telangana)",
+      "city": "Shamshabad",
+      "facility_code": "Lngrguda",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 17.25279574030558,
+      "longitude": 78.40670623323768
+    },
+    {
+      "id": "Suryapet_Krishna_D (Telangana)",
+      "hub_name": "Suryapet_Krishna_D (Telangana)",
+      "city": "Suryapet",
+      "facility_code": "Krishna",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 17.081534510491586,
+      "longitude": 79.804640055392
+    },
+    {
+      "id": "Tallada_PtrlBunk_D (Telangana)",
+      "hub_name": "Tallada_PtrlBunk_D (Telangana)",
+      "city": "Tallada",
+      "facility_code": "PtrlBunk",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 17.23289683939785,
+      "longitude": 80.426988453078
+    },
+    {
+      "id": "Tandur_SnthiNGR_D (Telangana)",
+      "hub_name": "Tandur_SnthiNGR_D (Telangana)",
+      "city": "Tandur",
+      "facility_code": "SnthiNGR",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 17.253450162581466,
+      "longitude": 77.60301395576455
+    },
+    {
+      "id": "Thirumalagiri_Xroad_D (Telangana)",
+      "hub_name": "Thirumalagiri_Xroad_D (Telangana)",
+      "city": "Thirumalagiri",
+      "facility_code": "Xroad",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 16.86333328174087,
+      "longitude": 77.8778289868708
+    },
+    {
+      "id": "Vemulawada_Central_DPP_2 (Telangana)",
+      "hub_name": "Vemulawada_Central_DPP_2 (Telangana)",
+      "city": "Vemulawada",
+      "facility_code": "Central",
+      "hub_type": "Unknown",
+      "state": "Telangana",
+      "latitude": 18.468735303042603,
+      "longitude": 78.88654239706014
+    },
+    {
+      "id": "Vikarabad_Central_DPP_2 (Telangana)",
+      "hub_name": "Vikarabad_Central_DPP_2 (Telangana)",
+      "city": "Vikarabad",
+      "facility_code": "Central",
+      "hub_type": "Unknown",
+      "state": "Telangana",
+      "latitude": 17.272808523038666,
+      "longitude": 77.75633544948452
+    },
+    {
+      "id": "Wanaparthy_VallaDPP_D (Telangana)",
+      "hub_name": "Wanaparthy_VallaDPP_D (Telangana)",
+      "city": "Wanaparthy",
+      "facility_code": "VallaDPP",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 16.2997328051796,
+      "longitude": 77.98025455456859
+    },
+    {
+      "id": "Warangal_Central_D_2 (Telangana)",
+      "hub_name": "Warangal_Central_D_2 (Telangana)",
+      "city": "Warangal",
+      "facility_code": "Central",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 17.96448066062287,
+      "longitude": 79.6001447865732
+    },
+    {
+      "id": "Warangal_HunterRd_I (Telangana)",
+      "hub_name": "Warangal_HunterRd_I (Telangana)",
+      "city": "Warangal",
+      "facility_code": "HunterRd",
+      "hub_type": "Intermediate",
+      "state": "Telangana",
+      "latitude": 17.98627198952665,
+      "longitude": 79.58595970214148
+    },
+    {
+      "id": "Yellandu_Sudimala_D (Telangana)",
+      "hub_name": "Yellandu_Sudimala_D (Telangana)",
+      "city": "Yellandu",
+      "facility_code": "Sudimala",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 17.603301394278414,
+      "longitude": 80.3298751951043
+    },
+    {
+      "id": "Yellareddy_JKRoad_D (Telangana)",
+      "hub_name": "Yellareddy_JKRoad_D (Telangana)",
+      "city": "Yellareddy",
+      "facility_code": "JKRoad",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 18.200590015301085,
+      "longitude": 78.03916412217824
+    },
+    {
+      "id": "Zahirabad_Mohim_D (Telangana)",
+      "hub_name": "Zahirabad_Mohim_D (Telangana)",
+      "city": "Zahirabad",
+      "facility_code": "Mohim",
+      "hub_type": "Delivery",
+      "state": "Telangana",
+      "latitude": 17.673631654444755,
+      "longitude": 77.5941033622239
+    }
+  ],
+  "edges": [
+    {
+      "source": "Asifabad_PaikjNGR_D (Telangana)",
+      "destination": "Karimnagar_KamnHbRD_I (Telangana)",
+      "avg_distance_km": 105.09421789326124,
+      "avg_time_min": 242.28571428571428,
+      "trip_count": 7,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Asifabad_PaikjNGR_D (Telangana)",
+      "destination": "Mancherial_Hitech_D (Telangana)",
+      "avg_distance_km": 53.164903414407384,
+      "avg_time_min": 75.5,
+      "trip_count": 2,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Banswada_Menagrdn_D (Telangana)",
+      "destination": "Yellareddy_JKRoad_D (Telangana)",
+      "avg_distance_km": 25.350276679365084,
+      "avg_time_min": 41.95,
+      "trip_count": 20,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Bellmpalli_BasthDPP_D (Telangana)",
+      "destination": "Asifabad_PaikjNGR_D (Telangana)",
+      "avg_distance_km": 36.5433240951985,
+      "avg_time_min": 84.0,
+      "trip_count": 2,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Bellmpalli_BasthDPP_D (Telangana)",
+      "destination": "Kaghaznagar_Central_DPP_1 (Telangana)",
+      "avg_distance_km": 32.09045181055206,
+      "avg_time_min": 52.333333333333336,
+      "trip_count": 3,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Bhadrachalam_ITDARd_D (Telangana)",
+      "destination": "Manuguru_AskNagar_D (Telangana)",
+      "avg_distance_km": 29.457011704798227,
+      "avg_time_min": 53.94736842105263,
+      "trip_count": 19,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Bhadrachalam_ITDARd_D (Telangana)",
+      "destination": "Sathupally_VidyaNGR_D (Telangana)",
+      "avg_distance_km": 51.38248775863705,
+      "avg_time_min": 141.0,
+      "trip_count": 1,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Bhupalpally_JwahrNGR_D (Telangana)",
+      "destination": "Mahadevpur_Kataram_D (Telangana)",
+      "avg_distance_km": 22.5002814886222,
+      "avg_time_min": 34.0,
+      "trip_count": 1,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Bhuvanagiri_HBColny_D (Telangana)",
+      "destination": "Mothkur_Mainroad_D (Telangana)",
+      "avg_distance_km": 38.983469891957064,
+      "avg_time_min": 47.714285714285715,
+      "trip_count": 14,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Bhuvanagiri_HBColny_D (Telangana)",
+      "destination": "Thirumalagiri_Xroad_D (Telangana)",
+      "avg_distance_km": 60.06108980370035,
+      "avg_time_min": 90.0,
+      "trip_count": 1,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Bijnapally_nagar_D (Telangana)",
+      "destination": "Jadcherla_Badeplly_D (Telangana)",
+      "avg_distance_km": 27.0583187449067,
+      "avg_time_min": 38.78947368421053,
+      "trip_count": 19,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Bodhan_SuryaDPP_D (Telangana)",
+      "destination": "Banswada_Menagrdn_D (Telangana)",
+      "avg_distance_km": 28.847683279652433,
+      "avg_time_min": 43.0,
+      "trip_count": 19,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Chinnur_AsnsdhRD_D (Telangana)",
+      "destination": "Karimnagar_KamnHbRD_I (Telangana)",
+      "avg_distance_km": 81.41808795963196,
+      "avg_time_min": 156.0,
+      "trip_count": 1,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Chinnur_AsnsdhRD_D (Telangana)",
+      "destination": "Manthani_Chaitnya_D (Telangana)",
+      "avg_distance_km": 24.692447000529974,
+      "avg_time_min": 86.6,
+      "trip_count": 5,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Choutuppal_Nagaram_D (Telangana)",
+      "destination": "Miryalguda_Ragvendr_D (Telangana)",
+      "avg_distance_km": 79.6966963554094,
+      "avg_time_min": 110.66666666666667,
+      "trip_count": 6,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Devarakonda_DindiRD_D (Telangana)",
+      "destination": "Haliya_PeroorRD_D (Telangana)",
+      "avg_distance_km": 44.10241512508034,
+      "avg_time_min": 59.8,
+      "trip_count": 15,
+      "route_types": "FTL"
+    },
+    {
+      "source": "DhrmpuriTS_HanumDPP_D (Telangana)",
+      "destination": "Karimnagar_KamnHbRD_I (Telangana)",
+      "avg_distance_km": 56.94962936873068,
+      "avg_time_min": 117.0,
+      "trip_count": 1,
+      "route_types": "FTL"
+    },
+    {
+      "source": "DhrmpuriTS_HanumDPP_D (Telangana)",
+      "destination": "Luxettipet_ShivaDPP_D (Telangana)",
+      "avg_distance_km": 15.000648498677483,
+      "avg_time_min": 41.0,
+      "trip_count": 1,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Ghanpur_Palakrty_D (Telangana)",
+      "destination": "Jangaon_Hanmkond_D (Telangana)",
+      "avg_distance_km": 24.100109637671366,
+      "avg_time_min": 29.8125,
+      "trip_count": 16,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Ghatkesar_Central_D_1 (Telangana)",
+      "destination": "Hyderabad_Uppal_I (Telangana)",
+      "avg_distance_km": 11.57230124348198,
+      "avg_time_min": 41.0,
+      "trip_count": 2,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Haliya_PeroorRD_D (Telangana)",
+      "destination": "Hyderabad_Shamshbd_H (Telangana)",
+      "avg_distance_km": 109.88837609167767,
+      "avg_time_min": 240.0,
+      "trip_count": 12,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Husnabad_Greenmkt_D (Telangana)",
+      "destination": "Jammikunta_ConduDPP_D (Telangana)",
+      "avg_distance_km": 31.715374694178404,
+      "avg_time_min": 78.0,
+      "trip_count": 13,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Hyd_Chandanagar_Dc (Telangana)",
+      "destination": "Sangareddy_Pothredy_D (Telangana)",
+      "avg_distance_km": 24.884534628110803,
+      "avg_time_min": 45.0,
+      "trip_count": 4,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Hyd_LB-Nagar_Dc (Telangana)",
+      "destination": "Hyderabad_Uppal_I (Telangana)",
+      "avg_distance_km": 10.30948050246579,
+      "avg_time_min": 33.0,
+      "trip_count": 1,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Hyd_Trimulgherry_Dc (Telangana)",
+      "destination": "Hyderabad_Alwal_I (Telangana)",
+      "avg_distance_km": 9.18717239229196,
+      "avg_time_min": 44.0,
+      "trip_count": 1,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Hyd_Trimulgherry_Dc (Telangana)",
+      "destination": "Medchal_MROoffce_D (Telangana)",
+      "avg_distance_km": 16.434391229452366,
+      "avg_time_min": 35.0,
+      "trip_count": 1,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Hyd_Uppal_Dc (Telangana)",
+      "destination": "Ghatkesar_Central_D_1 (Telangana)",
+      "avg_distance_km": 12.493257745495171,
+      "avg_time_min": 21.0,
+      "trip_count": 2,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Hyderabad_Alwal_I (Telangana)",
+      "destination": "Hyd_Trimulgherry_Dc (Telangana)",
+      "avg_distance_km": 9.11092270452614,
+      "avg_time_min": 31.0,
+      "trip_count": 1,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Hyderabad_Alwal_I (Telangana)",
+      "destination": "Hyderabad_Shamshbd_H (Telangana)",
+      "avg_distance_km": 35.322390024918356,
+      "avg_time_min": 193.33333333333334,
+      "trip_count": 9,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Hyderabad_Alwal_I (Telangana)",
+      "destination": "Medchal_MROoffce_D (Telangana)",
+      "avg_distance_km": 9.50101372105903,
+      "avg_time_min": 57.0,
+      "trip_count": 1,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Hyderabad_Alwal_L (Telangana)",
+      "destination": "Hyderabad_Shamshbd_H (Telangana)",
+      "avg_distance_km": 35.69564140778872,
+      "avg_time_min": 102.07692307692308,
+      "trip_count": 39,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Hyderabad_Bownplly_C (Telangana)",
+      "destination": "Hyderabad_Shamshbd_P (Telangana)",
+      "avg_distance_km": 26.96544355953307,
+      "avg_time_min": 202.63636363636363,
+      "trip_count": 11,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Hyderabad_Chikdply_C (Telangana)",
+      "destination": "Hyderabad_Shamshbd_P (Telangana)",
+      "avg_distance_km": 21.83557851561085,
+      "avg_time_min": 73.8125,
+      "trip_count": 32,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Hyderabad_Chikdply_I (Telangana)",
+      "destination": "Hyderabad_Shamshbd_H (Telangana)",
+      "avg_distance_km": 21.77643858507266,
+      "avg_time_min": 68.65,
+      "trip_count": 20,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Hyderabad_Mhdiptnm_C (Telangana)",
+      "destination": "Hyderabad_Shamshbd_P (Telangana)",
+      "avg_distance_km": 16.548425186590702,
+      "avg_time_min": 54.0625,
+      "trip_count": 16,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Hyderabad_North_D_2 (Telangana)",
+      "destination": "Medchal_MROoffce_D (Telangana)",
+      "avg_distance_km": 14.112839998687763,
+      "avg_time_min": 27.941176470588236,
+      "trip_count": 17,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Hyderabad_PndrgNgr_DC (Telangana)",
+      "destination": "Hyderabad_Chikdply_I (Telangana)",
+      "avg_distance_km": 9.29087990516049,
+      "avg_time_min": 61.25,
+      "trip_count": 4,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Hyderabad_Shamshbd_H (Telangana)",
+      "destination": "Choutuppal_Nagaram_D (Telangana)",
+      "avg_distance_km": 54.450495882280485,
+      "avg_time_min": 104.71428571428571,
+      "trip_count": 7,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Hyderabad_Shamshbd_H (Telangana)",
+      "destination": "Hyderabad_Alwal_I (Telangana)",
+      "avg_distance_km": 34.73597396425652,
+      "avg_time_min": 80.75,
+      "trip_count": 12,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Hyderabad_Shamshbd_H (Telangana)",
+      "destination": "Hyderabad_Alwal_L (Telangana)",
+      "avg_distance_km": 35.67826112015963,
+      "avg_time_min": 128.96969696969697,
+      "trip_count": 33,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Hyderabad_Shamshbd_H (Telangana)",
+      "destination": "Hyderabad_Chikdply_I (Telangana)",
+      "avg_distance_km": 21.463486427490142,
+      "avg_time_min": 58.833333333333336,
+      "trip_count": 24,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Hyderabad_Shamshbd_H (Telangana)",
+      "destination": "Hyderabad_Tolichwk_I (Telangana)",
+      "avg_distance_km": 17.815107747603662,
+      "avg_time_min": 39.68421052631579,
+      "trip_count": 19,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Hyderabad_Shamshbd_H (Telangana)",
+      "destination": "Hyderabad_Uppal_I (Telangana)",
+      "avg_distance_km": 27.430423238921428,
+      "avg_time_min": 63.6,
+      "trip_count": 10,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Hyderabad_Shamshbd_H (Telangana)",
+      "destination": "Hyderabad_Uppal_L (Telangana)",
+      "avg_distance_km": 27.01501476093613,
+      "avg_time_min": 77.83333333333333,
+      "trip_count": 6,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Hyderabad_Shamshbd_H (Telangana)",
+      "destination": "Kadthal_GndhiDPP_D (Telangana)",
+      "avg_distance_km": 29.27066207628166,
+      "avg_time_min": 52.294117647058826,
+      "trip_count": 17,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Hyderabad_Shamshbd_H (Telangana)",
+      "destination": "Kamareddy_Devenply_I (Telangana)",
+      "avg_distance_km": 120.59120275115782,
+      "avg_time_min": 183.0,
+      "trip_count": 2,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Hyderabad_Shamshbd_H (Telangana)",
+      "destination": "Karimnagar_KamnHbRD_I (Telangana)",
+      "avg_distance_km": 155.2332008628609,
+      "avg_time_min": 222.0,
+      "trip_count": 2,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Hyderabad_Shamshbd_H (Telangana)",
+      "destination": "Mahabubnagar_DC (Telangana)",
+      "avg_distance_km": 66.78872972925996,
+      "avg_time_min": 94.0,
+      "trip_count": 17,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Hyderabad_Shamshbd_H (Telangana)",
+      "destination": "Patancheru_Ameenpur_I (Telangana)",
+      "avg_distance_km": 29.300080268235035,
+      "avg_time_min": 60.22222222222222,
+      "trip_count": 18,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Hyderabad_Shamshbd_H (Telangana)",
+      "destination": "Shamshabad_Lngrguda_D (Telangana)",
+      "avg_distance_km": 18.201387429922843,
+      "avg_time_min": 122.0,
+      "trip_count": 1,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Hyderabad_Shamshbd_H (Telangana)",
+      "destination": "Tandur_SnthiNGR_D (Telangana)",
+      "avg_distance_km": 84.77611944133704,
+      "avg_time_min": 150.375,
+      "trip_count": 8,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Hyderabad_Shamshbd_H (Telangana)",
+      "destination": "Warangal_HunterRd_I (Telangana)",
+      "avg_distance_km": 150.25113849240714,
+      "avg_time_min": 223.25,
+      "trip_count": 16,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Hyderabad_South_D_4 (Telangana)",
+      "destination": "Hyderabad_Uppal_I (Telangana)",
+      "avg_distance_km": 14.70570838190364,
+      "avg_time_min": 56.89473684210526,
+      "trip_count": 19,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Hyderabad_South_R_11 (Telangana)",
+      "destination": "Hyderabad_Mhdiptnm_C (Telangana)",
+      "avg_distance_km": 16.45340694579684,
+      "avg_time_min": 65.9090909090909,
+      "trip_count": 11,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Hyderabad_Tolichwk_I (Telangana)",
+      "destination": "Hyderabad_Kondapur_D (Telangana)",
+      "avg_distance_km": 9.33539944717219,
+      "avg_time_min": 52.0,
+      "trip_count": 1,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Hyderabad_Tolichwk_I (Telangana)",
+      "destination": "Hyderabad_Shamshbd_H (Telangana)",
+      "avg_distance_km": 17.705948355232717,
+      "avg_time_min": 150.46153846153845,
+      "trip_count": 13,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Hyderabad_Tolichwk_L (Telangana)",
+      "destination": "Hyderabad_Shamshbd_H (Telangana)",
+      "avg_distance_km": 17.040572627438735,
+      "avg_time_min": 113.66666666666667,
+      "trip_count": 6,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Hyderabad_Uppal_I (Telangana)",
+      "destination": "Bhuvanagiri_HBColny_D (Telangana)",
+      "avg_distance_km": 33.851299237720916,
+      "avg_time_min": 65.38461538461539,
+      "trip_count": 13,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Hyderabad_Uppal_I (Telangana)",
+      "destination": "Hyd_LB-Nagar_Dc (Telangana)",
+      "avg_distance_km": 9.864476800165345,
+      "avg_time_min": 38.5,
+      "trip_count": 2,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Hyderabad_Uppal_I (Telangana)",
+      "destination": "Hyderabad_Shamshbd_H (Telangana)",
+      "avg_distance_km": 26.808461863457975,
+      "avg_time_min": 172.26666666666668,
+      "trip_count": 15,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Hyderabad_Uppal_I (Telangana)",
+      "destination": "Hyderabad_South_D_12 (Telangana)",
+      "avg_distance_km": 9.34399351496303,
+      "avg_time_min": 38.875,
+      "trip_count": 8,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Hyderabad_Uppal_L (Telangana)",
+      "destination": "Hyderabad_Shamshbd_H (Telangana)",
+      "avg_distance_km": 27.175024476426245,
+      "avg_time_min": 89.75,
+      "trip_count": 8,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Jadcherla_Badeplly_D (Telangana)",
+      "destination": "Hyderabad_Shamshbd_H (Telangana)",
+      "avg_distance_km": 58.52111334619552,
+      "avg_time_min": 92.28571428571429,
+      "trip_count": 14,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Jadcherla_Badeplly_D (Telangana)",
+      "destination": "Shadnagar_Central_D_1 (Telangana)",
+      "avg_distance_km": 31.359132295969808,
+      "avg_time_min": 53.6,
+      "trip_count": 5,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Jagtial_Aravind_D (Telangana)",
+      "destination": "DhrmpuriTS_HanumDPP_D (Telangana)",
+      "avg_distance_km": 23.41704290630322,
+      "avg_time_min": 32.166666666666664,
+      "trip_count": 12,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Jammikunta_ConduDPP_D (Telangana)",
+      "destination": "Warangal_HunterRd_I (Telangana)",
+      "avg_distance_km": 35.72885532434958,
+      "avg_time_min": 167.1875,
+      "trip_count": 16,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Jangaon_Hanmkond_D (Telangana)",
+      "destination": "Hyderabad_Shamshbd_H (Telangana)",
+      "avg_distance_km": 97.87700688262416,
+      "avg_time_min": 196.75,
+      "trip_count": 16,
+      "route_types": "FTL"
+    },
+    {
+      "source": "JoguGadwal_ColctrOf_D (Telangana)",
+      "destination": "Wanaparthy_VallaDPP_D (Telangana)",
+      "avg_distance_km": 30.21532942036044,
+      "avg_time_min": 77.33333333333333,
+      "trip_count": 9,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Kadthal_GndhiDPP_D (Telangana)",
+      "destination": "Devarakonda_DindiRD_D (Telangana)",
+      "avg_distance_km": 54.649391227494604,
+      "avg_time_min": 132.375,
+      "trip_count": 8,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Kadthal_GndhiDPP_D (Telangana)",
+      "destination": "Kalwakurthy_VidyaNGR_D (Telangana)",
+      "avg_distance_km": 34.872567489404176,
+      "avg_time_min": 58.111111111111114,
+      "trip_count": 9,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Kaghaznagar_Central_DPP_1 (Telangana)",
+      "destination": "Asifabad_PaikjNGR_D (Telangana)",
+      "avg_distance_km": 19.173898824504505,
+      "avg_time_min": 33.0,
+      "trip_count": 2,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Kaghaznagar_Central_DPP_1 (Telangana)",
+      "destination": "Karimnagar_KamnHbRD_I (Telangana)",
+      "avg_distance_km": 109.03195757112496,
+      "avg_time_min": 200.0,
+      "trip_count": 1,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Kaghaznagar_Central_DPP_1 (Telangana)",
+      "destination": "Mancherial_Hitech_D (Telangana)",
+      "avg_distance_km": 52.112239418402766,
+      "avg_time_min": 76.0,
+      "trip_count": 1,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Kalwakurthy_VidyaNGR_D (Telangana)",
+      "destination": "Devarakonda_DindiRD_D (Telangana)",
+      "avg_distance_km": 43.65025795104085,
+      "avg_time_min": 75.375,
+      "trip_count": 8,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Kamareddy_Devenply_I (Telangana)",
+      "destination": "Bodhan_SuryaDPP_D (Telangana)",
+      "avg_distance_km": 59.25970224824529,
+      "avg_time_min": 111.6,
+      "trip_count": 20,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Kamareddy_Devenply_I (Telangana)",
+      "destination": "Hyderabad_Shamshbd_H (Telangana)",
+      "avg_distance_km": 120.5599667454678,
+      "avg_time_min": 252.07692307692307,
+      "trip_count": 13,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Kamareddy_Devenply_I (Telangana)",
+      "destination": "Karimnagar_KamnHbRD_I (Telangana)",
+      "avg_distance_km": 85.26531025390285,
+      "avg_time_min": 125.0,
+      "trip_count": 1,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Karimnagar_DC (Telangana)",
+      "destination": "Jagtial_Aravind_D (Telangana)",
+      "avg_distance_km": 43.62873799696725,
+      "avg_time_min": 69.0,
+      "trip_count": 1,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Karimnagar_DC (Telangana)",
+      "destination": "Vemulawada_Central_DPP_2 (Telangana)",
+      "avg_distance_km": 28.108649696652954,
+      "avg_time_min": 53.44444444444444,
+      "trip_count": 9,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Karimnagar_KamnHbRD_I (Telangana)",
+      "destination": "Bellmpalli_BasthDPP_D (Telangana)",
+      "avg_distance_km": 81.28434504711451,
+      "avg_time_min": 184.0,
+      "trip_count": 1,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Karimnagar_KamnHbRD_I (Telangana)",
+      "destination": "Hyderabad_Shamshbd_H (Telangana)",
+      "avg_distance_km": 153.84449067070992,
+      "avg_time_min": 340.0,
+      "trip_count": 1,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Karimnagar_KamnHbRD_I (Telangana)",
+      "destination": "Kamareddy_Devenply_I (Telangana)",
+      "avg_distance_km": 86.04642235363696,
+      "avg_time_min": 125.5,
+      "trip_count": 2,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Karimnagar_KamnHbRD_I (Telangana)",
+      "destination": "Mancherial_Hitech_D (Telangana)",
+      "avg_distance_km": 60.397476334498585,
+      "avg_time_min": 101.0,
+      "trip_count": 11,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Karimnagar_KamnHbRD_I (Telangana)",
+      "destination": "Manthani_Chaitnya_D (Telangana)",
+      "avg_distance_km": 62.313931432964864,
+      "avg_time_min": 158.0,
+      "trip_count": 3,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Karimnagar_KamnHbRD_I (Telangana)",
+      "destination": "Peddapalli_UdaynDPP_D (Telangana)",
+      "avg_distance_km": 31.161735178846413,
+      "avg_time_min": 41.0,
+      "trip_count": 1,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Karimnagar_KamnHbRD_I (Telangana)",
+      "destination": "Ramagundam_Pdmavati_D (Telangana)",
+      "avg_distance_km": 53.74652993298617,
+      "avg_time_min": 136.28571428571428,
+      "trip_count": 7,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Karimnagar_KamnHbRD_I (Telangana)",
+      "destination": "Vemulawada_Central_DPP_2 (Telangana)",
+      "avg_distance_km": 28.61459438939075,
+      "avg_time_min": 56.75,
+      "trip_count": 4,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Khammam_NSTRoad_I (Telangana)",
+      "destination": "Kodad_VidyaNgr_D (Telangana)",
+      "avg_distance_km": 35.20537859052258,
+      "avg_time_min": 76.58333333333333,
+      "trip_count": 12,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Khammam_NSTRoad_I (Telangana)",
+      "destination": "Kusumnchi_SKRoad_D (Telangana)",
+      "avg_distance_km": 20.34973409982966,
+      "avg_time_min": 35.333333333333336,
+      "trip_count": 3,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Khammam_NSTRoad_I (Telangana)",
+      "destination": "Manuguru_AskNagar_D (Telangana)",
+      "avg_distance_km": 102.59248568430392,
+      "avg_time_min": 162.0,
+      "trip_count": 1,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Khammam_NSTRoad_I (Telangana)",
+      "destination": "Miryalguda_Ragvendr_D (Telangana)",
+      "avg_distance_km": 77.10858681716303,
+      "avg_time_min": 129.0,
+      "trip_count": 2,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Khammam_NSTRoad_I (Telangana)",
+      "destination": "Nalgonda_HydRoad_DC (Telangana)",
+      "avg_distance_km": 96.72693943026611,
+      "avg_time_min": 205.0,
+      "trip_count": 1,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Khammam_NSTRoad_I (Telangana)",
+      "destination": "Suryapet_Krishna_D (Telangana)",
+      "avg_distance_km": 57.88433056716913,
+      "avg_time_min": 81.35714285714286,
+      "trip_count": 14,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Khammam_NSTRoad_I (Telangana)",
+      "destination": "Tallada_PtrlBunk_D (Telangana)",
+      "avg_distance_km": 27.28866647391935,
+      "avg_time_min": 61.77777777777778,
+      "trip_count": 9,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Khanpur_Nrsampt_D (Telangana)",
+      "destination": "Mahbubabad_Yellanda_D (Telangana)",
+      "avg_distance_km": 38.107266568828166,
+      "avg_time_min": 65.36842105263158,
+      "trip_count": 19,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Kodad_VidyaNgr_D (Telangana)",
+      "destination": "Khammam_NSTRoad_I (Telangana)",
+      "avg_distance_km": 33.7628673141883,
+      "avg_time_min": 54.5,
+      "trip_count": 2,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Kodad_VidyaNgr_D (Telangana)",
+      "destination": "Kusumnchi_SKRoad_D (Telangana)",
+      "avg_distance_km": 24.211526178578936,
+      "avg_time_min": 51.25,
+      "trip_count": 12,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Kodad_VidyaNgr_D (Telangana)",
+      "destination": "Miryalguda_Ragvendr_D (Telangana)",
+      "avg_distance_km": 44.39915487018335,
+      "avg_time_min": 75.25,
+      "trip_count": 4,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Koratla_BhemuDPP_D (Telangana)",
+      "destination": "DhrmpuriTS_HanumDPP_D (Telangana)",
+      "avg_distance_km": 40.09685787271648,
+      "avg_time_min": 99.0,
+      "trip_count": 1,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Kusumnchi_SKRoad_D (Telangana)",
+      "destination": "Khammam_NSTRoad_I (Telangana)",
+      "avg_distance_km": 21.394208640981894,
+      "avg_time_min": 179.4,
+      "trip_count": 10,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Kusumnchi_SKRoad_D (Telangana)",
+      "destination": "Kodad_VidyaNgr_D (Telangana)",
+      "avg_distance_km": 23.869006387018803,
+      "avg_time_min": 43.4,
+      "trip_count": 5,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Luxettipet_ShivaDPP_D (Telangana)",
+      "destination": "Karimnagar_KamnHbRD_I (Telangana)",
+      "avg_distance_km": 52.812265664023116,
+      "avg_time_min": 126.4,
+      "trip_count": 15,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Mahabubnagar_DC (Telangana)",
+      "destination": "Bijnapally_nagar_D (Telangana)",
+      "avg_distance_km": 31.274903495609113,
+      "avg_time_min": 53.1578947368421,
+      "trip_count": 19,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Mahadevpur_Kataram_D (Telangana)",
+      "destination": "Parkal_AmbedDPP_D (Telangana)",
+      "avg_distance_km": 52.74389312851972,
+      "avg_time_min": 89.0,
+      "trip_count": 1,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Mahbubabad_Yellanda_D (Telangana)",
+      "destination": "Yellandu_Sudimala_D (Telangana)",
+      "avg_distance_km": 35.20291508909166,
+      "avg_time_min": 45.38461538461539,
+      "trip_count": 13,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Mancherial_Hitech_D (Telangana)",
+      "destination": "Bellmpalli_BasthDPP_D (Telangana)",
+      "avg_distance_km": 20.997233684805742,
+      "avg_time_min": 34.0,
+      "trip_count": 1,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Mancherial_Hitech_D (Telangana)",
+      "destination": "Karimnagar_KamnHbRD_I (Telangana)",
+      "avg_distance_km": 60.16133924948644,
+      "avg_time_min": 143.66666666666666,
+      "trip_count": 6,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Manthani_Chaitnya_D (Telangana)",
+      "destination": "Karimnagar_KamnHbRD_I (Telangana)",
+      "avg_distance_km": 61.42089410958417,
+      "avg_time_min": 143.88888888888889,
+      "trip_count": 9,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Manthani_Chaitnya_D (Telangana)",
+      "destination": "Ramagundam_Pdmavati_D (Telangana)",
+      "avg_distance_km": 18.907720518184796,
+      "avg_time_min": 41.0,
+      "trip_count": 2,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Manuguru_AskNagar_D (Telangana)",
+      "destination": "Sathupally_VidyaNGR_D (Telangana)",
+      "avg_distance_km": 79.98204633699405,
+      "avg_time_min": 198.55555555555554,
+      "trip_count": 18,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Medak_Dwaraka_D (Telangana)",
+      "destination": "Narsapur_Xroad_D (Telangana)",
+      "avg_distance_km": 31.815051588654388,
+      "avg_time_min": 51.10526315789474,
+      "trip_count": 19,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Medchal_MROoffce_D (Telangana)",
+      "destination": "Hyderabad_Alwal_I (Telangana)",
+      "avg_distance_km": 9.510166632514116,
+      "avg_time_min": 103.85714285714286,
+      "trip_count": 14,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Metpally_GunjRDPP_D (Telangana)",
+      "destination": "Jagtial_Aravind_D (Telangana)",
+      "avg_distance_km": 26.015099233795137,
+      "avg_time_min": 31.0,
+      "trip_count": 6,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Miryalguda_Ragvendr_D (Telangana)",
+      "destination": "Khammam_NSTRoad_I (Telangana)",
+      "avg_distance_km": 76.93688373988795,
+      "avg_time_min": 202.0,
+      "trip_count": 5,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Miryalguda_Ragvendr_D (Telangana)",
+      "destination": "Kodad_VidyaNgr_D (Telangana)",
+      "avg_distance_km": 44.2620110335472,
+      "avg_time_min": 92.0,
+      "trip_count": 1,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Mothkur_Mainroad_D (Telangana)",
+      "destination": "Thirumalagiri_Xroad_D (Telangana)",
+      "avg_distance_km": 20.555597071296333,
+      "avg_time_min": 36.09090909090909,
+      "trip_count": 11,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Mulugu_LaxmiNGR_D (Telangana)",
+      "destination": "Bhupalpally_JwahrNGR_D (Telangana)",
+      "avg_distance_km": 28.040467529840157,
+      "avg_time_min": 56.0,
+      "trip_count": 2,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Nalgonda_HydRoad_DC (Telangana)",
+      "destination": "Hyderabad_Shamshbd_H (Telangana)",
+      "avg_distance_km": 93.94583268458749,
+      "avg_time_min": 156.85714285714286,
+      "trip_count": 14,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Narayankhed_Datatrya_D (Telangana)",
+      "destination": "Zahirabad_Mohim_D (Telangana)",
+      "avg_distance_km": 43.142170391359166,
+      "avg_time_min": 102.36363636363636,
+      "trip_count": 22,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Narsapur_Xroad_D (Telangana)",
+      "destination": "Kamareddy_Devenply_I (Telangana)",
+      "avg_distance_km": 64.4720200053063,
+      "avg_time_min": 108.0,
+      "trip_count": 6,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Patancheru_Ameenpur_I (Telangana)",
+      "destination": "Hyderabad_Shamshbd_H (Telangana)",
+      "avg_distance_km": 29.17604408270342,
+      "avg_time_min": 124.0952380952381,
+      "trip_count": 21,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Patancheru_Ameenpur_I (Telangana)",
+      "destination": "Shamshabad_Lngrguda_D (Telangana)",
+      "avg_distance_km": 28.107149061550892,
+      "avg_time_min": 147.0,
+      "trip_count": 5,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Ramagundam_Pdmavati_D (Telangana)",
+      "destination": "Chinnur_AsnsdhRD_D (Telangana)",
+      "avg_distance_km": 30.676848537245597,
+      "avg_time_min": 53.0,
+      "trip_count": 5,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Ramagundam_Pdmavati_D (Telangana)",
+      "destination": "Karimnagar_KamnHbRD_I (Telangana)",
+      "avg_distance_km": 53.76070635297176,
+      "avg_time_min": 127.0,
+      "trip_count": 3,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Rayaparthi_Perkadrd_D (Telangana)",
+      "destination": "Warangal_HunterRd_I (Telangana)",
+      "avg_distance_km": 30.699776508444042,
+      "avg_time_min": 134.875,
+      "trip_count": 16,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Sangareddy_Pothredy_D (Telangana)",
+      "destination": "Patancheru_Ameenpur_I (Telangana)",
+      "avg_distance_km": 27.290361960150307,
+      "avg_time_min": 50.0,
+      "trip_count": 2,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Sathupally_VidyaNGR_D (Telangana)",
+      "destination": "Khammam_NSTRoad_I (Telangana)",
+      "avg_distance_km": 70.94093870341246,
+      "avg_time_min": 155.83333333333334,
+      "trip_count": 18,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Shadnagar_Central_D_1 (Telangana)",
+      "destination": "Hyderabad_Shamshbd_H (Telangana)",
+      "avg_distance_km": 26.59270481703949,
+      "avg_time_min": 53.5,
+      "trip_count": 12,
+      "route_types": "Carting|FTL"
+    },
+    {
+      "source": "Suryapet_Krishna_D (Telangana)",
+      "destination": "Nalgonda_HydRoad_DC (Telangana)",
+      "avg_distance_km": 38.49219002570982,
+      "avg_time_min": 72.0,
+      "trip_count": 14,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Tandur_SnthiNGR_D (Telangana)",
+      "destination": "Vikarabad_Central_DPP_2 (Telangana)",
+      "avg_distance_km": 34.259117292653904,
+      "avg_time_min": 66.6,
+      "trip_count": 5,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Thirumalagiri_Xroad_D (Telangana)",
+      "destination": "Hyderabad_Uppal_I (Telangana)",
+      "avg_distance_km": 94.00415717206228,
+      "avg_time_min": 165.07142857142858,
+      "trip_count": 14,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Vemulawada_Central_DPP_2 (Telangana)",
+      "destination": "Jagtial_Aravind_D (Telangana)",
+      "avg_distance_km": 33.7629131579794,
+      "avg_time_min": 84.0,
+      "trip_count": 1,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Vemulawada_Central_DPP_2 (Telangana)",
+      "destination": "Metpally_GunjRDPP_D (Telangana)",
+      "avg_distance_km": 46.72604147636612,
+      "avg_time_min": 72.4,
+      "trip_count": 5,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Vikarabad_Central_DPP_2 (Telangana)",
+      "destination": "Hyderabad_Shamshbd_H (Telangana)",
+      "avg_distance_km": 51.10451463578045,
+      "avg_time_min": 108.0,
+      "trip_count": 1,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Vikarabad_Central_DPP_2 (Telangana)",
+      "destination": "Shadnagar_Central_D_1 (Telangana)",
+      "avg_distance_km": 41.60475818436182,
+      "avg_time_min": 75.8,
+      "trip_count": 5,
+      "route_types": "Carting"
+    },
+    {
+      "source": "Warangal_Central_D_2 (Telangana)",
+      "destination": "Husnabad_Greenmkt_D (Telangana)",
+      "avg_distance_km": 37.89257078180388,
+      "avg_time_min": 56.46153846153846,
+      "trip_count": 13,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Warangal_Central_D_2 (Telangana)",
+      "destination": "Jammikunta_ConduDPP_D (Telangana)",
+      "avg_distance_km": 30.265613813046173,
+      "avg_time_min": 70.0,
+      "trip_count": 2,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Warangal_HunterRd_I (Telangana)",
+      "destination": "Ghanpur_Palakrty_D (Telangana)",
+      "avg_distance_km": 25.825236758503596,
+      "avg_time_min": 42.529411764705884,
+      "trip_count": 17,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Warangal_HunterRd_I (Telangana)",
+      "destination": "Khanpur_Nrsampt_D (Telangana)",
+      "avg_distance_km": 32.02408349876125,
+      "avg_time_min": 45.7,
+      "trip_count": 20,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Warangal_HunterRd_I (Telangana)",
+      "destination": "Mulugu_LaxmiNGR_D (Telangana)",
+      "avg_distance_km": 43.00577958576092,
+      "avg_time_min": 56.5,
+      "trip_count": 2,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Yellandu_Sudimala_D (Telangana)",
+      "destination": "Rayaparthi_Perkadrd_D (Telangana)",
+      "avg_distance_km": 78.82502689925848,
+      "avg_time_min": 149.41666666666666,
+      "trip_count": 12,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Yellareddy_JKRoad_D (Telangana)",
+      "destination": "Medak_Dwaraka_D (Telangana)",
+      "avg_distance_km": 30.589121506740018,
+      "avg_time_min": 61.78947368421053,
+      "trip_count": 19,
+      "route_types": "FTL"
+    },
+    {
+      "source": "Zahirabad_Mohim_D (Telangana)",
+      "destination": "Hyderabad_Shamshbd_H (Telangana)",
+      "avg_distance_km": 96.07130227029035,
+      "avg_time_min": 171.04545454545453,
+      "trip_count": 22,
+      "route_types": "FTL"
+    }
+  ]
+}
