@@ -1,0 +1,92 @@
+hub_name,city,facility_code,hub_type,state
+Asifabad_PaikjNGR_D (Telangana),Asifabad,PaikjNGR,Delivery,Telangana
+Banswada_Menagrdn_D (Telangana),Banswada,Menagrdn,Delivery,Telangana
+Bellmpalli_BasthDPP_D (Telangana),Bellmpalli,BasthDPP,Delivery,Telangana
+Bhadrachalam_ITDARd_D (Telangana),Bhadrachalam,ITDARd,Delivery,Telangana
+Bhupalpally_JwahrNGR_D (Telangana),Bhupalpally,JwahrNGR,Delivery,Telangana
+Bhuvanagiri_HBColny_D (Telangana),Bhuvanagiri,HBColny,Delivery,Telangana
+Bijnapally_nagar_D (Telangana),Bijnapally,nagar,Delivery,Telangana
+Bodhan_SuryaDPP_D (Telangana),Bodhan,SuryaDPP,Delivery,Telangana
+Chinnur_AsnsdhRD_D (Telangana),Chinnur,AsnsdhRD,Delivery,Telangana
+Choutuppal_Nagaram_D (Telangana),Choutuppal,Nagaram,Delivery,Telangana
+Devarakonda_DindiRD_D (Telangana),Devarakonda,DindiRD,Delivery,Telangana
+DhrmpuriTS_HanumDPP_D (Telangana),DhrmpuriTS,HanumDPP,Delivery,Telangana
+Ghanpur_Palakrty_D (Telangana),Ghanpur,Palakrty,Delivery,Telangana
+Ghatkesar_Central_D_1 (Telangana),Ghatkesar,Central,Delivery,Telangana
+Haliya_PeroorRD_D (Telangana),Haliya,PeroorRD,Delivery,Telangana
+Husnabad_Greenmkt_D (Telangana),Husnabad,Greenmkt,Delivery,Telangana
+Hyd_Chandanagar_Dc (Telangana),Hyd,Chandanagar,Distribution Center,Telangana
+Hyd_LB-Nagar_Dc (Telangana),Hyd,LB-Nagar,Distribution Center,Telangana
+Hyd_Trimulgherry_Dc (Telangana),Hyd,Trimulgherry,Distribution Center,Telangana
+Hyd_Uppal_Dc (Telangana),Hyd,Uppal,Distribution Center,Telangana
+Hyderabad_Alwal_I (Telangana),Hyderabad,Alwal,Intermediate,Telangana
+Hyderabad_Alwal_L (Telangana),Hyderabad,Alwal,Unknown,Telangana
+Hyderabad_Bownplly_C (Telangana),Hyderabad,Bownplly,Collection,Telangana
+Hyderabad_Chikdply_C (Telangana),Hyderabad,Chikdply,Collection,Telangana
+Hyderabad_Chikdply_I (Telangana),Hyderabad,Chikdply,Intermediate,Telangana
+Hyderabad_Kondapur_D (Telangana),Hyderabad,Kondapur,Delivery,Telangana
+Hyderabad_Mhdiptnm_C (Telangana),Hyderabad,Mhdiptnm,Collection,Telangana
+Hyderabad_North_D_2 (Telangana),Hyderabad,North,Delivery,Telangana
+Hyderabad_PndrgNgr_DC (Telangana),Hyderabad,PndrgNgr,Distribution Center,Telangana
+Hyderabad_Shamshbd_H (Telangana),Hyderabad,Shamshbd,Hub,Telangana
+Hyderabad_Shamshbd_P (Telangana),Hyderabad,Shamshbd,Unknown,Telangana
+Hyderabad_South_D_12 (Telangana),Hyderabad,South,Delivery,Telangana
+Hyderabad_South_D_4 (Telangana),Hyderabad,South,Delivery,Telangana
+Hyderabad_South_R_11 (Telangana),Hyderabad,South,Unknown,Telangana
+Hyderabad_Tolichwk_I (Telangana),Hyderabad,Tolichwk,Intermediate,Telangana
+Hyderabad_Tolichwk_L (Telangana),Hyderabad,Tolichwk,Unknown,Telangana
+Hyderabad_Uppal_I (Telangana),Hyderabad,Uppal,Intermediate,Telangana
+Hyderabad_Uppal_L (Telangana),Hyderabad,Uppal,Unknown,Telangana
+Jadcherla_Badeplly_D (Telangana),Jadcherla,Badeplly,Delivery,Telangana
+Jagtial_Aravind_D (Telangana),Jagtial,Aravind,Delivery,Telangana
+Jammikunta_ConduDPP_D (Telangana),Jammikunta,ConduDPP,Delivery,Telangana
+Jangaon_Hanmkond_D (Telangana),Jangaon,Hanmkond,Delivery,Telangana
+JoguGadwal_ColctrOf_D (Telangana),JoguGadwal,ColctrOf,Delivery,Telangana
+Kadthal_GndhiDPP_D (Telangana),Kadthal,GndhiDPP,Delivery,Telangana
+Kaghaznagar_Central_DPP_1 (Telangana),Kaghaznagar,Central,Unknown,Telangana
+Kalwakurthy_VidyaNGR_D (Telangana),Kalwakurthy,VidyaNGR,Delivery,Telangana
+Kamareddy_Devenply_I (Telangana),Kamareddy,Devenply,Intermediate,Telangana
+Karimnagar_DC (Telangana),Karimnagar,,Distribution Center,Telangana
+Karimnagar_KamnHbRD_I (Telangana),Karimnagar,KamnHbRD,Intermediate,Telangana
+Khammam_NSTRoad_I (Telangana),Khammam,NSTRoad,Intermediate,Telangana
+Khanpur_Nrsampt_D (Telangana),Khanpur,Nrsampt,Delivery,Telangana
+Kodad_VidyaNgr_D (Telangana),Kodad,VidyaNgr,Delivery,Telangana
+Koratla_BhemuDPP_D (Telangana),Koratla,BhemuDPP,Delivery,Telangana
+Kusumnchi_SKRoad_D (Telangana),Kusumnchi,SKRoad,Delivery,Telangana
+Luxettipet_ShivaDPP_D (Telangana),Luxettipet,ShivaDPP,Delivery,Telangana
+Mahabubnagar_DC (Telangana),Mahabubnagar,,Distribution Center,Telangana
+Mahadevpur_Kataram_D (Telangana),Mahadevpur,Kataram,Delivery,Telangana
+Mahbubabad_Yellanda_D (Telangana),Mahbubabad,Yellanda,Delivery,Telangana
+Mancherial_Hitech_D (Telangana),Mancherial,Hitech,Delivery,Telangana
+Manthani_Chaitnya_D (Telangana),Manthani,Chaitnya,Delivery,Telangana
+Manuguru_AskNagar_D (Telangana),Manuguru,AskNagar,Delivery,Telangana
+Medak_Dwaraka_D (Telangana),Medak,Dwaraka,Delivery,Telangana
+Medchal_MROoffce_D (Telangana),Medchal,MROoffce,Delivery,Telangana
+Metpally_GunjRDPP_D (Telangana),Metpally,GunjRDPP,Delivery,Telangana
+Miryalguda_Ragvendr_D (Telangana),Miryalguda,Ragvendr,Delivery,Telangana
+Mothkur_Mainroad_D (Telangana),Mothkur,Mainroad,Delivery,Telangana
+Mulugu_LaxmiNGR_D (Telangana),Mulugu,LaxmiNGR,Delivery,Telangana
+Nalgonda_HydRoad_DC (Telangana),Nalgonda,HydRoad,Distribution Center,Telangana
+Narayankhed_Datatrya_D (Telangana),Narayankhed,Datatrya,Delivery,Telangana
+Narsapur_Xroad_D (Telangana),Narsapur,Xroad,Delivery,Telangana
+Parkal_AmbedDPP_D (Telangana),Parkal,AmbedDPP,Delivery,Telangana
+Patancheru_Ameenpur_I (Telangana),Patancheru,Ameenpur,Intermediate,Telangana
+Peddapalli_UdaynDPP_D (Telangana),Peddapalli,UdaynDPP,Delivery,Telangana
+Ramagundam_Pdmavati_D (Telangana),Ramagundam,Pdmavati,Delivery,Telangana
+Rayaparthi_Perkadrd_D (Telangana),Rayaparthi,Perkadrd,Delivery,Telangana
+Sangareddy_Pothredy_D (Telangana),Sangareddy,Pothredy,Delivery,Telangana
+Sathupally_VidyaNGR_D (Telangana),Sathupally,VidyaNGR,Delivery,Telangana
+Shadnagar_Central_D_1 (Telangana),Shadnagar,Central,Delivery,Telangana
+Shamshabad_Lngrguda_D (Telangana),Shamshabad,Lngrguda,Delivery,Telangana
+Suryapet_Krishna_D (Telangana),Suryapet,Krishna,Delivery,Telangana
+Tallada_PtrlBunk_D (Telangana),Tallada,PtrlBunk,Delivery,Telangana
+Tandur_SnthiNGR_D (Telangana),Tandur,SnthiNGR,Delivery,Telangana
+Thirumalagiri_Xroad_D (Telangana),Thirumalagiri,Xroad,Delivery,Telangana
+Vemulawada_Central_DPP_2 (Telangana),Vemulawada,Central,Unknown,Telangana
+Vikarabad_Central_DPP_2 (Telangana),Vikarabad,Central,Unknown,Telangana
+Wanaparthy_VallaDPP_D (Telangana),Wanaparthy,VallaDPP,Delivery,Telangana
+Warangal_Central_D_2 (Telangana),Warangal,Central,Delivery,Telangana
+Warangal_HunterRd_I (Telangana),Warangal,HunterRd,Intermediate,Telangana
+Yellandu_Sudimala_D (Telangana),Yellandu,Sudimala,Delivery,Telangana
+Yellareddy_JKRoad_D (Telangana),Yellareddy,JKRoad,Delivery,Telangana
+Zahirabad_Mohim_D (Telangana),Zahirabad,Mohim,Delivery,Telangana
