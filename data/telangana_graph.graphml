@@ -1,0 +1,1273 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d6" for="edge" attr.name="trips" attr.type="long" />
+  <key id="d5" for="edge" attr.name="time" attr.type="double" />
+  <key id="d4" for="edge" attr.name="distance" attr.type="double" />
+  <key id="d3" for="node" attr.name="state" attr.type="string" />
+  <key id="d2" for="node" attr.name="hub_type" attr.type="string" />
+  <key id="d1" for="node" attr.name="facility_code" attr.type="string" />
+  <key id="d0" for="node" attr.name="city" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="Asifabad_PaikjNGR_D (Telangana)">
+      <data key="d0">Asifabad</data>
+      <data key="d1">PaikjNGR</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Karimnagar_KamnHbRD_I (Telangana)">
+      <data key="d0">Karimnagar</data>
+      <data key="d1">KamnHbRD</data>
+      <data key="d2">Intermediate</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Mancherial_Hitech_D (Telangana)">
+      <data key="d0">Mancherial</data>
+      <data key="d1">Hitech</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Banswada_Menagrdn_D (Telangana)">
+      <data key="d0">Banswada</data>
+      <data key="d1">Menagrdn</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Yellareddy_JKRoad_D (Telangana)">
+      <data key="d0">Yellareddy</data>
+      <data key="d1">JKRoad</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Bellmpalli_BasthDPP_D (Telangana)">
+      <data key="d0">Bellmpalli</data>
+      <data key="d1">BasthDPP</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Kaghaznagar_Central_DPP_1 (Telangana)">
+      <data key="d0">Kaghaznagar</data>
+      <data key="d1">Central</data>
+      <data key="d2">Unknown</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Bhadrachalam_ITDARd_D (Telangana)">
+      <data key="d0">Bhadrachalam</data>
+      <data key="d1">ITDARd</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Manuguru_AskNagar_D (Telangana)">
+      <data key="d0">Manuguru</data>
+      <data key="d1">AskNagar</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Sathupally_VidyaNGR_D (Telangana)">
+      <data key="d0">Sathupally</data>
+      <data key="d1">VidyaNGR</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Bhupalpally_JwahrNGR_D (Telangana)">
+      <data key="d0">Bhupalpally</data>
+      <data key="d1">JwahrNGR</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Mahadevpur_Kataram_D (Telangana)">
+      <data key="d0">Mahadevpur</data>
+      <data key="d1">Kataram</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Bhuvanagiri_HBColny_D (Telangana)">
+      <data key="d0">Bhuvanagiri</data>
+      <data key="d1">HBColny</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Mothkur_Mainroad_D (Telangana)">
+      <data key="d0">Mothkur</data>
+      <data key="d1">Mainroad</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Thirumalagiri_Xroad_D (Telangana)">
+      <data key="d0">Thirumalagiri</data>
+      <data key="d1">Xroad</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Bijnapally_nagar_D (Telangana)">
+      <data key="d0">Bijnapally</data>
+      <data key="d1">nagar</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Jadcherla_Badeplly_D (Telangana)">
+      <data key="d0">Jadcherla</data>
+      <data key="d1">Badeplly</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Bodhan_SuryaDPP_D (Telangana)">
+      <data key="d0">Bodhan</data>
+      <data key="d1">SuryaDPP</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Chinnur_AsnsdhRD_D (Telangana)">
+      <data key="d0">Chinnur</data>
+      <data key="d1">AsnsdhRD</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Manthani_Chaitnya_D (Telangana)">
+      <data key="d0">Manthani</data>
+      <data key="d1">Chaitnya</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Choutuppal_Nagaram_D (Telangana)">
+      <data key="d0">Choutuppal</data>
+      <data key="d1">Nagaram</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Miryalguda_Ragvendr_D (Telangana)">
+      <data key="d0">Miryalguda</data>
+      <data key="d1">Ragvendr</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Devarakonda_DindiRD_D (Telangana)">
+      <data key="d0">Devarakonda</data>
+      <data key="d1">DindiRD</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Haliya_PeroorRD_D (Telangana)">
+      <data key="d0">Haliya</data>
+      <data key="d1">PeroorRD</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="DhrmpuriTS_HanumDPP_D (Telangana)">
+      <data key="d0">DhrmpuriTS</data>
+      <data key="d1">HanumDPP</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Luxettipet_ShivaDPP_D (Telangana)">
+      <data key="d0">Luxettipet</data>
+      <data key="d1">ShivaDPP</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Ghanpur_Palakrty_D (Telangana)">
+      <data key="d0">Ghanpur</data>
+      <data key="d1">Palakrty</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Jangaon_Hanmkond_D (Telangana)">
+      <data key="d0">Jangaon</data>
+      <data key="d1">Hanmkond</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Ghatkesar_Central_D_1 (Telangana)">
+      <data key="d0">Ghatkesar</data>
+      <data key="d1">Central</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Hyderabad_Uppal_I (Telangana)">
+      <data key="d0">Hyderabad</data>
+      <data key="d1">Uppal</data>
+      <data key="d2">Intermediate</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Hyderabad_Shamshbd_H (Telangana)">
+      <data key="d0">Hyderabad</data>
+      <data key="d1">Shamshbd</data>
+      <data key="d2">Hub</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Husnabad_Greenmkt_D (Telangana)">
+      <data key="d0">Husnabad</data>
+      <data key="d1">Greenmkt</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Jammikunta_ConduDPP_D (Telangana)">
+      <data key="d0">Jammikunta</data>
+      <data key="d1">ConduDPP</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Hyd_Chandanagar_Dc (Telangana)">
+      <data key="d0">Hyd</data>
+      <data key="d1">Chandanagar</data>
+      <data key="d2">Distribution Center</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Sangareddy_Pothredy_D (Telangana)">
+      <data key="d0">Sangareddy</data>
+      <data key="d1">Pothredy</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Hyd_LB-Nagar_Dc (Telangana)">
+      <data key="d0">Hyd</data>
+      <data key="d1">LB-Nagar</data>
+      <data key="d2">Distribution Center</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Hyd_Trimulgherry_Dc (Telangana)">
+      <data key="d0">Hyd</data>
+      <data key="d1">Trimulgherry</data>
+      <data key="d2">Distribution Center</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Hyderabad_Alwal_I (Telangana)">
+      <data key="d0">Hyderabad</data>
+      <data key="d1">Alwal</data>
+      <data key="d2">Intermediate</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Medchal_MROoffce_D (Telangana)">
+      <data key="d0">Medchal</data>
+      <data key="d1">MROoffce</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Hyd_Uppal_Dc (Telangana)">
+      <data key="d0">Hyd</data>
+      <data key="d1">Uppal</data>
+      <data key="d2">Distribution Center</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Hyderabad_Alwal_L (Telangana)">
+      <data key="d0">Hyderabad</data>
+      <data key="d1">Alwal</data>
+      <data key="d2">Unknown</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Hyderabad_Bownplly_C (Telangana)">
+      <data key="d0">Hyderabad</data>
+      <data key="d1">Bownplly</data>
+      <data key="d2">Collection</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Hyderabad_Shamshbd_P (Telangana)">
+      <data key="d0">Hyderabad</data>
+      <data key="d1">Shamshbd</data>
+      <data key="d2">Unknown</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Hyderabad_Chikdply_C (Telangana)">
+      <data key="d0">Hyderabad</data>
+      <data key="d1">Chikdply</data>
+      <data key="d2">Collection</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Hyderabad_Chikdply_I (Telangana)">
+      <data key="d0">Hyderabad</data>
+      <data key="d1">Chikdply</data>
+      <data key="d2">Intermediate</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Hyderabad_Mhdiptnm_C (Telangana)">
+      <data key="d0">Hyderabad</data>
+      <data key="d1">Mhdiptnm</data>
+      <data key="d2">Collection</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Hyderabad_North_D_2 (Telangana)">
+      <data key="d0">Hyderabad</data>
+      <data key="d1">North</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Hyderabad_PndrgNgr_DC (Telangana)">
+      <data key="d0">Hyderabad</data>
+      <data key="d1">PndrgNgr</data>
+      <data key="d2">Distribution Center</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Hyderabad_Tolichwk_I (Telangana)">
+      <data key="d0">Hyderabad</data>
+      <data key="d1">Tolichwk</data>
+      <data key="d2">Intermediate</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Hyderabad_Uppal_L (Telangana)">
+      <data key="d0">Hyderabad</data>
+      <data key="d1">Uppal</data>
+      <data key="d2">Unknown</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Kadthal_GndhiDPP_D (Telangana)">
+      <data key="d0">Kadthal</data>
+      <data key="d1">GndhiDPP</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Kamareddy_Devenply_I (Telangana)">
+      <data key="d0">Kamareddy</data>
+      <data key="d1">Devenply</data>
+      <data key="d2">Intermediate</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Mahabubnagar_DC (Telangana)">
+      <data key="d0">Mahabubnagar</data>
+      <data key="d1" />
+      <data key="d2">Distribution Center</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Patancheru_Ameenpur_I (Telangana)">
+      <data key="d0">Patancheru</data>
+      <data key="d1">Ameenpur</data>
+      <data key="d2">Intermediate</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Shamshabad_Lngrguda_D (Telangana)">
+      <data key="d0">Shamshabad</data>
+      <data key="d1">Lngrguda</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Tandur_SnthiNGR_D (Telangana)">
+      <data key="d0">Tandur</data>
+      <data key="d1">SnthiNGR</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Warangal_HunterRd_I (Telangana)">
+      <data key="d0">Warangal</data>
+      <data key="d1">HunterRd</data>
+      <data key="d2">Intermediate</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Hyderabad_South_D_4 (Telangana)">
+      <data key="d0">Hyderabad</data>
+      <data key="d1">South</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Hyderabad_South_R_11 (Telangana)">
+      <data key="d0">Hyderabad</data>
+      <data key="d1">South</data>
+      <data key="d2">Unknown</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Hyderabad_Kondapur_D (Telangana)">
+      <data key="d0">Hyderabad</data>
+      <data key="d1">Kondapur</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Hyderabad_Tolichwk_L (Telangana)">
+      <data key="d0">Hyderabad</data>
+      <data key="d1">Tolichwk</data>
+      <data key="d2">Unknown</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Hyderabad_South_D_12 (Telangana)">
+      <data key="d0">Hyderabad</data>
+      <data key="d1">South</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Shadnagar_Central_D_1 (Telangana)">
+      <data key="d0">Shadnagar</data>
+      <data key="d1">Central</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Jagtial_Aravind_D (Telangana)">
+      <data key="d0">Jagtial</data>
+      <data key="d1">Aravind</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="JoguGadwal_ColctrOf_D (Telangana)">
+      <data key="d0">JoguGadwal</data>
+      <data key="d1">ColctrOf</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Wanaparthy_VallaDPP_D (Telangana)">
+      <data key="d0">Wanaparthy</data>
+      <data key="d1">VallaDPP</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Kalwakurthy_VidyaNGR_D (Telangana)">
+      <data key="d0">Kalwakurthy</data>
+      <data key="d1">VidyaNGR</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Karimnagar_DC (Telangana)">
+      <data key="d0">Karimnagar</data>
+      <data key="d1" />
+      <data key="d2">Distribution Center</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Vemulawada_Central_DPP_2 (Telangana)">
+      <data key="d0">Vemulawada</data>
+      <data key="d1">Central</data>
+      <data key="d2">Unknown</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Peddapalli_UdaynDPP_D (Telangana)">
+      <data key="d0">Peddapalli</data>
+      <data key="d1">UdaynDPP</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Ramagundam_Pdmavati_D (Telangana)">
+      <data key="d0">Ramagundam</data>
+      <data key="d1">Pdmavati</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Khammam_NSTRoad_I (Telangana)">
+      <data key="d0">Khammam</data>
+      <data key="d1">NSTRoad</data>
+      <data key="d2">Intermediate</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Kodad_VidyaNgr_D (Telangana)">
+      <data key="d0">Kodad</data>
+      <data key="d1">VidyaNgr</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Kusumnchi_SKRoad_D (Telangana)">
+      <data key="d0">Kusumnchi</data>
+      <data key="d1">SKRoad</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Nalgonda_HydRoad_DC (Telangana)">
+      <data key="d0">Nalgonda</data>
+      <data key="d1">HydRoad</data>
+      <data key="d2">Distribution Center</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Suryapet_Krishna_D (Telangana)">
+      <data key="d0">Suryapet</data>
+      <data key="d1">Krishna</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Tallada_PtrlBunk_D (Telangana)">
+      <data key="d0">Tallada</data>
+      <data key="d1">PtrlBunk</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Khanpur_Nrsampt_D (Telangana)">
+      <data key="d0">Khanpur</data>
+      <data key="d1">Nrsampt</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Mahbubabad_Yellanda_D (Telangana)">
+      <data key="d0">Mahbubabad</data>
+      <data key="d1">Yellanda</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Koratla_BhemuDPP_D (Telangana)">
+      <data key="d0">Koratla</data>
+      <data key="d1">BhemuDPP</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Parkal_AmbedDPP_D (Telangana)">
+      <data key="d0">Parkal</data>
+      <data key="d1">AmbedDPP</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Yellandu_Sudimala_D (Telangana)">
+      <data key="d0">Yellandu</data>
+      <data key="d1">Sudimala</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Medak_Dwaraka_D (Telangana)">
+      <data key="d0">Medak</data>
+      <data key="d1">Dwaraka</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Narsapur_Xroad_D (Telangana)">
+      <data key="d0">Narsapur</data>
+      <data key="d1">Xroad</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Metpally_GunjRDPP_D (Telangana)">
+      <data key="d0">Metpally</data>
+      <data key="d1">GunjRDPP</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Mulugu_LaxmiNGR_D (Telangana)">
+      <data key="d0">Mulugu</data>
+      <data key="d1">LaxmiNGR</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Narayankhed_Datatrya_D (Telangana)">
+      <data key="d0">Narayankhed</data>
+      <data key="d1">Datatrya</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Zahirabad_Mohim_D (Telangana)">
+      <data key="d0">Zahirabad</data>
+      <data key="d1">Mohim</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Rayaparthi_Perkadrd_D (Telangana)">
+      <data key="d0">Rayaparthi</data>
+      <data key="d1">Perkadrd</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Vikarabad_Central_DPP_2 (Telangana)">
+      <data key="d0">Vikarabad</data>
+      <data key="d1">Central</data>
+      <data key="d2">Unknown</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <node id="Warangal_Central_D_2 (Telangana)">
+      <data key="d0">Warangal</data>
+      <data key="d1">Central</data>
+      <data key="d2">Delivery</data>
+      <data key="d3">Telangana</data>
+    </node>
+    <edge source="Asifabad_PaikjNGR_D (Telangana)" target="Karimnagar_KamnHbRD_I (Telangana)">
+      <data key="d4">105.09421789326124</data>
+      <data key="d5">242.28571428571428</data>
+      <data key="d6">7</data>
+    </edge>
+    <edge source="Asifabad_PaikjNGR_D (Telangana)" target="Mancherial_Hitech_D (Telangana)">
+      <data key="d4">53.16490341440738</data>
+      <data key="d5">75.5</data>
+      <data key="d6">2</data>
+    </edge>
+    <edge source="Karimnagar_KamnHbRD_I (Telangana)" target="Bellmpalli_BasthDPP_D (Telangana)">
+      <data key="d4">81.28434504711451</data>
+      <data key="d5">184.0</data>
+      <data key="d6">1</data>
+    </edge>
+    <edge source="Karimnagar_KamnHbRD_I (Telangana)" target="Hyderabad_Shamshbd_H (Telangana)">
+      <data key="d4">153.84449067070992</data>
+      <data key="d5">340.0</data>
+      <data key="d6">1</data>
+    </edge>
+    <edge source="Karimnagar_KamnHbRD_I (Telangana)" target="Kamareddy_Devenply_I (Telangana)">
+      <data key="d4">86.04642235363696</data>
+      <data key="d5">125.5</data>
+      <data key="d6">2</data>
+    </edge>
+    <edge source="Karimnagar_KamnHbRD_I (Telangana)" target="Mancherial_Hitech_D (Telangana)">
+      <data key="d4">60.397476334498585</data>
+      <data key="d5">101.0</data>
+      <data key="d6">11</data>
+    </edge>
+    <edge source="Karimnagar_KamnHbRD_I (Telangana)" target="Manthani_Chaitnya_D (Telangana)">
+      <data key="d4">62.313931432964864</data>
+      <data key="d5">158.0</data>
+      <data key="d6">3</data>
+    </edge>
+    <edge source="Karimnagar_KamnHbRD_I (Telangana)" target="Peddapalli_UdaynDPP_D (Telangana)">
+      <data key="d4">31.161735178846413</data>
+      <data key="d5">41.0</data>
+      <data key="d6">1</data>
+    </edge>
+    <edge source="Karimnagar_KamnHbRD_I (Telangana)" target="Ramagundam_Pdmavati_D (Telangana)">
+      <data key="d4">53.74652993298617</data>
+      <data key="d5">136.28571428571428</data>
+      <data key="d6">7</data>
+    </edge>
+    <edge source="Karimnagar_KamnHbRD_I (Telangana)" target="Vemulawada_Central_DPP_2 (Telangana)">
+      <data key="d4">28.61459438939075</data>
+      <data key="d5">56.75</data>
+      <data key="d6">4</data>
+    </edge>
+    <edge source="Mancherial_Hitech_D (Telangana)" target="Bellmpalli_BasthDPP_D (Telangana)">
+      <data key="d4">20.997233684805742</data>
+      <data key="d5">34.0</data>
+      <data key="d6">1</data>
+    </edge>
+    <edge source="Mancherial_Hitech_D (Telangana)" target="Karimnagar_KamnHbRD_I (Telangana)">
+      <data key="d4">60.16133924948644</data>
+      <data key="d5">143.66666666666666</data>
+      <data key="d6">6</data>
+    </edge>
+    <edge source="Banswada_Menagrdn_D (Telangana)" target="Yellareddy_JKRoad_D (Telangana)">
+      <data key="d4">25.350276679365084</data>
+      <data key="d5">41.95</data>
+      <data key="d6">20</data>
+    </edge>
+    <edge source="Yellareddy_JKRoad_D (Telangana)" target="Medak_Dwaraka_D (Telangana)">
+      <data key="d4">30.589121506740018</data>
+      <data key="d5">61.78947368421053</data>
+      <data key="d6">19</data>
+    </edge>
+    <edge source="Bellmpalli_BasthDPP_D (Telangana)" target="Asifabad_PaikjNGR_D (Telangana)">
+      <data key="d4">36.5433240951985</data>
+      <data key="d5">84.0</data>
+      <data key="d6">2</data>
+    </edge>
+    <edge source="Bellmpalli_BasthDPP_D (Telangana)" target="Kaghaznagar_Central_DPP_1 (Telangana)">
+      <data key="d4">32.09045181055206</data>
+      <data key="d5">52.333333333333336</data>
+      <data key="d6">3</data>
+    </edge>
+    <edge source="Kaghaznagar_Central_DPP_1 (Telangana)" target="Asifabad_PaikjNGR_D (Telangana)">
+      <data key="d4">19.173898824504505</data>
+      <data key="d5">33.0</data>
+      <data key="d6">2</data>
+    </edge>
+    <edge source="Kaghaznagar_Central_DPP_1 (Telangana)" target="Karimnagar_KamnHbRD_I (Telangana)">
+      <data key="d4">109.03195757112496</data>
+      <data key="d5">200.0</data>
+      <data key="d6">1</data>
+    </edge>
+    <edge source="Kaghaznagar_Central_DPP_1 (Telangana)" target="Mancherial_Hitech_D (Telangana)">
+      <data key="d4">52.112239418402766</data>
+      <data key="d5">76.0</data>
+      <data key="d6">1</data>
+    </edge>
+    <edge source="Bhadrachalam_ITDARd_D (Telangana)" target="Manuguru_AskNagar_D (Telangana)">
+      <data key="d4">29.457011704798227</data>
+      <data key="d5">53.94736842105263</data>
+      <data key="d6">19</data>
+    </edge>
+    <edge source="Bhadrachalam_ITDARd_D (Telangana)" target="Sathupally_VidyaNGR_D (Telangana)">
+      <data key="d4">51.38248775863705</data>
+      <data key="d5">141.0</data>
+      <data key="d6">1</data>
+    </edge>
+    <edge source="Manuguru_AskNagar_D (Telangana)" target="Sathupally_VidyaNGR_D (Telangana)">
+      <data key="d4">79.98204633699405</data>
+      <data key="d5">198.55555555555557</data>
+      <data key="d6">18</data>
+    </edge>
+    <edge source="Sathupally_VidyaNGR_D (Telangana)" target="Khammam_NSTRoad_I (Telangana)">
+      <data key="d4">70.94093870341246</data>
+      <data key="d5">155.83333333333334</data>
+      <data key="d6">18</data>
+    </edge>
+    <edge source="Bhupalpally_JwahrNGR_D (Telangana)" target="Mahadevpur_Kataram_D (Telangana)">
+      <data key="d4">22.5002814886222</data>
+      <data key="d5">34.0</data>
+      <data key="d6">1</data>
+    </edge>
+    <edge source="Mahadevpur_Kataram_D (Telangana)" target="Parkal_AmbedDPP_D (Telangana)">
+      <data key="d4">52.74389312851972</data>
+      <data key="d5">89.0</data>
+      <data key="d6">1</data>
+    </edge>
+    <edge source="Bhuvanagiri_HBColny_D (Telangana)" target="Mothkur_Mainroad_D (Telangana)">
+      <data key="d4">38.98346989195706</data>
+      <data key="d5">47.71428571428572</data>
+      <data key="d6">14</data>
+    </edge>
+    <edge source="Bhuvanagiri_HBColny_D (Telangana)" target="Thirumalagiri_Xroad_D (Telangana)">
+      <data key="d4">60.06108980370035</data>
+      <data key="d5">90.0</data>
+      <data key="d6">1</data>
+    </edge>
+    <edge source="Mothkur_Mainroad_D (Telangana)" target="Thirumalagiri_Xroad_D (Telangana)">
+      <data key="d4">20.555597071296333</data>
+      <data key="d5">36.09090909090909</data>
+      <data key="d6">11</data>
+    </edge>
+    <edge source="Thirumalagiri_Xroad_D (Telangana)" target="Hyderabad_Uppal_I (Telangana)">
+      <data key="d4">94.00415717206228</data>
+      <data key="d5">165.07142857142858</data>
+      <data key="d6">14</data>
+    </edge>
+    <edge source="Bijnapally_nagar_D (Telangana)" target="Jadcherla_Badeplly_D (Telangana)">
+      <data key="d4">27.0583187449067</data>
+      <data key="d5">38.78947368421053</data>
+      <data key="d6">19</data>
+    </edge>
+    <edge source="Jadcherla_Badeplly_D (Telangana)" target="Hyderabad_Shamshbd_H (Telangana)">
+      <data key="d4">58.52111334619552</data>
+      <data key="d5">92.28571428571428</data>
+      <data key="d6">14</data>
+    </edge>
+    <edge source="Jadcherla_Badeplly_D (Telangana)" target="Shadnagar_Central_D_1 (Telangana)">
+      <data key="d4">31.359132295969808</data>
+      <data key="d5">53.6</data>
+      <data key="d6">5</data>
+    </edge>
+    <edge source="Bodhan_SuryaDPP_D (Telangana)" target="Banswada_Menagrdn_D (Telangana)">
+      <data key="d4">28.847683279652436</data>
+      <data key="d5">43.0</data>
+      <data key="d6">19</data>
+    </edge>
+    <edge source="Chinnur_AsnsdhRD_D (Telangana)" target="Karimnagar_KamnHbRD_I (Telangana)">
+      <data key="d4">81.41808795963196</data>
+      <data key="d5">156.0</data>
+      <data key="d6">1</data>
+    </edge>
+    <edge source="Chinnur_AsnsdhRD_D (Telangana)" target="Manthani_Chaitnya_D (Telangana)">
+      <data key="d4">24.69244700052997</data>
+      <data key="d5">86.6</data>
+      <data key="d6">5</data>
+    </edge>
+    <edge source="Manthani_Chaitnya_D (Telangana)" target="Karimnagar_KamnHbRD_I (Telangana)">
+      <data key="d4">61.42089410958417</data>
+      <data key="d5">143.88888888888889</data>
+      <data key="d6">9</data>
+    </edge>
+    <edge source="Manthani_Chaitnya_D (Telangana)" target="Ramagundam_Pdmavati_D (Telangana)">
+      <data key="d4">18.9077205181848</data>
+      <data key="d5">41.0</data>
+      <data key="d6">2</data>
+    </edge>
+    <edge source="Choutuppal_Nagaram_D (Telangana)" target="Miryalguda_Ragvendr_D (Telangana)">
+      <data key="d4">79.6966963554094</data>
+      <data key="d5">110.66666666666669</data>
+      <data key="d6">6</data>
+    </edge>
+    <edge source="Miryalguda_Ragvendr_D (Telangana)" target="Khammam_NSTRoad_I (Telangana)">
+      <data key="d4">76.93688373988795</data>
+      <data key="d5">202.0</data>
+      <data key="d6">5</data>
+    </edge>
+    <edge source="Miryalguda_Ragvendr_D (Telangana)" target="Kodad_VidyaNgr_D (Telangana)">
+      <data key="d4">44.2620110335472</data>
+      <data key="d5">92.0</data>
+      <data key="d6">1</data>
+    </edge>
+    <edge source="Devarakonda_DindiRD_D (Telangana)" target="Haliya_PeroorRD_D (Telangana)">
+      <data key="d4">44.10241512508034</data>
+      <data key="d5">59.8</data>
+      <data key="d6">15</data>
+    </edge>
+    <edge source="Haliya_PeroorRD_D (Telangana)" target="Hyderabad_Shamshbd_H (Telangana)">
+      <data key="d4">109.88837609167769</data>
+      <data key="d5">240.0</data>
+      <data key="d6">12</data>
+    </edge>
+    <edge source="DhrmpuriTS_HanumDPP_D (Telangana)" target="Karimnagar_KamnHbRD_I (Telangana)">
+      <data key="d4">56.94962936873068</data>
+      <data key="d5">117.0</data>
+      <data key="d6">1</data>
+    </edge>
+    <edge source="DhrmpuriTS_HanumDPP_D (Telangana)" target="Luxettipet_ShivaDPP_D (Telangana)">
+      <data key="d4">15.000648498677483</data>
+      <data key="d5">41.0</data>
+      <data key="d6">1</data>
+    </edge>
+    <edge source="Luxettipet_ShivaDPP_D (Telangana)" target="Karimnagar_KamnHbRD_I (Telangana)">
+      <data key="d4">52.81226566402312</data>
+      <data key="d5">126.4</data>
+      <data key="d6">15</data>
+    </edge>
+    <edge source="Ghanpur_Palakrty_D (Telangana)" target="Jangaon_Hanmkond_D (Telangana)">
+      <data key="d4">24.10010963767137</data>
+      <data key="d5">29.8125</data>
+      <data key="d6">16</data>
+    </edge>
+    <edge source="Jangaon_Hanmkond_D (Telangana)" target="Hyderabad_Shamshbd_H (Telangana)">
+      <data key="d4">97.87700688262416</data>
+      <data key="d5">196.75</data>
+      <data key="d6">16</data>
+    </edge>
+    <edge source="Ghatkesar_Central_D_1 (Telangana)" target="Hyderabad_Uppal_I (Telangana)">
+      <data key="d4">11.57230124348198</data>
+      <data key="d5">41.0</data>
+      <data key="d6">2</data>
+    </edge>
+    <edge source="Hyderabad_Uppal_I (Telangana)" target="Bhuvanagiri_HBColny_D (Telangana)">
+      <data key="d4">33.85129923772092</data>
+      <data key="d5">65.38461538461539</data>
+      <data key="d6">13</data>
+    </edge>
+    <edge source="Hyderabad_Uppal_I (Telangana)" target="Hyd_LB-Nagar_Dc (Telangana)">
+      <data key="d4">9.864476800165344</data>
+      <data key="d5">38.5</data>
+      <data key="d6">2</data>
+    </edge>
+    <edge source="Hyderabad_Uppal_I (Telangana)" target="Hyderabad_Shamshbd_H (Telangana)">
+      <data key="d4">26.80846186345797</data>
+      <data key="d5">172.26666666666668</data>
+      <data key="d6">15</data>
+    </edge>
+    <edge source="Hyderabad_Uppal_I (Telangana)" target="Hyderabad_South_D_12 (Telangana)">
+      <data key="d4">9.34399351496303</data>
+      <data key="d5">38.875</data>
+      <data key="d6">8</data>
+    </edge>
+    <edge source="Hyderabad_Shamshbd_H (Telangana)" target="Choutuppal_Nagaram_D (Telangana)">
+      <data key="d4">54.450495882280485</data>
+      <data key="d5">104.71428571428572</data>
+      <data key="d6">7</data>
+    </edge>
+    <edge source="Hyderabad_Shamshbd_H (Telangana)" target="Hyderabad_Alwal_I (Telangana)">
+      <data key="d4">34.73597396425652</data>
+      <data key="d5">80.75</data>
+      <data key="d6">12</data>
+    </edge>
+    <edge source="Hyderabad_Shamshbd_H (Telangana)" target="Hyderabad_Alwal_L (Telangana)">
+      <data key="d4">35.67826112015963</data>
+      <data key="d5">128.96969696969697</data>
+      <data key="d6">33</data>
+    </edge>
+    <edge source="Hyderabad_Shamshbd_H (Telangana)" target="Hyderabad_Chikdply_I (Telangana)">
+      <data key="d4">21.463486427490142</data>
+      <data key="d5">58.833333333333336</data>
+      <data key="d6">24</data>
+    </edge>
+    <edge source="Hyderabad_Shamshbd_H (Telangana)" target="Hyderabad_Tolichwk_I (Telangana)">
+      <data key="d4">17.815107747603662</data>
+      <data key="d5">39.68421052631579</data>
+      <data key="d6">19</data>
+    </edge>
+    <edge source="Hyderabad_Shamshbd_H (Telangana)" target="Hyderabad_Uppal_I (Telangana)">
+      <data key="d4">27.430423238921428</data>
+      <data key="d5">63.6</data>
+      <data key="d6">10</data>
+    </edge>
+    <edge source="Hyderabad_Shamshbd_H (Telangana)" target="Hyderabad_Uppal_L (Telangana)">
+      <data key="d4">27.01501476093613</data>
+      <data key="d5">77.83333333333333</data>
+      <data key="d6">6</data>
+    </edge>
+    <edge source="Hyderabad_Shamshbd_H (Telangana)" target="Kadthal_GndhiDPP_D (Telangana)">
+      <data key="d4">29.27066207628166</data>
+      <data key="d5">52.294117647058826</data>
+      <data key="d6">17</data>
+    </edge>
+    <edge source="Hyderabad_Shamshbd_H (Telangana)" target="Kamareddy_Devenply_I (Telangana)">
+      <data key="d4">120.59120275115782</data>
+      <data key="d5">183.0</data>
+      <data key="d6">2</data>
+    </edge>
+    <edge source="Hyderabad_Shamshbd_H (Telangana)" target="Karimnagar_KamnHbRD_I (Telangana)">
+      <data key="d4">155.2332008628609</data>
+      <data key="d5">222.0</data>
+      <data key="d6">2</data>
+    </edge>
+    <edge source="Hyderabad_Shamshbd_H (Telangana)" target="Mahabubnagar_DC (Telangana)">
+      <data key="d4">66.78872972925996</data>
+      <data key="d5">94.0</data>
+      <data key="d6">17</data>
+    </edge>
+    <edge source="Hyderabad_Shamshbd_H (Telangana)" target="Patancheru_Ameenpur_I (Telangana)">
+      <data key="d4">29.300080268235035</data>
+      <data key="d5">60.22222222222222</data>
+      <data key="d6">18</data>
+    </edge>
+    <edge source="Hyderabad_Shamshbd_H (Telangana)" target="Shamshabad_Lngrguda_D (Telangana)">
+      <data key="d4">18.201387429922843</data>
+      <data key="d5">122.0</data>
+      <data key="d6">1</data>
+    </edge>
+    <edge source="Hyderabad_Shamshbd_H (Telangana)" target="Tandur_SnthiNGR_D (Telangana)">
+      <data key="d4">84.77611944133704</data>
+      <data key="d5">150.375</data>
+      <data key="d6">8</data>
+    </edge>
+    <edge source="Hyderabad_Shamshbd_H (Telangana)" target="Warangal_HunterRd_I (Telangana)">
+      <data key="d4">150.25113849240714</data>
+      <data key="d5">223.25</data>
+      <data key="d6">16</data>
+    </edge>
+    <edge source="Husnabad_Greenmkt_D (Telangana)" target="Jammikunta_ConduDPP_D (Telangana)">
+      <data key="d4">31.715374694178404</data>
+      <data key="d5">78.0</data>
+      <data key="d6">13</data>
+    </edge>
+    <edge source="Jammikunta_ConduDPP_D (Telangana)" target="Warangal_HunterRd_I (Telangana)">
+      <data key="d4">35.72885532434958</data>
+      <data key="d5">167.1875</data>
+      <data key="d6">16</data>
+    </edge>
+    <edge source="Hyd_Chandanagar_Dc (Telangana)" target="Sangareddy_Pothredy_D (Telangana)">
+      <data key="d4">24.884534628110803</data>
+      <data key="d5">45.0</data>
+      <data key="d6">4</data>
+    </edge>
+    <edge source="Sangareddy_Pothredy_D (Telangana)" target="Patancheru_Ameenpur_I (Telangana)">
+      <data key="d4">27.290361960150307</data>
+      <data key="d5">50.0</data>
+      <data key="d6">2</data>
+    </edge>
+    <edge source="Hyd_LB-Nagar_Dc (Telangana)" target="Hyderabad_Uppal_I (Telangana)">
+      <data key="d4">10.30948050246579</data>
+      <data key="d5">33.0</data>
+      <data key="d6">1</data>
+    </edge>
+    <edge source="Hyd_Trimulgherry_Dc (Telangana)" target="Hyderabad_Alwal_I (Telangana)">
+      <data key="d4">9.18717239229196</data>
+      <data key="d5">44.0</data>
+      <data key="d6">1</data>
+    </edge>
+    <edge source="Hyd_Trimulgherry_Dc (Telangana)" target="Medchal_MROoffce_D (Telangana)">
+      <data key="d4">16.434391229452366</data>
+      <data key="d5">35.0</data>
+      <data key="d6">1</data>
+    </edge>
+    <edge source="Hyderabad_Alwal_I (Telangana)" target="Hyd_Trimulgherry_Dc (Telangana)">
+      <data key="d4">9.11092270452614</data>
+      <data key="d5">31.0</data>
+      <data key="d6">1</data>
+    </edge>
+    <edge source="Hyderabad_Alwal_I (Telangana)" target="Hyderabad_Shamshbd_H (Telangana)">
+      <data key="d4">35.32239002491836</data>
+      <data key="d5">193.33333333333331</data>
+      <data key="d6">9</data>
+    </edge>
+    <edge source="Hyderabad_Alwal_I (Telangana)" target="Medchal_MROoffce_D (Telangana)">
+      <data key="d4">9.50101372105903</data>
+      <data key="d5">57.0</data>
+      <data key="d6">1</data>
+    </edge>
+    <edge source="Medchal_MROoffce_D (Telangana)" target="Hyderabad_Alwal_I (Telangana)">
+      <data key="d4">9.510166632514116</data>
+      <data key="d5">103.85714285714286</data>
+      <data key="d6">14</data>
+    </edge>
+    <edge source="Hyd_Uppal_Dc (Telangana)" target="Ghatkesar_Central_D_1 (Telangana)">
+      <data key="d4">12.493257745495171</data>
+      <data key="d5">21.0</data>
+      <data key="d6">2</data>
+    </edge>
+    <edge source="Hyderabad_Alwal_L (Telangana)" target="Hyderabad_Shamshbd_H (Telangana)">
+      <data key="d4">35.69564140778872</data>
+      <data key="d5">102.07692307692308</data>
+      <data key="d6">39</data>
+    </edge>
+    <edge source="Hyderabad_Bownplly_C (Telangana)" target="Hyderabad_Shamshbd_P (Telangana)">
+      <data key="d4">26.96544355953307</data>
+      <data key="d5">202.63636363636363</data>
+      <data key="d6">11</data>
+    </edge>
+    <edge source="Hyderabad_Chikdply_C (Telangana)" target="Hyderabad_Shamshbd_P (Telangana)">
+      <data key="d4">21.83557851561085</data>
+      <data key="d5">73.8125</data>
+      <data key="d6">32</data>
+    </edge>
+    <edge source="Hyderabad_Chikdply_I (Telangana)" target="Hyderabad_Shamshbd_H (Telangana)">
+      <data key="d4">21.77643858507266</data>
+      <data key="d5">68.65</data>
+      <data key="d6">20</data>
+    </edge>
+    <edge source="Hyderabad_Mhdiptnm_C (Telangana)" target="Hyderabad_Shamshbd_P (Telangana)">
+      <data key="d4">16.548425186590702</data>
+      <data key="d5">54.0625</data>
+      <data key="d6">16</data>
+    </edge>
+    <edge source="Hyderabad_North_D_2 (Telangana)" target="Medchal_MROoffce_D (Telangana)">
+      <data key="d4">14.112839998687765</data>
+      <data key="d5">27.94117647058824</data>
+      <data key="d6">17</data>
+    </edge>
+    <edge source="Hyderabad_PndrgNgr_DC (Telangana)" target="Hyderabad_Chikdply_I (Telangana)">
+      <data key="d4">9.29087990516049</data>
+      <data key="d5">61.25</data>
+      <data key="d6">4</data>
+    </edge>
+    <edge source="Hyderabad_Tolichwk_I (Telangana)" target="Hyderabad_Kondapur_D (Telangana)">
+      <data key="d4">9.33539944717219</data>
+      <data key="d5">52.0</data>
+      <data key="d6">1</data>
+    </edge>
+    <edge source="Hyderabad_Tolichwk_I (Telangana)" target="Hyderabad_Shamshbd_H (Telangana)">
+      <data key="d4">17.705948355232717</data>
+      <data key="d5">150.46153846153845</data>
+      <data key="d6">13</data>
+    </edge>
+    <edge source="Hyderabad_Uppal_L (Telangana)" target="Hyderabad_Shamshbd_H (Telangana)">
+      <data key="d4">27.175024476426245</data>
+      <data key="d5">89.75</data>
+      <data key="d6">8</data>
+    </edge>
+    <edge source="Kadthal_GndhiDPP_D (Telangana)" target="Devarakonda_DindiRD_D (Telangana)">
+      <data key="d4">54.64939122749461</data>
+      <data key="d5">132.375</data>
+      <data key="d6">8</data>
+    </edge>
+    <edge source="Kadthal_GndhiDPP_D (Telangana)" target="Kalwakurthy_VidyaNGR_D (Telangana)">
+      <data key="d4">34.872567489404176</data>
+      <data key="d5">58.11111111111112</data>
+      <data key="d6">9</data>
+    </edge>
+    <edge source="Kamareddy_Devenply_I (Telangana)" target="Bodhan_SuryaDPP_D (Telangana)">
+      <data key="d4">59.25970224824529</data>
+      <data key="d5">111.6</data>
+      <data key="d6">20</data>
+    </edge>
+    <edge source="Kamareddy_Devenply_I (Telangana)" target="Hyderabad_Shamshbd_H (Telangana)">
+      <data key="d4">120.5599667454678</data>
+      <data key="d5">252.07692307692307</data>
+      <data key="d6">13</data>
+    </edge>
+    <edge source="Kamareddy_Devenply_I (Telangana)" target="Karimnagar_KamnHbRD_I (Telangana)">
+      <data key="d4">85.26531025390285</data>
+      <data key="d5">125.0</data>
+      <data key="d6">1</data>
+    </edge>
+    <edge source="Mahabubnagar_DC (Telangana)" target="Bijnapally_nagar_D (Telangana)">
+      <data key="d4">31.274903495609117</data>
+      <data key="d5">53.1578947368421</data>
+      <data key="d6">19</data>
+    </edge>
+    <edge source="Patancheru_Ameenpur_I (Telangana)" target="Hyderabad_Shamshbd_H (Telangana)">
+      <data key="d4">29.17604408270342</data>
+      <data key="d5">124.0952380952381</data>
+      <data key="d6">21</data>
+    </edge>
+    <edge source="Patancheru_Ameenpur_I (Telangana)" target="Shamshabad_Lngrguda_D (Telangana)">
+      <data key="d4">28.10714906155089</data>
+      <data key="d5">147.0</data>
+      <data key="d6">5</data>
+    </edge>
+    <edge source="Tandur_SnthiNGR_D (Telangana)" target="Vikarabad_Central_DPP_2 (Telangana)">
+      <data key="d4">34.259117292653904</data>
+      <data key="d5">66.6</data>
+      <data key="d6">5</data>
+    </edge>
+    <edge source="Warangal_HunterRd_I (Telangana)" target="Ghanpur_Palakrty_D (Telangana)">
+      <data key="d4">25.8252367585036</data>
+      <data key="d5">42.52941176470589</data>
+      <data key="d6">17</data>
+    </edge>
+    <edge source="Warangal_HunterRd_I (Telangana)" target="Khanpur_Nrsampt_D (Telangana)">
+      <data key="d4">32.02408349876125</data>
+      <data key="d5">45.7</data>
+      <data key="d6">20</data>
+    </edge>
+    <edge source="Warangal_HunterRd_I (Telangana)" target="Mulugu_LaxmiNGR_D (Telangana)">
+      <data key="d4">43.00577958576092</data>
+      <data key="d5">56.5</data>
+      <data key="d6">2</data>
+    </edge>
+    <edge source="Hyderabad_South_D_4 (Telangana)" target="Hyderabad_Uppal_I (Telangana)">
+      <data key="d4">14.70570838190364</data>
+      <data key="d5">56.89473684210526</data>
+      <data key="d6">19</data>
+    </edge>
+    <edge source="Hyderabad_South_R_11 (Telangana)" target="Hyderabad_Mhdiptnm_C (Telangana)">
+      <data key="d4">16.45340694579684</data>
+      <data key="d5">65.9090909090909</data>
+      <data key="d6">11</data>
+    </edge>
+    <edge source="Hyderabad_Tolichwk_L (Telangana)" target="Hyderabad_Shamshbd_H (Telangana)">
+      <data key="d4">17.040572627438735</data>
+      <data key="d5">113.66666666666669</data>
+      <data key="d6">6</data>
+    </edge>
+    <edge source="Shadnagar_Central_D_1 (Telangana)" target="Hyderabad_Shamshbd_H (Telangana)">
+      <data key="d4">26.59270481703949</data>
+      <data key="d5">53.5</data>
+      <data key="d6">12</data>
+    </edge>
+    <edge source="Jagtial_Aravind_D (Telangana)" target="DhrmpuriTS_HanumDPP_D (Telangana)">
+      <data key="d4">23.41704290630322</data>
+      <data key="d5">32.166666666666664</data>
+      <data key="d6">12</data>
+    </edge>
+    <edge source="JoguGadwal_ColctrOf_D (Telangana)" target="Wanaparthy_VallaDPP_D (Telangana)">
+      <data key="d4">30.21532942036044</data>
+      <data key="d5">77.33333333333333</data>
+      <data key="d6">9</data>
+    </edge>
+    <edge source="Kalwakurthy_VidyaNGR_D (Telangana)" target="Devarakonda_DindiRD_D (Telangana)">
+      <data key="d4">43.65025795104085</data>
+      <data key="d5">75.375</data>
+      <data key="d6">8</data>
+    </edge>
+    <edge source="Karimnagar_DC (Telangana)" target="Jagtial_Aravind_D (Telangana)">
+      <data key="d4">43.62873799696725</data>
+      <data key="d5">69.0</data>
+      <data key="d6">1</data>
+    </edge>
+    <edge source="Karimnagar_DC (Telangana)" target="Vemulawada_Central_DPP_2 (Telangana)">
+      <data key="d4">28.108649696652957</data>
+      <data key="d5">53.44444444444444</data>
+      <data key="d6">9</data>
+    </edge>
+    <edge source="Vemulawada_Central_DPP_2 (Telangana)" target="Jagtial_Aravind_D (Telangana)">
+      <data key="d4">33.7629131579794</data>
+      <data key="d5">84.0</data>
+      <data key="d6">1</data>
+    </edge>
+    <edge source="Vemulawada_Central_DPP_2 (Telangana)" target="Metpally_GunjRDPP_D (Telangana)">
+      <data key="d4">46.72604147636612</data>
+      <data key="d5">72.4</data>
+      <data key="d6">5</data>
+    </edge>
+    <edge source="Ramagundam_Pdmavati_D (Telangana)" target="Chinnur_AsnsdhRD_D (Telangana)">
+      <data key="d4">30.6768485372456</data>
+      <data key="d5">53.0</data>
+      <data key="d6">5</data>
+    </edge>
+    <edge source="Ramagundam_Pdmavati_D (Telangana)" target="Karimnagar_KamnHbRD_I (Telangana)">
+      <data key="d4">53.76070635297176</data>
+      <data key="d5">127.0</data>
+      <data key="d6">3</data>
+    </edge>
+    <edge source="Khammam_NSTRoad_I (Telangana)" target="Kodad_VidyaNgr_D (Telangana)">
+      <data key="d4">35.20537859052258</data>
+      <data key="d5">76.58333333333333</data>
+      <data key="d6">12</data>
+    </edge>
+    <edge source="Khammam_NSTRoad_I (Telangana)" target="Kusumnchi_SKRoad_D (Telangana)">
+      <data key="d4">20.34973409982966</data>
+      <data key="d5">35.333333333333336</data>
+      <data key="d6">3</data>
+    </edge>
+    <edge source="Khammam_NSTRoad_I (Telangana)" target="Manuguru_AskNagar_D (Telangana)">
+      <data key="d4">102.59248568430392</data>
+      <data key="d5">162.0</data>
+      <data key="d6">1</data>
+    </edge>
+    <edge source="Khammam_NSTRoad_I (Telangana)" target="Miryalguda_Ragvendr_D (Telangana)">
+      <data key="d4">77.10858681716303</data>
+      <data key="d5">129.0</data>
+      <data key="d6">2</data>
+    </edge>
+    <edge source="Khammam_NSTRoad_I (Telangana)" target="Nalgonda_HydRoad_DC (Telangana)">
+      <data key="d4">96.72693943026611</data>
+      <data key="d5">205.0</data>
+      <data key="d6">1</data>
+    </edge>
+    <edge source="Khammam_NSTRoad_I (Telangana)" target="Suryapet_Krishna_D (Telangana)">
+      <data key="d4">57.88433056716913</data>
+      <data key="d5">81.35714285714286</data>
+      <data key="d6">14</data>
+    </edge>
+    <edge source="Khammam_NSTRoad_I (Telangana)" target="Tallada_PtrlBunk_D (Telangana)">
+      <data key="d4">27.28866647391935</data>
+      <data key="d5">61.77777777777778</data>
+      <data key="d6">9</data>
+    </edge>
+    <edge source="Kodad_VidyaNgr_D (Telangana)" target="Khammam_NSTRoad_I (Telangana)">
+      <data key="d4">33.7628673141883</data>
+      <data key="d5">54.5</data>
+      <data key="d6">2</data>
+    </edge>
+    <edge source="Kodad_VidyaNgr_D (Telangana)" target="Kusumnchi_SKRoad_D (Telangana)">
+      <data key="d4">24.211526178578936</data>
+      <data key="d5">51.25</data>
+      <data key="d6">12</data>
+    </edge>
+    <edge source="Kodad_VidyaNgr_D (Telangana)" target="Miryalguda_Ragvendr_D (Telangana)">
+      <data key="d4">44.39915487018335</data>
+      <data key="d5">75.25</data>
+      <data key="d6">4</data>
+    </edge>
+    <edge source="Kusumnchi_SKRoad_D (Telangana)" target="Khammam_NSTRoad_I (Telangana)">
+      <data key="d4">21.39420864098189</data>
+      <data key="d5">179.4</data>
+      <data key="d6">10</data>
+    </edge>
+    <edge source="Kusumnchi_SKRoad_D (Telangana)" target="Kodad_VidyaNgr_D (Telangana)">
+      <data key="d4">23.869006387018803</data>
+      <data key="d5">43.4</data>
+      <data key="d6">5</data>
+    </edge>
+    <edge source="Nalgonda_HydRoad_DC (Telangana)" target="Hyderabad_Shamshbd_H (Telangana)">
+      <data key="d4">93.94583268458749</data>
+      <data key="d5">156.85714285714286</data>
+      <data key="d6">14</data>
+    </edge>
+    <edge source="Suryapet_Krishna_D (Telangana)" target="Nalgonda_HydRoad_DC (Telangana)">
+      <data key="d4">38.49219002570982</data>
+      <data key="d5">72.0</data>
+      <data key="d6">14</data>
+    </edge>
+    <edge source="Khanpur_Nrsampt_D (Telangana)" target="Mahbubabad_Yellanda_D (Telangana)">
+      <data key="d4">38.107266568828166</data>
+      <data key="d5">65.36842105263158</data>
+      <data key="d6">19</data>
+    </edge>
+    <edge source="Mahbubabad_Yellanda_D (Telangana)" target="Yellandu_Sudimala_D (Telangana)">
+      <data key="d4">35.20291508909166</data>
+      <data key="d5">45.38461538461539</data>
+      <data key="d6">13</data>
+    </edge>
+    <edge source="Koratla_BhemuDPP_D (Telangana)" target="DhrmpuriTS_HanumDPP_D (Telangana)">
+      <data key="d4">40.09685787271648</data>
+      <data key="d5">99.0</data>
+      <data key="d6">1</data>
+    </edge>
+    <edge source="Yellandu_Sudimala_D (Telangana)" target="Rayaparthi_Perkadrd_D (Telangana)">
+      <data key="d4">78.82502689925848</data>
+      <data key="d5">149.41666666666666</data>
+      <data key="d6">12</data>
+    </edge>
+    <edge source="Medak_Dwaraka_D (Telangana)" target="Narsapur_Xroad_D (Telangana)">
+      <data key="d4">31.815051588654388</data>
+      <data key="d5">51.10526315789474</data>
+      <data key="d6">19</data>
+    </edge>
+    <edge source="Narsapur_Xroad_D (Telangana)" target="Kamareddy_Devenply_I (Telangana)">
+      <data key="d4">64.4720200053063</data>
+      <data key="d5">108.0</data>
+      <data key="d6">6</data>
+    </edge>
+    <edge source="Metpally_GunjRDPP_D (Telangana)" target="Jagtial_Aravind_D (Telangana)">
+      <data key="d4">26.015099233795137</data>
+      <data key="d5">31.0</data>
+      <data key="d6">6</data>
+    </edge>
+    <edge source="Mulugu_LaxmiNGR_D (Telangana)" target="Bhupalpally_JwahrNGR_D (Telangana)">
+      <data key="d4">28.04046752984016</data>
+      <data key="d5">56.0</data>
+      <data key="d6">2</data>
+    </edge>
+    <edge source="Narayankhed_Datatrya_D (Telangana)" target="Zahirabad_Mohim_D (Telangana)">
+      <data key="d4">43.142170391359166</data>
+      <data key="d5">102.36363636363636</data>
+      <data key="d6">22</data>
+    </edge>
+    <edge source="Zahirabad_Mohim_D (Telangana)" target="Hyderabad_Shamshbd_H (Telangana)">
+      <data key="d4">96.07130227029036</data>
+      <data key="d5">171.04545454545453</data>
+      <data key="d6">22</data>
+    </edge>
+    <edge source="Rayaparthi_Perkadrd_D (Telangana)" target="Warangal_HunterRd_I (Telangana)">
+      <data key="d4">30.69977650844404</data>
+      <data key="d5">134.875</data>
+      <data key="d6">16</data>
+    </edge>
+    <edge source="Vikarabad_Central_DPP_2 (Telangana)" target="Hyderabad_Shamshbd_H (Telangana)">
+      <data key="d4">51.10451463578045</data>
+      <data key="d5">108.0</data>
+      <data key="d6">1</data>
+    </edge>
+    <edge source="Vikarabad_Central_DPP_2 (Telangana)" target="Shadnagar_Central_D_1 (Telangana)">
+      <data key="d4">41.60475818436182</data>
+      <data key="d5">75.8</data>
+      <data key="d6">5</data>
+    </edge>
+    <edge source="Warangal_Central_D_2 (Telangana)" target="Husnabad_Greenmkt_D (Telangana)">
+      <data key="d4">37.89257078180388</data>
+      <data key="d5">56.46153846153846</data>
+      <data key="d6">13</data>
+    </edge>
+    <edge source="Warangal_Central_D_2 (Telangana)" target="Jammikunta_ConduDPP_D (Telangana)">
+      <data key="d4">30.265613813046173</data>
+      <data key="d5">70.0</data>
+      <data key="d6">2</data>
+    </edge>
+  </graph>
+</graphml>
