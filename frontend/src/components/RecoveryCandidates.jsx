@@ -14,6 +14,8 @@ export default function RecoveryCandidates({
   /** Backend-persisted / assigned selected candidate id (authoritative). */
   selectedCandidateId = null,
   assignedCandidateId = null,
+  /** When a candidate is expanded for inspection, preview its backend path on the map. */
+  onPreviewCandidate = null,
 }) {
   const [expandedId, setExpandedId] = useState(null);
 
@@ -88,7 +90,11 @@ export default function RecoveryCandidates({
   }
 
   const toggle = (id) => {
-    setExpandedId((prev) => (prev === id ? null : id));
+    setExpandedId((prev) => {
+      const next = prev === id ? null : id;
+      if (onPreviewCandidate) onPreviewCandidate(next);
+      return next;
+    });
   };
 
   return (
