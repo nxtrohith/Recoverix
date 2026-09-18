@@ -78,6 +78,18 @@ export function isRecoveryMapActive({ activeIncident, recoveryAnalysis }) {
 }
 
 /**
+ * First non-empty hub sequence from backend fields.
+ * @param {...(string[] | null | undefined)} paths
+ * @returns {string[]}
+ */
+export function firstNonEmptyPath(...paths) {
+  for (const p of paths) {
+    if (Array.isArray(p) && p.length) return p;
+  }
+  return [];
+}
+
+/**
  * Resolve the active recovery candidate for map overlays.
  * Preview (inspect) is optional and must not invent routes.
  *
@@ -126,6 +138,25 @@ export function resolveActiveRecoveryCandidate({
     selected?.path ||
     [];
 
+  const existingRouteNodes = firstNonEmptyPath(
+    activeIncident?.existingRouteNodes,
+    selectedRecovery?.existingRouteNodes,
+    plan?.existingRouteNodes,
+    selected?.existingRouteNodes,
+  );
+  const vehicleToPickupPath = firstNonEmptyPath(
+    activeIncident?.vehicleToPickupPath,
+    selectedRecovery?.vehicleToPickupPath,
+    plan?.vehicleToPickupPath,
+    selected?.vehicleToPickupPath,
+  );
+  const vehicleToDestinationPath = firstNonEmptyPath(
+    activeIncident?.vehicleToDestinationPath,
+    selectedRecovery?.vehicleToDestinationPath,
+    plan?.vehicleToDestinationPath,
+    selected?.vehicleToDestinationPath,
+  );
+
   const pickupCase =
     activeIncident?.pickupCase ||
     selectedRecovery?.pickupCase ||
@@ -152,11 +183,17 @@ export function resolveActiveRecoveryCandidate({
     selectedRecovery,
     plan,
     recoveryPath: Array.isArray(recoveryPath) ? recoveryPath : [],
+    existingRouteNodes,
+    vehicleToPickupPath,
+    vehicleToDestinationPath,
     pickupCase,
     vehicleId,
     vehicleNumber,
     preview,
     previewPath: preview?.path || [],
+    previewExistingRouteNodes: preview?.existingRouteNodes || [],
+    previewToPickupPath: preview?.vehicleToPickupPath || [],
+    previewToDestinationPath: preview?.vehicleToDestinationPath || [],
     previewPickupCase: preview?.pickupCase || null,
     previewVehicleId: preview?.vehicleId || null,
   };
@@ -238,27 +275,24 @@ export function buildRecoveryMapState({
       : null) ||
     [];
 
-  const { toPickup, fromPickup } = splitPathAtPickup(
-    cand.recoveryPath,
-    pickupNode,
+  // Prefer explicit backend segments; fall back to splitting composed path
+  const split = splitPathAtPickup(cand.recoveryPath, pickupNode);
+  const toPickup = firstNonEmptyPath(cand.vehicleToPickupPath, split.toPickup);
+  const fromPickup = firstNonEmptyPath(
+    cand.vehicleToDestinationPath,
+    split.fromPickup,
   );
 
   const recoveryVehicle =
     findVehicle(vehicles, cand.vehicleId) ||
     (selectedVehicle?.id === cand.vehicleId ? selectedVehicle : null);
 
-  // Existing vehicle movement: only use backend-provided currentPath
-  const vehicleExistingPath =
-    (selectedVehicle?.id === cand.vehicleId &&
-      Array.isArray(selectedVehicle?.currentPath) &&
-      selectedVehicle.currentPath.length
-      ? selectedVehicle.currentPath
-      : null) ||
-    (Array.isArray(recoveryVehicle?.currentPath) &&
-    recoveryVehicle.currentPath.length
-      ? recoveryVehicle.currentPath
-      : null) ||
-    [];
+  // Prefer generator existingRouteNodes; fall back to vehicle detail currentPath
+  const vehicleExistingPath = firstNonEmptyPath(
+    cand.existingRouteNodes,
+    selectedVehicle?.id === cand.vehicleId ? selectedVehicle?.currentPath : null,
+    recoveryVehicle?.currentPath,
+  );
 
   const previewVehicle =
     findVehicle(vehicles, cand.previewVehicleId) ||
@@ -269,7 +303,14 @@ export function buildRecoveryMapState({
   const toPickupLatLngs = pathToLatLngs(toPickup, nodeById);
   const fromPickupLatLngs = pathToLatLngs(fromPickup, nodeById);
   const vehicleRouteLatLngs = pathToLatLngs(vehicleExistingPath, nodeById);
-  const previewLatLngs = pathToLatLngs(cand.previewPath, nodeById);
+  const previewLatLngs = pathToLatLngs(
+    firstNonEmptyPath(
+      cand.previewPath,
+      cand.previewToPickupPath,
+      cand.previewToDestinationPath,
+    ),
+    nodeById,
+  );
 
   const originPos = nodeLatLng(nodeById.get(originNode));
   const expectedPos = nodeLatLng(nodeById.get(expectedNode));

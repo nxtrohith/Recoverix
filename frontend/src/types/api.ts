@@ -192,6 +192,9 @@ export interface Incident {
   status: IncidentStatus;
   selectedCandidateId?: string | null;
   recoveryPath?: string[];
+  existingRouteNodes?: string[];
+  vehicleToPickupPath?: string[];
+  vehicleToDestinationPath?: string[];
   pickupCase?: CandidateType | null;
   pickupNode?: string | null;
   destinationNode?: string | null;
@@ -257,6 +260,12 @@ export interface RecoveryCandidate {
   vehicleNumber?: string | null;
   pickupCase?: CandidateType | null;
   path: string[];
+  /** Vehicle's existing route hub sequence (from candidate generator). */
+  existingRouteNodes?: string[];
+  /** Backend path vehicle → pickup. */
+  vehicleToPickupPath?: string[];
+  /** Backend path pickup → destination (or full remaining movement). */
+  vehicleToDestinationPath?: string[];
   feasible: boolean;
   feasibility?: boolean;
   rejectionReason?: RejectionReason | null;
@@ -276,6 +285,9 @@ export interface SelectedRecovery {
   vehicleNumber?: string | null;
   pickupCase?: CandidateType | null;
   path?: string[];
+  existingRouteNodes?: string[];
+  vehicleToPickupPath?: string[];
+  vehicleToDestinationPath?: string[];
   estimatedArrival?: string | null;
   estimatedCost?: number | null;
   estimatedDistance?: number | null;
@@ -299,6 +311,9 @@ export interface RecoveryPlan {
   candidateType?: CandidateType | null;
   candidateId?: string | null;
   path?: string[];
+  existingRouteNodes?: string[];
+  vehicleToPickupPath?: string[];
+  vehicleToDestinationPath?: string[];
   score?: number | null;
   componentScores?: ComponentScores | null;
   estimatedTime?: number | null;
@@ -366,6 +381,9 @@ export interface RecoveryAssignment {
   vehicleNumber?: string | null;
   driverId?: string | null;
   path?: string[];
+  existingRouteNodes?: string[];
+  vehicleToPickupPath?: string[];
+  vehicleToDestinationPath?: string[];
   pickupCase?: CandidateType | null;
   pickupNode?: string | null;
   destinationNode?: string | null;
@@ -437,7 +455,10 @@ export interface SimulateIncidentResponse {
 
 /** Recovery-related shipment event types observed in the demo workflow. */
 export type RecoveryEventType =
+  | 'misplaced'
+  | 'recovery_started'
   | 'recovery_pickup_confirmed'
+  | 'recovered'
   | string;
 
 export interface RecoveryEvent {

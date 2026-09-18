@@ -29,6 +29,7 @@ export function hasPersistedRecoveryPlan(analysis) {
  *   incident?: import('../../types/api.ts').Incident | null,
  *   shipment?: import('../../types/api.ts').Shipment | null,
  *   recoveryAnalysis?: import('../../types/api.ts').RecoveryAnalysis | null,
+ *   driverNotification?: import('../../types/api.ts').DriverNotification | null,
  * }} input
  * @returns {RecoveryActionId}
  */
@@ -36,8 +37,13 @@ export function getAvailableRecoveryAction({
   incident = null,
   shipment = null,
   recoveryAnalysis = null,
+  driverNotification = null,
 } = {}) {
-  const display = resolveRecoveryDisplayStatus({ incident, shipment });
+  const display = resolveRecoveryDisplayStatus({
+    incident,
+    shipment,
+    driverNotification,
+  });
   const incidentStatus = incident?.status || null;
 
   if (!display && !incidentStatus && !shipment?.needsRecovery) {
@@ -48,11 +54,12 @@ export function getAvailableRecoveryAction({
     return null;
   }
 
-  if (display === 'RECOVERED' || incidentStatus === 'PICKUP_CONFIRMED') {
-    return 'resolve';
-  }
-
-  if (display === 'PICKUP_CONFIRMED') {
+  // Pickup confirmed / recovered shipment — operator resolve closes the incident
+  if (
+    display === 'RECOVERED' ||
+    display === 'PICKUP_CONFIRMED' ||
+    incidentStatus === 'PICKUP_CONFIRMED'
+  ) {
     return 'resolve';
   }
 

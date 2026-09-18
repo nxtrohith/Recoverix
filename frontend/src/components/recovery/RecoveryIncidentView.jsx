@@ -1,7 +1,7 @@
 import IncidentMetadata from './IncidentMetadata';
 import LocationDivergence from './LocationDivergence';
 import RecoveryActions from './RecoveryActions';
-import RecoveryStatus from './RecoveryStatus';
+import RecoveryTimeline from './RecoveryTimeline';
 import RouteSummary from './RouteSummary';
 import ShipmentSummary from './ShipmentSummary';
 
@@ -169,10 +169,20 @@ export default function RecoveryIncidentView({
 
       <RouteSummary shipment={displayShipment} recoveryNetwork={network} />
 
-      <RecoveryStatus
+      <RecoveryTimeline
         shipment={displayShipment}
         incident={resolvedIncident}
         lifecycleStatus={displayShipment.lifecycleStatus}
+        driverNotification={driverNotification}
+        loading={
+          (incidentLoading && !resolvedIncident) ||
+          (shipmentLoading && Boolean(resolvedIncident || displayShipment))
+        }
+        eventsLoading={shipmentLoading && Boolean(displayShipment)}
+        error={
+          (incidentError && !resolvedIncident ? incidentError : null) ||
+          (recoveryError && !recoveryAnalysis ? recoveryError : null)
+        }
       />
 
       <RecoveryActions

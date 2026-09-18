@@ -57,6 +57,9 @@ const recoveryOptionSchema = new Schema(
     candidateId: { type: String, required: false },
     pickupCase: { type: String, required: false }, // at_node | pass_through | detour
     recoveryPath: { type: [String], default: [] },
+    existingRouteNodes: { type: [String], default: [] },
+    vehicleToPickupPath: { type: [String], default: [] },
+    vehicleToDestinationPath: { type: [String], default: [] },
     pickupNode: { type: String, required: false },
     destinationNode: { type: String, required: false },
     // Hackathon: vehicle number is the driver handle

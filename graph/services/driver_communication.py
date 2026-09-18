@@ -214,20 +214,15 @@ def send_driver_notification(
     dial = resolve_driver_phone(vehicle_doc=vehicle_doc, explicit_phone=phone)
     lang = (language or _env("SARVAM_DEFAULT_LANGUAGE") or "English").strip()
 
-    # Prefer Sarvam when we have a phone to dial
+    # Prefer Sarvam when we have a phone to dial.
+    # Do not send arbitrary agent_variables — Sarvam agents reject unknown keys (HTTP 422).
+    # Opening line + language overrides carry the recovery context.
     if dial:
         call = place_instant_outbound_call(
             user_phone_number=dial,
             initial_bot_message=message,
             language=lang,
-            agent_variables={
-                "vehicle_id": str(vehicle_id),
-                "call_kind": call_kind,
-                "shipment_id": str(meta.get("shipmentId") or ""),
-                "incident_id": str(meta.get("incidentId") or ""),
-                "pickup_hub": str(meta.get("pickupNode") or ""),
-                "destination": str(meta.get("destinationNode") or ""),
-            },
+            agent_variables=None,
             metadata={
                 "vehicleId": str(vehicle_id),
                 "callKind": call_kind,

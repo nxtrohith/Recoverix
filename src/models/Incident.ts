@@ -46,6 +46,9 @@ const incidentSchema = new Schema(
     // Hackathon: vehicle number is the driver handle (no separate Driver entity)
     recoveryDriverId: { type: String, required: false },
     recoveryPath: { type: [String], default: [] },
+    existingRouteNodes: { type: [String], default: [] },
+    vehicleToPickupPath: { type: [String], default: [] },
+    vehicleToDestinationPath: { type: [String], default: [] },
     pickupCase: { type: String, required: false },
     pickupNode: { type: String, required: false },
     destinationNode: { type: String, required: false },

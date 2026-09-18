@@ -1,4 +1,4 @@
-/* Global reset handled in App.css — keep this file minimal for redesign later. */
+/* Reset + global */
 html,
 body,
 #root {

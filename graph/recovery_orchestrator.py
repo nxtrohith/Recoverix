@@ -106,6 +106,19 @@ def _estimated_arrival(travel_min: float | None) -> str | None:
     return _iso(datetime.now(tz=timezone.utc) + timedelta(minutes=travel_min))
 
 
+def _path_segment_fields(scored: Any) -> dict[str, list[str]]:
+    """Pass through generator path segments (never invent routes here)."""
+    return {
+        "existingRouteNodes": list(getattr(scored, "existing_route_nodes", None) or []),
+        "vehicleToPickupPath": list(
+            getattr(scored, "vehicle_to_pickup_path", None) or []
+        ),
+        "vehicleToDestinationPath": list(
+            getattr(scored, "vehicle_to_destination_path", None) or []
+        ),
+    }
+
+
 def _candidate_payload(scored: Any) -> dict[str, Any]:
     """Adapt ScoredCandidate.to_dict() into the orchestrator response shape."""
     raw = scored.to_dict()
@@ -116,6 +129,9 @@ def _candidate_payload(scored: Any) -> dict[str, Any]:
         "vehicleNumber": raw.get("vehicleNumber"),
         "pickupCase": raw.get("pickupCase"),
         "path": raw.get("path") or [],
+        "existingRouteNodes": raw.get("existingRouteNodes") or [],
+        "vehicleToPickupPath": raw.get("vehicleToPickupPath") or [],
+        "vehicleToDestinationPath": raw.get("vehicleToDestinationPath") or [],
         "feasible": raw["feasible"],
         "rejectionReason": raw.get("rejectionReason"),
         "score": raw.get("score"),
@@ -137,6 +153,7 @@ def _selected_payload(scored: Any) -> dict[str, Any] | None:
         "vehicleNumber": scored.vehicle_number,
         "pickupCase": scored.pickup_case,
         "path": list(scored.path),
+        **_path_segment_fields(scored),
         "estimatedArrival": _estimated_arrival(
             m.travel_time_min if m else None
         ),

@@ -118,6 +118,10 @@ class ScoredCandidate:
     explanation: str
     factors_helped: list[str] = field(default_factory=list)
     factors_hurt: list[str] = field(default_factory=list)
+    # Path segments from candidate_generator — map/UI only; not recomputed here.
+    existing_route_nodes: list[str] = field(default_factory=list)
+    vehicle_to_pickup_path: list[str] = field(default_factory=list)
+    vehicle_to_destination_path: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         """JSON-serialisable representation matching the SH-205 result shape."""
@@ -135,6 +139,9 @@ class ScoredCandidate:
             "explanation": self.explanation,
             "factorsHelped": self.factors_helped,
             "factorsHurt": self.factors_hurt,
+            "existingRouteNodes": list(self.existing_route_nodes),
+            "vehicleToPickupPath": list(self.vehicle_to_pickup_path),
+            "vehicleToDestinationPath": list(self.vehicle_to_destination_path),
         }
         if self.breakdown is not None:
             component_scores = {
@@ -848,6 +855,11 @@ def score_recovery_candidates(
         ok, reason, recovery_path, travel_min = check_feasibility(
             G, cand, now=now
         )
+        route_segments = dict(
+            existing_route_nodes=list(cand.existing_route_nodes),
+            vehicle_to_pickup_path=list(cand.vehicle_to_pickup_path),
+            vehicle_to_destination_path=list(cand.vehicle_to_destination_path),
+        )
         if not ok:
             scored.append(
                 ScoredCandidate(
@@ -862,6 +874,7 @@ def score_recovery_candidates(
                     breakdown=None,
                     metrics=None,
                     explanation=f"Rejected: {reason}.",
+                    **route_segments,
                 )
             )
             continue
@@ -893,6 +906,7 @@ def score_recovery_candidates(
                 breakdown=None,
                 metrics=metrics,
                 explanation="",
+                **route_segments,
             )
         )
 
