@@ -1,3 +1,11 @@
+import { useState } from 'react';
+import {
+  getAvailableRecoveryAction,
+  buildAssignConfirmation,
+  RECOVERY_ACTION_LABELS,
+} from './recovery/recoveryActions';
+import { firstPresent } from './recovery/recoveryStatus';
+
 function Field({ label, value }) {
   return (
     <div className="field">
@@ -35,19 +43,45 @@ function LifecycleBar({ current }) {
   );
 }
 
+function ConfirmBlock({ title, children, onCancel, onConfirm, confirmLabel, busy }) {
+  return (
+    <div className="recovery-confirm" role="dialog" aria-label={title}>
+      <div className="recovery-confirm-card">
+        <h4>{title}</h4>
+        <div className="recovery-confirm-body">{children}</div>
+        <div className="recovery-action-buttons">
+          <button type="button" onClick={onCancel} disabled={busy}>
+            Cancel
+          </button>
+          <button type="button" className="primary" onClick={onConfirm} disabled={busy}>
+            {busy ? 'Working…' : confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ShipmentPanel({
   shipment,
+  incident = null,
+  recoveryAnalysis = null,
+  vehicles = [],
   loading,
   error,
   onAnalyze,
   analyzing,
   onSimulateIncident,
   simulating,
+  onAssign,
+  assigning = false,
   onConfirmPickup,
   confirmingPickup,
   onMarkRecovered,
   resolving,
 }) {
+  const [confirmKind, setConfirmKind] = useState(null);
+
   if (loading) {
     return (
       <section className="panel">
@@ -81,10 +115,45 @@ export default function ShipmentPanel({
   if (shipment.needsRecovery) flags.push('NEEDS RECOVERY');
   if (lifecycle !== 'NORMAL') flags.push(lifecycle.replace(/_/g, ' '));
 
+  const resolvedIncident = incident || shipment.activeIncident || null;
+  const available = getAvailableRecoveryAction({
+    incident: resolvedIncident,
+    shipment,
+    recoveryAnalysis,
+  });
+
   const canSimulate =
     lifecycle === 'NORMAL' || lifecycle === 'RECOVERED' || !shipment.needsRecovery;
-  const canConfirmPickup = lifecycle === 'RECOVERY_ASSIGNED';
-  const canResolve = lifecycle === 'PICKUP_CONFIRMED';
+  const busy = analyzing || assigning || confirmingPickup || resolving || simulating;
+  const assignDetails = buildAssignConfirmation({
+    analysis: recoveryAnalysis,
+    vehicles,
+    incident: resolvedIncident,
+  });
+  const pickupHub =
+    firstPresent(
+      resolvedIncident?.pickupNode,
+      recoveryAnalysis?.recoveryPlan?.pickupNode,
+      shipment.actualLocation,
+      shipment.currentLocation,
+    ) || '—';
+
+  const onActionClick = (kind) => {
+    if (busy) return;
+    if (kind === 'analyze') {
+      if (onAnalyze) onAnalyze();
+      return;
+    }
+    setConfirmKind(kind);
+  };
+
+  const runConfirmed = async () => {
+    const kind = confirmKind;
+    setConfirmKind(null);
+    if (kind === 'assign' && onAssign) await onAssign();
+    else if (kind === 'pickup' && onConfirmPickup) await onConfirmPickup();
+    else if (kind === 'resolve' && onMarkRecovered) await onMarkRecovered();
+  };
 
   return (
     <section className="panel shipment-panel">
@@ -96,37 +165,49 @@ export default function ShipmentPanel({
               type="button"
               className="danger"
               onClick={onSimulateIncident}
-              disabled={simulating}
+              disabled={busy}
             >
               {simulating ? 'Simulating…' : 'Simulate Incident'}
             </button>
           ) : null}
-          <button
-            type="button"
-            className="primary"
-            onClick={onAnalyze}
-            disabled={analyzing}
-          >
-            {analyzing ? 'Analyzing…' : 'Analyze Recovery'}
-          </button>
-          {canConfirmPickup ? (
+          {available === 'analyze' ? (
             <button
               type="button"
               className="primary"
-              onClick={onConfirmPickup}
-              disabled={confirmingPickup}
+              onClick={() => onActionClick('analyze')}
+              disabled={busy}
             >
-              {confirmingPickup ? 'Confirming…' : 'Confirm Pickup'}
+              {analyzing ? 'Analyzing…' : RECOVERY_ACTION_LABELS.analyze}
             </button>
           ) : null}
-          {canResolve ? (
+          {available === 'assign' ? (
             <button
               type="button"
               className="primary"
-              onClick={onMarkRecovered}
-              disabled={resolving}
+              onClick={() => onActionClick('assign')}
+              disabled={busy}
             >
-              {resolving ? 'Resolving…' : 'Resolve Incident'}
+              {assigning ? 'Assigning…' : RECOVERY_ACTION_LABELS.assign}
+            </button>
+          ) : null}
+          {available === 'pickup' ? (
+            <button
+              type="button"
+              className="primary"
+              onClick={() => onActionClick('pickup')}
+              disabled={busy}
+            >
+              {confirmingPickup ? 'Confirming…' : RECOVERY_ACTION_LABELS.pickup}
+            </button>
+          ) : null}
+          {available === 'resolve' ? (
+            <button
+              type="button"
+              className="primary"
+              onClick={() => onActionClick('resolve')}
+              disabled={busy}
+            >
+              {resolving ? 'Resolving…' : RECOVERY_ACTION_LABELS.resolve}
             </button>
           ) : null}
         </div>
@@ -142,6 +223,66 @@ export default function ShipmentPanel({
             </span>
           ))}
         </div>
+      ) : null}
+
+      {confirmKind === 'assign' ? (
+        <ConfirmBlock
+          title={`Assign Vehicle ${assignDetails.vehicleLabel}?`}
+          onCancel={() => setConfirmKind(null)}
+          onConfirm={runConfirmed}
+          confirmLabel="Confirm Assignment"
+          busy={assigning}
+        >
+          <dl className="recovery-confirm-dl">
+            <div>
+              <dt>Pickup</dt>
+              <dd>{assignDetails.pickup}</dd>
+            </div>
+            <div>
+              <dt>Destination</dt>
+              <dd>{assignDetails.destination}</dd>
+            </div>
+            <div>
+              <dt>Driver</dt>
+              <dd>{assignDetails.driver}</dd>
+            </div>
+            <div>
+              <dt>Type</dt>
+              <dd>{assignDetails.typeLabel}</dd>
+            </div>
+            <div>
+              <dt>Score</dt>
+              <dd>{assignDetails.scoreLabel}</dd>
+            </div>
+          </dl>
+        </ConfirmBlock>
+      ) : null}
+
+      {confirmKind === 'pickup' ? (
+        <ConfirmBlock
+          title="Confirm pickup"
+          onCancel={() => setConfirmKind(null)}
+          onConfirm={runConfirmed}
+          confirmLabel="Confirm Pickup"
+          busy={confirmingPickup}
+        >
+          <p>
+            Confirm that the driver has picked up the misplaced shipment from{' '}
+            <strong>{pickupHub}</strong>?
+          </p>
+        </ConfirmBlock>
+      ) : null}
+
+      {confirmKind === 'resolve' ? (
+        <ConfirmBlock
+          title="Resolve this recovery incident?"
+          onCancel={() => setConfirmKind(null)}
+          onConfirm={runConfirmed}
+          confirmLabel="Resolve Incident"
+          busy={resolving}
+        >
+          <p>The shipment has completed the recovery workflow.</p>
+        </ConfirmBlock>
       ) : null}
 
       <dl className="detail-grid">

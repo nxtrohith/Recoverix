@@ -1,9 +1,12 @@
 /**
  * Recovery data layer — loading / error / data / refresh for the demo workflow.
  * Presentation components should consume this hook instead of calling the API directly.
+ *
+ * Mutations always refresh from the server afterward. Lifecycle state is not
+ * advanced optimistically in React.
  */
 
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
   ApiError,
   analyzeRecovery as apiAnalyzeRecovery,
@@ -54,6 +57,9 @@ export function useRecoveryData(options = {}) {
 
   const [completionBanner, setCompletionBanner] = useState(null);
   const [driverNotification, setDriverNotification] = useState(null);
+  const [actionError, setActionError] = useState(null);
+  const [actionFeedback, setActionFeedback] = useState(null);
+  const lastFailedActionRef = useRef(null);
 
   const [simulating, setSimulating] = useState(false);
   const [assigning, setAssigning] = useState(false);
@@ -83,94 +89,145 @@ export function useRecoveryData(options = {}) {
     }
   }, []);
 
-  const loadShipment = useCallback(async (id) => {
-    if (!id) return null;
-    setShipmentLoading(true);
-    setShipmentError(null);
-    setRecoveryError(null);
-    setCompletionBanner(null);
-    try {
-      const data = await getShipment(id);
-      setSelectedShipment(data);
-      const incident = data.activeIncident || null;
-      setActiveIncident(incident);
+  const loadShipment = useCallback(
+    async (id, { fetchRecoveryPlan = true } = {}) => {
+      if (!id) return null;
+      setShipmentLoading(true);
+      setShipmentError(null);
+      try {
+        const data = await getShipment(id);
+        setSelectedShipment(data);
+        const incident = data.activeIncident || null;
+        setActiveIncident(incident);
 
-      if (incident?.status === 'RESOLVED') {
-        setCompletionBanner({
-          trackingNumber: data.trackingNumber,
-          recoveryVehicleNumber: incident.recoveryVehicleNumber,
-          recoveryRouteLabel: (incident.recoveryPath || []).join(' → ') || null,
-          status: 'RECOVERED',
-        });
-      }
-
-      // Restore assigned / pickup-confirmed recovery path on refresh
-      if (
-        incident?.recoveryPath?.length &&
-        (incident.status === 'ASSIGNED' || incident.status === 'PICKUP_CONFIRMED')
-      ) {
-        setRecoveryAnalysis((prev) => ({
-          ...(prev || {}),
-          status:
-            incident.status === 'PICKUP_CONFIRMED'
-              ? 'PICKUP_CONFIRMED'
-              : 'RECOVERY_ASSIGNED',
-          selectedRecovery: {
-            candidateId: incident.selectedCandidateId,
-            vehicleId: incident.recoveryVehicleId,
-            vehicleNumber: incident.recoveryVehicleNumber,
-            path: incident.recoveryPath,
-            pickupCase: incident.pickupCase,
-            recoveryOptionId: incident.selectedRecoveryOptionId,
-          },
-          candidates: prev?.candidates || [],
-          recoveryPlan: prev?.recoveryPlan || null,
-          reasons: prev?.reasons || [],
-          network: prev?.network || {},
-          shipment: prev?.shipment || {
-            id: data.id,
+        if (incident?.status === 'RESOLVED') {
+          setCompletionBanner({
             trackingNumber: data.trackingNumber,
-          },
-        }));
-      } else if (!incident || incident.status === 'RESOLVED') {
-        setRecoveryAnalysis(null);
-      }
+            recoveryVehicleNumber: incident.recoveryVehicleNumber,
+            recoveryRouteLabel: (incident.recoveryPath || []).join(' → ') || null,
+            status: 'RECOVERED',
+          });
+        }
 
-      if (data.currentNode && onFocusNode) onFocusNode(data.currentNode);
-      return data;
-    } catch (err) {
-      setSelectedShipment(null);
-      if (err instanceof ApiError && err.status === 404) {
-        setShipmentError(`Shipment not found: ${id}`);
-      } else {
-        setShipmentError(errMsg(err, 'Failed to load shipment'));
+        // Restore assigned / pickup-confirmed recovery path on refresh
+        if (
+          incident?.recoveryPath?.length &&
+          (incident.status === 'ASSIGNED' ||
+            incident.status === 'PICKUP_CONFIRMED')
+        ) {
+          setRecoveryAnalysis((prev) => ({
+            ...(prev || {}),
+            status:
+              incident.status === 'PICKUP_CONFIRMED'
+                ? 'PICKUP_CONFIRMED'
+                : 'RECOVERY_ASSIGNED',
+            selectedRecovery: {
+              candidateId: incident.selectedCandidateId,
+              vehicleId: incident.recoveryVehicleId,
+              vehicleNumber: incident.recoveryVehicleNumber,
+              path: incident.recoveryPath,
+              pickupCase: incident.pickupCase,
+              recoveryOptionId: incident.selectedRecoveryOptionId,
+            },
+            candidates: prev?.candidates || [],
+            recoveryPlan: prev?.recoveryPlan || null,
+            reasons: prev?.reasons || [],
+            network: prev?.network || {},
+            shipment: prev?.shipment || {
+              id: data.id,
+              trackingNumber: data.trackingNumber,
+            },
+          }));
+        } else if (!incident) {
+          setRecoveryAnalysis(null);
+        }
+
+        // Load persisted plan (GET) so Assign is available without re-analyze
+        if (
+          fetchRecoveryPlan &&
+          incident &&
+          (incident.status === 'RECOVERY_REQUIRED' ||
+            incident.status === 'OPEN' ||
+            incident.status === 'ASSIGNED' ||
+            incident.status === 'PICKUP_CONFIRMED')
+        ) {
+          try {
+            const recovery = await getRecovery(id);
+            setRecoveryAnalysis(recovery);
+            const path = recovery?.selectedRecovery?.path;
+            if (path?.length && onFocusNode) onFocusNode(path[0]);
+          } catch {
+            // Keep incident-derived analysis snapshot if GET fails
+          }
+        }
+
+        if (data.currentNode && onFocusNode) onFocusNode(data.currentNode);
+        return data;
+      } catch (err) {
+        setSelectedShipment(null);
+        if (err instanceof ApiError && err.status === 404) {
+          setShipmentError(`Shipment not found: ${id}`);
+        } else {
+          setShipmentError(errMsg(err, 'Failed to load shipment'));
+        }
+        return null;
+      } finally {
+        setShipmentLoading(false);
       }
-      return null;
-    } finally {
-      setShipmentLoading(false);
-    }
-  }, [onFocusNode]);
+    },
+    [onFocusNode],
+  );
 
   /**
    * Fetch incident for the current (or given) shipment via
    * GET /api/incidents/by-shipment/:id
    */
-  const loadIncidentForShipment = useCallback(async (shipmentId) => {
-    const id = shipmentId || shipmentKey(selectedShipment);
-    if (!id) return null;
-    try {
-      const incident = await getIncidentByShipment(id);
-      setActiveIncident(incident);
-      return incident;
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 404) {
-        setActiveIncident(null);
+  const loadIncidentForShipment = useCallback(
+    async (shipmentId) => {
+      const id = shipmentId || shipmentKey(selectedShipment);
+      if (!id) return null;
+      try {
+        const incident = await getIncidentByShipment(id);
+        setActiveIncident(incident);
+        return incident;
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 404) {
+          setActiveIncident(null);
+          return null;
+        }
+        setRecoveryError(errMsg(err, 'Failed to load incident'));
         return null;
       }
-      setRecoveryError(errMsg(err, 'Failed to load incident'));
-      return null;
-    }
-  }, [selectedShipment]);
+    },
+    [selectedShipment],
+  );
+
+  /**
+   * After a successful mutation: re-fetch recovery → incident → shipment.
+   * Server remains the source of truth for lifecycle / available actions.
+   */
+  const refreshAfterMutation = useCallback(
+    async (shipmentId) => {
+      const id = shipmentId || shipmentKey(selectedShipment);
+      if (!id) return { recovery: null, incident: null, shipment: null };
+
+      let recovery = null;
+      try {
+        recovery = await getRecovery(id);
+        setRecoveryAnalysis(recovery);
+        const path = recovery?.selectedRecovery?.path;
+        if (path?.length && onFocusNode) onFocusNode(path[0]);
+      } catch {
+        // Assignment/pickup may still succeed when GET recovery is unavailable
+      }
+
+      const incident = await loadIncidentForShipment(id);
+      const shipment = await loadShipment(id, { fetchRecoveryPlan: false });
+      if (onDashboardRefresh) await onDashboardRefresh();
+      return { recovery, incident, shipment };
+    },
+    [selectedShipment, loadIncidentForShipment, loadShipment, onDashboardRefresh, onFocusNode],
+  );
 
   /**
    * Fetch recovery analysis (candidates + persisted plan).
@@ -181,10 +238,14 @@ export function useRecoveryData(options = {}) {
       const id = shipmentId || shipmentKey(selectedShipment);
       if (!id) {
         setRecoveryError('Select a shipment before analyzing recovery.');
+        setActionError('Select a shipment before analyzing recovery.');
         return null;
       }
       setRecoveryLoading(true);
       setRecoveryError(null);
+      setActionError(null);
+      setActionFeedback(null);
+      lastFailedActionRef.current = null;
       try {
         let data;
         if (mode === 'calculate') {
@@ -197,21 +258,41 @@ export function useRecoveryData(options = {}) {
         setRecoveryAnalysis(data);
         const path = data?.selectedRecovery?.path;
         if (path?.length && onFocusNode) onFocusNode(path[0]);
-        await loadShipment(id);
+        await loadIncidentForShipment(id);
+        await loadShipment(id, { fetchRecoveryPlan: false });
+        if (mode !== 'get') {
+          const planReady =
+            data?.status === 'RECOVERY_PLAN_AVAILABLE' ||
+            Boolean(data?.recoveryPlan || data?.selectedRecovery);
+          setActionFeedback(
+            planReady
+              ? 'Recovery analysis complete — selected plan ready.'
+              : 'Recovery analysis complete — no feasible plan.',
+          );
+          if (onHint) {
+            onHint(
+              planReady
+                ? `Recovery plan ready for ${data?.shipment?.trackingNumber || id}`
+                : `No feasible recovery for ${data?.shipment?.trackingNumber || id}`,
+            );
+          }
+        }
         return data;
       } catch (err) {
         setRecoveryAnalysis(null);
-        if (err instanceof ApiError && err.status === 404) {
-          setRecoveryError(`Shipment not found for recovery: ${id}`);
-        } else {
-          setRecoveryError(errMsg(err, 'Recovery analysis failed'));
-        }
+        const message =
+          err instanceof ApiError && err.status === 404
+            ? `Shipment not found for recovery: ${id}`
+            : errMsg(err, 'Unable to analyze recovery.');
+        setRecoveryError(message);
+        setActionError(message);
+        lastFailedActionRef.current = 'analyze';
         return null;
       } finally {
         setRecoveryLoading(false);
       }
     },
-    [selectedShipment, loadShipment, onFocusNode],
+    [selectedShipment, loadShipment, loadIncidentForShipment, onFocusNode, onHint],
   );
 
   const analyzeRecovery = useCallback(
@@ -234,6 +315,8 @@ export function useRecoveryData(options = {}) {
     setShipmentError(null);
     setCompletionBanner(null);
     setDriverNotification(null);
+    setActionError(null);
+    setActionFeedback(null);
     try {
       const result = await simulateIncident(id, { autoAnalyze: false });
       setActiveIncident(result.incident);
@@ -248,9 +331,14 @@ export function useRecoveryData(options = {}) {
         setRecoveryAnalysis(data);
         const path = data?.selectedRecovery?.path;
         if (path?.length && onFocusNode) onFocusNode(path[0]);
+        await loadIncidentForShipment(id);
         await loadShipment(id);
+        setActionFeedback('Incident simulated — recovery analysis ready.');
       } catch (calcErr) {
-        setRecoveryError(errMsg(calcErr, 'Recovery analysis failed after incident'));
+        const message = errMsg(calcErr, 'Unable to analyze recovery.');
+        setRecoveryError(message);
+        setActionError(message);
+        lastFailedActionRef.current = 'analyze';
       } finally {
         setRecoveryLoading(false);
       }
@@ -259,54 +347,62 @@ export function useRecoveryData(options = {}) {
     } finally {
       setSimulating(false);
     }
-  }, [selectedShipment, loadShipment, onDashboardRefresh, onHint, onFocusNode]);
+  }, [
+    selectedShipment,
+    loadShipment,
+    loadIncidentForShipment,
+    onDashboardRefresh,
+    onHint,
+    onFocusNode,
+  ]);
 
+  /**
+   * Assign using the backend-persisted selected recovery plan.
+   * Empty payload — do not choose a vehicle in the frontend.
+   */
+  const handleAssignPersistedPlan = useCallback(async () => {
+    const id = shipmentKey(selectedShipment);
+    if (!id) return;
+    setAssigning(true);
+    setRecoveryError(null);
+    setActionError(null);
+    setActionFeedback(null);
+    lastFailedActionRef.current = null;
+    try {
+      const result = await apiAssignRecovery(id, {});
+      setActiveIncident(result.incident);
+      setDriverNotification(result.driverNotification || null);
+      // Refresh from server — do not invent the next lifecycle status locally
+      await refreshAfterMutation(id);
+      if (result.assignment?.vehicleId && onLoadVehicle) {
+        await onLoadVehicle(result.assignment.vehicleId);
+      }
+      setActionFeedback(
+        `Vehicle ${result.assignment?.vehicleNumber || result.assignment?.vehicleId || ''} assigned — driver contacted (simulated).`.trim(),
+      );
+      if (onHint) {
+        onHint(
+          `Recovery assigned to ${result.assignment?.vehicleNumber || result.assignment?.vehicleId}`,
+        );
+      }
+    } catch (err) {
+      const message = 'Unable to assign vehicle.';
+      setRecoveryError(errMsg(err, message));
+      setActionError(message);
+      lastFailedActionRef.current = 'assign';
+    } finally {
+      setAssigning(false);
+    }
+  }, [selectedShipment, refreshAfterMutation, onLoadVehicle, onHint]);
+
+  /** @deprecated Prefer handleAssignPersistedPlan — kept for any legacy call sites. */
   const handleSelectRecovery = useCallback(
     async (candidate) => {
-      const id = shipmentKey(selectedShipment);
-      if (!id || !candidate) return;
-      setAssigning(true);
-      setRecoveryError(null);
-      try {
-        const result = await apiAssignRecovery(id, {
-          candidateId: candidate.candidateId,
-          vehicleId: candidate.vehicleId,
-          path: candidate.path,
-          pickupCase: candidate.pickupCase,
-          score: candidate.score,
-        });
-        setActiveIncident(result.incident);
-        setDriverNotification(result.driverNotification || null);
-        if (result.recovery) setRecoveryAnalysis(result.recovery);
-        if (result.assignment?.path?.length) {
-          setRecoveryAnalysis((prev) => ({
-            ...(prev || result.recovery || {}),
-            status: 'RECOVERY_ASSIGNED',
-            selectedRecovery: {
-              ...(prev?.selectedRecovery || {}),
-              ...result.assignment,
-            },
-            recoveryPlan: result.recoveryPlan || prev?.recoveryPlan || null,
-          }));
-          if (onFocusNode) onFocusNode(result.assignment.path[0]);
-        }
-        if (result.assignment?.vehicleId && onLoadVehicle) {
-          await onLoadVehicle(result.assignment.vehicleId);
-        }
-        await loadShipment(id);
-        if (onDashboardRefresh) await onDashboardRefresh();
-        if (onHint) {
-          onHint(
-            `Recovery assigned to ${result.assignment?.vehicleNumber || result.assignment?.vehicleId} — driver contacted (simulated)`,
-          );
-        }
-      } catch (err) {
-        setRecoveryError(errMsg(err, 'Failed to assign recovery'));
-      } finally {
-        setAssigning(false);
-      }
+      // Still assign via persisted plan; ignore client candidate choice.
+      void candidate;
+      return handleAssignPersistedPlan();
     },
-    [selectedShipment, loadShipment, onLoadVehicle, onDashboardRefresh, onFocusNode, onHint],
+    [handleAssignPersistedPlan],
   );
 
   const handleConfirmPickup = useCallback(async () => {
@@ -314,27 +410,36 @@ export function useRecoveryData(options = {}) {
     if (!id) return;
     setConfirmingPickup(true);
     setRecoveryError(null);
+    setActionError(null);
+    setActionFeedback(null);
+    lastFailedActionRef.current = null;
     try {
       const result = await pickupRecovery(id);
       setActiveIncident(result.incident);
       setCompletionBanner(null);
-      await loadShipment(id);
-      if (onDashboardRefresh) await onDashboardRefresh();
+      await refreshAfterMutation(id);
+      setActionFeedback('Pickup confirmed — shipment recovered; resolve when ready.');
       if (onHint) {
-        onHint(`Simulated pickup confirmed for ${result.shipment?.trackingNumber || id}`);
+        onHint(`Pickup confirmed for ${result.shipment?.trackingNumber || id}`);
       }
     } catch (err) {
-      setRecoveryError(errMsg(err, 'Failed to confirm pickup'));
+      const message = 'Unable to confirm pickup.';
+      setRecoveryError(errMsg(err, message));
+      setActionError(message);
+      lastFailedActionRef.current = 'pickup';
     } finally {
       setConfirmingPickup(false);
     }
-  }, [selectedShipment, loadShipment, onDashboardRefresh, onHint]);
+  }, [selectedShipment, refreshAfterMutation, onHint]);
 
   const handleMarkRecovered = useCallback(async () => {
     const id = shipmentKey(selectedShipment);
     if (!id) return;
     setResolving(true);
     setRecoveryError(null);
+    setActionError(null);
+    setActionFeedback(null);
+    lastFailedActionRef.current = null;
     try {
       const result = await apiResolveRecovery(id);
       setActiveIncident(result.incident);
@@ -345,23 +450,49 @@ export function useRecoveryData(options = {}) {
         status: result.completion?.status || 'RECOVERED',
       });
       setDriverNotification(null);
-      await loadShipment(id);
-      if (onDashboardRefresh) await onDashboardRefresh();
+      await refreshAfterMutation(id);
+      setActionFeedback('Incident resolved — recovery complete.');
       if (onHint) {
         onHint(`Incident resolved for ${result.shipment?.trackingNumber || id}`);
       }
     } catch (err) {
-      setRecoveryError(errMsg(err, 'Failed to resolve incident'));
+      const message = 'Unable to resolve incident.';
+      setRecoveryError(errMsg(err, message));
+      setActionError(message);
+      lastFailedActionRef.current = 'resolve';
     } finally {
       setResolving(false);
     }
-  }, [selectedShipment, loadShipment, onDashboardRefresh, onHint]);
+  }, [selectedShipment, refreshAfterMutation, onHint]);
+
+  const clearActionError = useCallback(() => {
+    setActionError(null);
+    lastFailedActionRef.current = null;
+  }, []);
+
+  const retryLastAction = useCallback(async () => {
+    const kind = lastFailedActionRef.current;
+    setActionError(null);
+    if (kind === 'analyze') return analyzeRecovery();
+    if (kind === 'assign') return handleAssignPersistedPlan();
+    if (kind === 'pickup') return handleConfirmPickup();
+    if (kind === 'resolve') return handleMarkRecovered();
+    return null;
+  }, [
+    analyzeRecovery,
+    handleAssignPersistedPlan,
+    handleConfirmPickup,
+    handleMarkRecovered,
+  ]);
 
   const clearRecoverySelection = useCallback(() => {
     setRecoveryAnalysis(null);
     setRecoveryError(null);
     setCompletionBanner(null);
     setDriverNotification(null);
+    setActionError(null);
+    setActionFeedback(null);
+    lastFailedActionRef.current = null;
   }, []);
 
   return {
@@ -375,6 +506,8 @@ export function useRecoveryData(options = {}) {
     activeIncidents,
     completionBanner,
     driverNotification,
+    actionError,
+    actionFeedback,
 
     // loading / error
     shipmentLoading,
@@ -399,9 +532,12 @@ export function useRecoveryData(options = {}) {
     refreshRecovery,
     analyzeRecovery,
     handleSimulateIncident,
+    handleAssignPersistedPlan,
     handleSelectRecovery,
     handleConfirmPickup,
     handleMarkRecovered,
+    retryLastAction,
+    clearActionError,
     clearRecoverySelection,
   };
 }

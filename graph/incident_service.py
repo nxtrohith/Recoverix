@@ -26,6 +26,7 @@ from graph.recovery_persistence import (
     serialize_recovery_plan,
 )
 from graph.services.driver_communication import (
+    build_late_detection_message,
     build_recovery_assignment_message,
     send_driver_notification,
 )
@@ -167,6 +168,11 @@ def serialize_incident(db: Database, doc: dict[str, Any]) -> dict[str, Any]:
             else None
         ),
         "driverMessage": doc.get("driverMessage"),
+        "lateDetectionMessage": doc.get("lateDetectionMessage"),
+        "lateDetectionCallAttemptId": doc.get("lateDetectionCallAttemptId"),
+        "lateDetectionCallChannel": doc.get("lateDetectionCallChannel"),
+        "driverCallAttemptId": doc.get("driverCallAttemptId"),
+        "driverCallChannel": doc.get("driverCallChannel"),
         "analysisStatus": doc.get("analysisStatus"),
         "lifecycleStatus": None,  # filled by callers with shipment context
         "assignedAt": _iso(doc.get("assignedAt")),
@@ -279,6 +285,11 @@ def simulate_misplaced_incident(
         "pickupCase": None,
         "recoveryCase": recovery_case_oid,
         "driverMessage": None,
+        "lateDetectionMessage": None,
+        "lateDetectionCallAttemptId": None,
+        "lateDetectionCallChannel": None,
+        "driverCallAttemptId": None,
+        "driverCallChannel": None,
         "analysisStatus": None,
         "resolvedAt": None,
         "createdAt": now,
@@ -312,6 +323,60 @@ def simulate_misplaced_incident(
             {"_id": ship_oid},
             {"$set": {"assignedVehicle": vehicle_id, "updatedAt": now}},
         )
+
+    # Late detection: call the current/wrong vehicle driver (non-blocking).
+    # Package is already on this vehicle / outbound — ask them to confirm & prepare.
+    late_detection_notification: dict[str, Any] | None = None
+    if vehicle_id is not None:
+        vehicle_doc = db["vehicles"].find_one({"_id": vehicle_id}) or {}
+        vehicle_number = _vehicle_number(db, vehicle_id)
+        late_msg = build_late_detection_message(
+            shipment_tracking=shipment.get("trackingNumber", ""),
+            shipment_id=str(ship_oid),
+            pickup_hub=_loc_name(db, hub_id),
+            destination=_loc_name(db, shipment.get("destination")),
+            vehicle_number=vehicle_number,
+        )
+        late_notify = send_driver_notification(
+            str(vehicle_id),
+            late_msg,
+            call_kind="late_detection",
+            vehicle_doc=vehicle_doc,
+            metadata={
+                "shipmentId": str(ship_oid),
+                "incidentId": incident_id,
+                "pickupNode": _loc_name(db, hub_id),
+                "destinationNode": _loc_name(db, shipment.get("destination")),
+                "lateDetection": True,
+            },
+        )
+        db["incidents"].update_one(
+            {"_id": incident_doc["_id"]},
+            {
+                "$set": {
+                    "lateDetectionMessage": late_notify.message,
+                    "lateDetectionCallAttemptId": late_notify.attempt_id,
+                    "lateDetectionCallChannel": late_notify.channel,
+                    "updatedAt": _now(),
+                }
+            },
+        )
+        incident_doc["lateDetectionMessage"] = late_notify.message
+        incident_doc["lateDetectionCallAttemptId"] = late_notify.attempt_id
+        incident_doc["lateDetectionCallChannel"] = late_notify.channel
+        late_detection_notification = {
+            "vehicleId": late_notify.vehicle_id,
+            "message": late_notify.message,
+            "channel": late_notify.channel,
+            "delivered": late_notify.delivered,
+            "sentAt": late_notify.sent_at,
+            "detail": late_notify.detail,
+            "attemptId": late_notify.attempt_id,
+            "callKind": late_notify.call_kind,
+            "phone": late_notify.phone,
+            "language": late_notify.language,
+            "simulated": late_notify.simulated,
+        }
 
     recovery: dict[str, Any] | None = None
     if auto_analyze:
@@ -362,9 +427,18 @@ def simulate_misplaced_incident(
             "needsRecovery": True,
         },
         "recovery": recovery,
+        "lateDetectionNotification": late_detection_notification,
         "message": (
             "Incident simulated — recovery required at actual/last-confirmed hub "
             f"({_loc_name(db, hub_id)})"
+            + (
+                "; late-detection driver call placed"
+                if late_detection_notification
+                and not late_detection_notification.get("simulated")
+                else "; late-detection driver notify logged"
+                if late_detection_notification
+                else ""
+            )
         ),
     }
 
@@ -546,16 +620,22 @@ def assign_recovery(
         if sel.get("candidateId") == candidate:
             recovery_score = sel.get("score")
 
+    recovery_vehicle_doc = (
+        db["vehicles"].find_one({"_id": recovery_vehicle_oid}) or {}
+    )
     message = build_recovery_assignment_message(
         shipment_tracking=shipment.get("trackingNumber", ""),
         shipment_id=str(ship_oid),
         pickup_hub=pickup_hub,
         destination=destination,
         recovery_route=recovery_path,
+        vehicle_number=driver_id,
     )
     notify = send_driver_notification(
         str(recovery_vehicle_oid),
         message,
+        call_kind="recovery_assign",
+        vehicle_doc=recovery_vehicle_doc,
         metadata={
             "shipmentId": str(ship_oid),
             "incidentId": incident.get("incidentId"),
@@ -563,7 +643,6 @@ def assign_recovery(
             "pickupCase": pickup,
             "pickupNode": pickup_hub,
             "destinationNode": destination,
-            "simulated": True,
         },
     )
 
@@ -592,6 +671,8 @@ def assign_recovery(
                 "assignedAt": now,
                 "pickupConfirmedAt": None,
                 "driverMessage": notify.message,
+                "driverCallAttemptId": notify.attempt_id,
+                "driverCallChannel": notify.channel,
                 "selectedRecoveryOption": option_oid,
                 "analysisStatus": (analysis or {}).get("status")
                 or incident.get("analysisStatus")
@@ -697,10 +778,18 @@ def assign_recovery(
             "delivered": notify.delivered,
             "sentAt": notify.sent_at,
             "detail": notify.detail,
-            "simulated": True,
+            "attemptId": notify.attempt_id,
+            "callKind": notify.call_kind,
+            "phone": notify.phone,
+            "language": notify.language,
+            "simulated": notify.simulated,
         },
         "recovery": analysis,
-        "message": "Recovery assigned — simulated driver contact logged",
+        "message": (
+            "Recovery assigned — Sarvam driver call placed"
+            if not notify.simulated and notify.channel == "sarvam_voice"
+            else "Recovery assigned — driver contact logged (Sarvam fallback)"
+        ),
     }
 
 

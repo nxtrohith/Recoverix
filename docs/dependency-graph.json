@@ -105,6 +105,11 @@
     {
       "id": "graph.services.driver_communication",
       "path": "graph/services/driver_communication.py",
+      "dependsOn": ["graph.services.sarvam_outbound"]
+    },
+    {
+      "id": "graph.services.sarvam_outbound",
+      "path": "graph/services/sarvam_outbound.py",
       "dependsOn": []
     },
     {
@@ -125,7 +130,26 @@
     {
       "id": "frontend.components.recovery",
       "path": "frontend/src/components/recovery/RecoveryIncidentView.jsx",
-      "dependsOn": ["frontend.types", "frontend.hooks.useRecoveryData"]
+      "dependsOn": [
+        "frontend.types",
+        "frontend.hooks.useRecoveryData",
+        "frontend.components.recovery.actions"
+      ]
+    },
+    {
+      "id": "frontend.components.recovery.mapState",
+      "path": "frontend/src/components/recovery/recoveryMapState.js",
+      "dependsOn": ["frontend.types"]
+    },
+    {
+      "id": "frontend.components.LogisticsMap",
+      "path": "frontend/src/components/LogisticsMap.jsx",
+      "dependsOn": ["frontend.components.recovery.mapState"]
+    },
+    {
+      "id": "frontend.components.recovery.actions",
+      "path": "frontend/src/components/recovery/RecoveryActions.jsx",
+      "dependsOn": ["frontend.types"]
     },
     {
       "id": "frontend.components.RecoveryCandidates",
@@ -144,6 +168,7 @@
         "frontend.api",
         "frontend.hooks.useRecoveryData",
         "frontend.components.recovery",
+        "frontend.components.LogisticsMap",
         "frontend.components.RecoveryCandidates",
         "frontend.components.RecoveryPlan"
       ]

@@ -52,6 +52,7 @@ export default function App() {
   const [vehicleError, setVehicleError] = useState(null);
 
   const [focusNodeId, setFocusNodeId] = useState(null);
+  const [previewCandidateId, setPreviewCandidateId] = useState(null);
 
   const loadVehicle = useCallback(async (id) => {
     if (!id) return;
@@ -124,6 +125,8 @@ export default function App() {
     setActiveIncident,
     completionBanner,
     driverNotification,
+    actionError,
+    actionFeedback,
     shipmentLoading,
     shipmentError,
     setShipmentError,
@@ -132,14 +135,18 @@ export default function App() {
     incidentsLoading,
     incidentsError,
     simulating,
+    assigning,
     confirmingPickup,
     resolving,
     loadShipment,
     refreshActiveIncidents,
     analyzeRecovery,
     handleSimulateIncident,
+    handleAssignPersistedPlan,
     handleConfirmPickup,
     handleMarkRecovered,
+    retryLastAction,
+    clearActionError,
     clearRecoverySelection,
   } = recovery;
 
@@ -277,6 +284,37 @@ export default function App() {
       ? activeIncident
       : selectedShipment?.activeIncident || activeIncident;
 
+  // Load recovery vehicle detail (includes backend currentPath) for map piggyback overlay
+  const recoveryVehicleIdForMap =
+    incidentForAlert?.recoveryVehicleId ||
+    recoveryAnalysis?.selectedRecovery?.vehicleId ||
+    recoveryAnalysis?.recoveryPlan?.selectedVehicleId ||
+    null;
+
+  useEffect(() => {
+    const incidentOpen =
+      incidentForAlert?.status && incidentForAlert.status !== 'RESOLVED';
+    if (!recoveryVehicleIdForMap || !incidentOpen) return;
+    // Detail endpoint always sets currentPath (array or null); list items omit it
+    if (
+      selectedVehicle?.id === recoveryVehicleIdForMap &&
+      selectedVehicle.currentPath !== undefined
+    ) {
+      return;
+    }
+    loadVehicle(recoveryVehicleIdForMap);
+  }, [
+    recoveryVehicleIdForMap,
+    selectedVehicle?.id,
+    selectedVehicle?.currentPath,
+    incidentForAlert?.status,
+    loadVehicle,
+  ]);
+
+  useEffect(() => {
+    if (!recoveryAnalysis) setPreviewCandidateId(null);
+  }, [recoveryAnalysis]);
+
   const showAlert =
     completionBanner ||
     (incidentForAlert &&
@@ -322,10 +360,14 @@ export default function App() {
           incident={incidentForAlert}
           shipment={selectedShipment}
           completion={completionBanner}
+          recoveryAnalysis={recoveryAnalysis}
+          vehicles={vehicles}
           onViewRecovery={analyzeRecovery}
+          onAssign={handleAssignPersistedPlan}
           onConfirmPickup={handleConfirmPickup}
           onMarkRecovered={handleMarkRecovered}
           recovering={recoveryLoading}
+          assigning={assigning}
           confirmingPickup={confirmingPickup}
           resolving={resolving}
         />
@@ -335,21 +377,55 @@ export default function App() {
         shipment={selectedShipment}
         incident={incidentForAlert}
         recoveryAnalysis={recoveryAnalysis}
+        vehicles={vehicles}
+        driverNotification={driverNotification}
         shipmentLoading={shipmentLoading}
         shipmentError={shipmentError}
         incidentLoading={incidentsLoading && !incidentForAlert}
         incidentError={incidentsError}
         recoveryLoading={recoveryLoading}
         recoveryError={recoveryError}
+        analyzing={recoveryLoading}
+        assigning={assigning}
+        confirmingPickup={confirmingPickup}
+        resolving={resolving}
+        actionError={actionError}
+        actionFeedback={actionFeedback}
+        onAnalyze={analyzeRecovery}
+        onAssign={handleAssignPersistedPlan}
+        onConfirmPickup={handleConfirmPickup}
+        onResolve={handleMarkRecovered}
+        onRetryAction={retryLastAction}
+        onClearActionError={clearActionError}
       />
 
       {driverNotification ? (
         <section className="panel driver-notify">
-          <h2>Driver Contacted (Simulated)</h2>
+          <h2>
+            {driverNotification.simulated
+              ? 'Driver Contact (Log Fallback)'
+              : 'Driver Called (Sarvam)'}
+          </h2>
           <p className="muted">
-            Channel: {driverNotification.channel} · delivered:{' '}
-            {String(driverNotification.delivered)} · not live telephony
+            Channel: {driverNotification.channel}
+            {driverNotification.callKind
+              ? ` · kind: ${driverNotification.callKind}`
+              : ''}
+            {' · '}
+            delivered: {String(driverNotification.delivered)}
+            {driverNotification.attemptId
+              ? ` · attempt: ${driverNotification.attemptId}`
+              : ''}
+            {driverNotification.language
+              ? ` · lang: ${driverNotification.language}`
+              : ''}
+            {driverNotification.simulated
+              ? ' · telephony not fully configured'
+              : ''}
           </p>
+          {driverNotification.detail ? (
+            <p className="cell-sub">{driverNotification.detail}</p>
+          ) : null}
           <pre className="driver-message">{driverNotification.message}</pre>
         </section>
       ) : null}
@@ -365,17 +441,23 @@ export default function App() {
           recoveryAnalysis={recoveryAnalysis}
           activeIncident={incidentForAlert}
           focusNodeId={focusNodeId}
+          previewCandidateId={previewCandidateId}
         />
 
         <div className="side-panels">
           <ShipmentPanel
             shipment={selectedShipment}
+            incident={incidentForAlert}
+            recoveryAnalysis={recoveryAnalysis}
+            vehicles={vehicles}
             loading={shipmentLoading}
             error={shipmentError}
             onAnalyze={analyzeRecovery}
             analyzing={recoveryLoading}
             onSimulateIncident={handleSimulateIncident}
             simulating={simulating}
+            onAssign={handleAssignPersistedPlan}
+            assigning={assigning}
             onConfirmPickup={handleConfirmPickup}
             confirmingPickup={confirmingPickup}
             onMarkRecovered={handleMarkRecovered}
@@ -421,6 +503,7 @@ export default function App() {
               ? incidentForAlert.selectedCandidateId
               : null
           }
+          onPreviewCandidate={setPreviewCandidateId}
         />
         <RecoveryPlan
           analysis={recoveryAnalysis}

@@ -1,35 +1,65 @@
 import IncidentMetadata from './IncidentMetadata';
 import LocationDivergence from './LocationDivergence';
+import RecoveryActions from './RecoveryActions';
 import RecoveryStatus from './RecoveryStatus';
 import RouteSummary from './RouteSummary';
 import ShipmentSummary from './ShipmentSummary';
 
 /**
  * Operator-facing recovery incident panel.
- * Display / organization only — no candidate ranking or assignment actions.
+ * Display + state-gated recovery actions (analyze → assign → pickup → resolve).
+ * Does not rank candidates or choose vehicles — assignment uses the persisted plan.
  *
  * @param {{
  *   shipment: import('../../types/api.ts').Shipment | null,
  *   incident?: import('../../types/api.ts').Incident | null,
  *   recoveryAnalysis?: import('../../types/api.ts').RecoveryAnalysis | null,
+ *   vehicles?: import('../../types/api.ts').Vehicle[],
+ *   driverNotification?: import('../../types/api.ts').DriverNotification | null,
  *   shipmentLoading?: boolean,
  *   shipmentError?: string | null,
  *   incidentLoading?: boolean,
  *   incidentError?: string | null,
  *   recoveryLoading?: boolean,
  *   recoveryError?: string | null,
+ *   analyzing?: boolean,
+ *   assigning?: boolean,
+ *   confirmingPickup?: boolean,
+ *   resolving?: boolean,
+ *   actionError?: string | null,
+ *   actionFeedback?: string | null,
+ *   onAnalyze?: () => void | Promise<void>,
+ *   onAssign?: () => void | Promise<void>,
+ *   onConfirmPickup?: () => void | Promise<void>,
+ *   onResolve?: () => void | Promise<void>,
+ *   onRetryAction?: () => void | Promise<void>,
+ *   onClearActionError?: () => void,
  * }} props
  */
 export default function RecoveryIncidentView({
   shipment,
   incident = null,
   recoveryAnalysis = null,
+  vehicles = [],
+  driverNotification = null,
   shipmentLoading = false,
   shipmentError = null,
   incidentLoading = false,
   incidentError = null,
   recoveryLoading = false,
   recoveryError = null,
+  analyzing = false,
+  assigning = false,
+  confirmingPickup = false,
+  resolving = false,
+  actionError = null,
+  actionFeedback = null,
+  onAnalyze,
+  onAssign,
+  onConfirmPickup,
+  onResolve,
+  onRetryAction,
+  onClearActionError,
 }) {
   // ShipmentPanel owns generic search/load failures; only surface them here
   // when we already have recovery context.
@@ -143,6 +173,26 @@ export default function RecoveryIncidentView({
         shipment={displayShipment}
         incident={resolvedIncident}
         lifecycleStatus={displayShipment.lifecycleStatus}
+      />
+
+      <RecoveryActions
+        shipment={displayShipment}
+        incident={resolvedIncident}
+        recoveryAnalysis={recoveryAnalysis}
+        vehicles={vehicles}
+        driverNotification={driverNotification}
+        analyzing={analyzing || recoveryLoading}
+        assigning={assigning}
+        confirmingPickup={confirmingPickup}
+        resolving={resolving}
+        actionError={actionError}
+        actionFeedback={actionFeedback}
+        onAnalyze={onAnalyze}
+        onAssign={onAssign}
+        onConfirmPickup={onConfirmPickup}
+        onResolve={onResolve}
+        onRetry={onRetryAction}
+        onClearError={onClearActionError}
       />
 
       {incidentLoading ? (

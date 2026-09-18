@@ -1,4 +1,5 @@
 export { default as RecoveryIncidentView } from './RecoveryIncidentView';
+export { default as RecoveryActions } from './RecoveryActions';
 export { default as ShipmentSummary } from './ShipmentSummary';
 export { default as LocationDivergence } from './LocationDivergence';
 export { default as RouteSummary } from './RouteSummary';
@@ -16,6 +17,12 @@ export {
   formatTimestamp,
 } from './recoveryStatus';
 export {
+  getAvailableRecoveryAction,
+  hasPersistedRecoveryPlan,
+  buildAssignConfirmation,
+  RECOVERY_ACTION_LABELS,
+} from './recoveryActions';
+export {
   CANDIDATE_TYPE_LABELS,
   candidateTypeLabel,
   isCandidateFeasible,
@@ -23,3 +30,11 @@ export {
   candidateComponentScores,
   factualSelectionSummary,
 } from './candidateUtils';
+export {
+  buildRecoveryMapState,
+  isRecoveryMapActive,
+  resolveActiveRecoveryCandidate,
+  splitPathAtPickup,
+  pathToLatLngs,
+  nodeLatLng,
+} from './recoveryMapState';
