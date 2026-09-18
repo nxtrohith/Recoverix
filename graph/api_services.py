@@ -96,8 +96,7 @@ def _load_routes_map(db: Database, ids: list[Any]) -> dict[str, dict[str, Any]]:
     """Return a dict keyed by str(ObjectId) → route document (minimal fields)."""
     oids = [o for o in (_to_oid(i) for i in ids) if o is not None]
     if not oids:
-        return {}t
-        
+        return {}
     docs = db["routes"].find({"_id": {"$in": oids}}, {"destination": 1})
     return {str(doc["_id"]): doc for doc in docs}
 
