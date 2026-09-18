@@ -96,3 +96,42 @@ export function getShipment(id) {
 export function getRecoveryAnalysis(shipmentId) {
   return request(`/api/recovery/${encodeURIComponent(shipmentId)}`);
 }
+
+export function calculateRecovery(shipmentId) {
+  return request(`/api/recovery/${encodeURIComponent(shipmentId)}/calculate`, {
+    method: 'POST',
+  });
+}
+
+export function simulateIncident(shipmentId, { autoAnalyze = true } = {}) {
+  return request('/api/incidents/simulate', {
+    method: 'POST',
+    body: JSON.stringify({
+      shipment_id: shipmentId,
+      auto_analyze: autoAnalyze,
+    }),
+  });
+}
+
+export function getActiveIncidents() {
+  return request('/api/incidents/active');
+}
+
+export function assignRecovery(shipmentId, option = {}) {
+  return request(`/api/recovery/${encodeURIComponent(shipmentId)}/assign`, {
+    method: 'POST',
+    body: JSON.stringify({
+      candidateId: option.candidateId || null,
+      vehicleId: option.vehicleId || null,
+      path: option.path || null,
+      pickupCase: option.pickupCase || null,
+    }),
+  });
+}
+
+export function resolveRecovery(shipmentId) {
+  return request(`/api/recovery/${encodeURIComponent(shipmentId)}/resolve`, {
+    method: 'POST',
+  });
+}
+

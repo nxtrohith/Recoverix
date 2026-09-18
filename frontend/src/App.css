@@ -415,6 +415,142 @@ th {
   color: var(--ok);
 }
 
+.panel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+button.danger {
+  background: #fff5f5;
+  border: 1px solid #f1aeb5;
+  color: var(--bad);
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+button.danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.lifecycle-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0 12px;
+}
+
+.lifecycle-step {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  background: #f6f8fa;
+}
+
+.lifecycle-step.lifecycle-done {
+  background: #dafbe1;
+  border-color: #4ac26b;
+  color: var(--ok);
+}
+
+.lifecycle-step.lifecycle-active {
+  background: #fff8c5;
+  border-color: #d4a72c;
+  color: #7d4e00;
+  font-weight: 700;
+}
+
+.incident-alert {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  background: #fff8f0;
+}
+
+.incident-alert-warn {
+  border-color: #f0b429;
+  background: linear-gradient(180deg, #fff8e8 0%, #fff 100%);
+}
+
+.incident-alert-assigned {
+  border-color: #f0883e;
+  background: linear-gradient(180deg, #fff4e6 0%, #fff 100%);
+}
+
+.incident-alert-ok {
+  border-color: #4ac26b;
+  background: linear-gradient(180deg, #eaf8ee 0%, #fff 100%);
+}
+
+.incident-alert-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: baseline;
+  margin-bottom: 10px;
+}
+
+.incident-alert-header strong {
+  font-size: 1.05rem;
+}
+
+.incident-alert-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px 16px;
+  margin: 0 0 12px;
+}
+
+.incident-alert-grid dt {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+.incident-alert-grid dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.incident-route {
+  grid-column: 1 / -1;
+}
+
+.incident-alert-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.driver-notify pre.driver-message,
+.driver-message {
+  white-space: pre-wrap;
+  background: #f6f8fa;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.badge-assigned {
+  background: #fff1e5;
+  color: #bc4c00;
+}
+
+.swatch.incident {
+  background: #e11d48;
+}
+
 @media (max-width: 1000px) {
   .app-header,
   .main-grid,
@@ -428,3 +564,4 @@ th {
     grid-template-columns: 1fr;
   }
 }
+

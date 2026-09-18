@@ -3,11 +3,21 @@ function fmt(value, digits = 1) {
   return Number(value).toFixed(digits);
 }
 
+function strategyLabel(pickupCase) {
+  if (pickupCase === 'at_node' || pickupCase === 'pass_through') return 'Piggyback';
+  if (pickupCase === 'detour') return 'Alternate / Detour';
+  if (pickupCase === 'none') return 'Direct Recovery';
+  return pickupCase || '—';
+}
+
 export default function RecoveryCandidates({
   analysis,
   loading,
   error,
   selectedCandidateId,
+  assignedCandidateId,
+  onSelectRecovery,
+  assigning,
 }) {
   if (loading) {
     return (
@@ -31,7 +41,9 @@ export default function RecoveryCandidates({
     return (
       <section className="panel">
         <h2>Recovery Candidates</h2>
-        <p className="muted">Click “Analyze Recovery” on a shipment to load candidates.</p>
+        <p className="muted">
+          Simulate an incident or click “Analyze Recovery” to load candidates.
+        </p>
       </section>
     );
   }
@@ -39,7 +51,10 @@ export default function RecoveryCandidates({
   const candidates = analysis.candidates || [];
   const network = analysis.network || {};
   const selectedId =
-    selectedCandidateId || analysis.selectedRecovery?.candidateId || null;
+    assignedCandidateId ||
+    selectedCandidateId ||
+    analysis.selectedRecovery?.candidateId ||
+    null;
 
   if (!candidates.length) {
     return (
@@ -59,14 +74,11 @@ export default function RecoveryCandidates({
 
   return (
     <section className="panel recovery-candidates">
-      <h2>Recovery Candidates</h2>
+      <h2>Recovery Options</h2>
       <p className="muted">
         Status: <strong>{analysis.status}</strong> · total{' '}
         {network.candidateCount ?? candidates.length} · feasible{' '}
-        {network.feasibleCount ?? candidates.filter((c) => c.feasible).length} ·
-        infeasible{' '}
-        {(network.candidateCount ?? candidates.length) -
-          (network.feasibleCount ?? candidates.filter((c) => c.feasible).length)}
+        {network.feasibleCount ?? candidates.filter((c) => c.feasible).length}
       </p>
 
       <div className="table-wrap">
@@ -74,6 +86,7 @@ export default function RecoveryCandidates({
           <thead>
             <tr>
               <th>State</th>
+              <th>Strategy</th>
               <th>Vehicle</th>
               <th>Path</th>
               <th>Feasible</th>
@@ -81,9 +94,7 @@ export default function RecoveryCandidates({
               <th>Distance</th>
               <th>Travel Time</th>
               <th>Cost</th>
-              <th>Capacity</th>
-              <th>Deadline buffer</th>
-              <th>Explanation</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody>
@@ -91,7 +102,8 @@ export default function RecoveryCandidates({
               const m = c.metrics || {};
               const isSelected = selectedId && c.candidateId === selectedId;
               let state = c.feasible ? 'FEASIBLE' : 'INFEASIBLE';
-              if (isSelected) state = 'SELECTED';
+              if (isSelected && assignedCandidateId) state = 'ASSIGNED';
+              else if (isSelected) state = 'SELECTED';
               return (
                 <tr
                   key={c.candidateId}
@@ -108,6 +120,7 @@ export default function RecoveryCandidates({
                       {state}
                     </span>
                   </td>
+                  <td>{strategyLabel(c.pickupCase)}</td>
                   <td>
                     {c.vehicleNumber || c.vehicleId}
                     <div className="cell-sub">{c.vehicleId}</div>
@@ -115,22 +128,33 @@ export default function RecoveryCandidates({
                   <td className="path-cell">
                     {(c.path || []).join(' → ') || '—'}
                   </td>
-                  <td>{c.feasible ? 'yes' : `no${c.rejectionReason ? `: ${c.rejectionReason}` : ''}`}</td>
+                  <td>
+                    {c.feasible
+                      ? 'yes'
+                      : `no${c.rejectionReason ? `: ${c.rejectionReason}` : ''}`}
+                  </td>
                   <td>{c.score == null ? '—' : fmt(c.score, 4)}</td>
                   <td>{fmt(m.distance)} km</td>
                   <td>{fmt(m.travelTime)} min</td>
                   <td>{fmt(m.cost, 2)}</td>
                   <td>
-                    {m.availableCapacity
-                      ? `${fmt(m.availableCapacity.weight, 0)} kg / ${fmt(m.availableCapacity.volume, 1)} m³`
-                      : '—'}
+                    {c.feasible && onSelectRecovery ? (
+                      <button
+                        type="button"
+                        className="primary"
+                        disabled={assigning || Boolean(assignedCandidateId)}
+                        onClick={() => onSelectRecovery(c)}
+                      >
+                        {assignedCandidateId === c.candidateId
+                          ? 'Assigned'
+                          : assigning
+                            ? 'Assigning…'
+                            : 'Select Recovery'}
+                      </button>
+                    ) : (
+                      '—'
+                    )}
                   </td>
-                  <td>
-                    {m.deadlineBuffer == null
-                      ? '—'
-                      : `${fmt(m.deadlineBuffer, 0)} min`}
-                  </td>
-                  <td className="explain-cell">{c.explanation || '—'}</td>
                 </tr>
               );
             })}

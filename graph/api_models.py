@@ -183,3 +183,25 @@ class ShipmentDetailResponse(ShipmentListItem):
     events: list[ShipmentEventModel] = []
     createdAt: Optional[str] = None
     updatedAt: Optional[str] = None
+    # Live incident / recovery demo fields (MongoDB source of truth)
+    lifecycleStatus: Optional[str] = None
+    assignedVehicleId: Optional[str] = None
+    assignedVehicleNumber: Optional[str] = None
+    activeIncident: Optional[dict[str, Any]] = None
+
+
+# ---------------------------------------------------------------------------
+# Incidents / recovery assignment
+# ---------------------------------------------------------------------------
+
+
+class SimulateIncidentRequest(BaseModel):
+    shipment_id: str
+    auto_analyze: bool = False
+
+
+class AssignRecoveryRequest(BaseModel):
+    candidateId: Optional[str] = None
+    vehicleId: Optional[str] = None
+    path: Optional[list[str]] = None
+    pickupCase: Optional[str] = None

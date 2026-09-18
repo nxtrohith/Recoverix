@@ -1,17 +1,22 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   ApiError,
+  assignRecovery,
+  calculateRecovery,
+  getActiveIncidents,
   getApiBaseUrl,
   getGraph,
   getHealth,
   getHubs,
-  getRecoveryAnalysis,
   getShipment,
   getShipments,
   getVehicle,
   getVehicles,
+  resolveRecovery,
+  simulateIncident,
 } from './api/client';
 import Header from './components/Header';
+import IncidentAlert from './components/IncidentAlert';
 import LogisticsMap from './components/LogisticsMap';
 import MetricsBar from './components/MetricsBar';
 import RecoveryCandidates from './components/RecoveryCandidates';
@@ -57,6 +62,13 @@ export default function App() {
   const [recoveryLoading, setRecoveryLoading] = useState(false);
   const [recoveryError, setRecoveryError] = useState(null);
 
+  const [activeIncident, setActiveIncident] = useState(null);
+  const [completionBanner, setCompletionBanner] = useState(null);
+  const [simulating, setSimulating] = useState(false);
+  const [assigning, setAssigning] = useState(false);
+  const [resolving, setResolving] = useState(false);
+  const [driverNotification, setDriverNotification] = useState(null);
+
   const [focusNodeId, setFocusNodeId] = useState(null);
 
   const refreshHealth = useCallback(async () => {
@@ -84,9 +96,10 @@ export default function App() {
       getHubs(),
       getVehicles(),
       getShipments(),
+      getActiveIncidents(),
     ]);
 
-    const [graphRes, hubsRes, vehiclesRes, shipmentsRes] = results;
+    const [graphRes, hubsRes, vehiclesRes, shipmentsRes, incidentsRes] = results;
 
     if (graphRes.status === 'fulfilled') {
       setGraph(graphRes.value);
@@ -115,6 +128,17 @@ export default function App() {
       setShipments([]);
       listErrors.push(`shipments: ${errMsg(shipmentsRes.reason, 'failed')}`);
     }
+    if (incidentsRes.status === 'fulfilled') {
+      const incidents = incidentsRes.value?.incidents || [];
+      // If a shipment is already selected, keep its incident; else show newest
+      setActiveIncident((prev) => {
+        if (prev) {
+          const match = incidents.find((i) => i.incidentId === prev.incidentId);
+          return match || prev;
+        }
+        return incidents[0] || null;
+      });
+    }
     setListsError(listErrors.length ? listErrors.join(' · ') : null);
     setListsLoading(false);
   }, []);
@@ -130,11 +154,40 @@ export default function App() {
     if (!id) return;
     setShipmentLoading(true);
     setShipmentError(null);
-    setRecoveryAnalysis(null);
     setRecoveryError(null);
+    setCompletionBanner(null);
     try {
       const data = await getShipment(id);
       setSelectedShipment(data);
+      const incident = data.activeIncident || null;
+      setActiveIncident(
+        incident && incident.status !== 'RESOLVED' ? incident : incident,
+      );
+      if (incident?.status === 'RESOLVED') {
+        setCompletionBanner({
+          trackingNumber: data.trackingNumber,
+          recoveryVehicleNumber: incident.recoveryVehicleNumber,
+          recoveryRouteLabel: (incident.recoveryPath || []).join(' → ') || null,
+          status: 'RECOVERED',
+        });
+      }
+      // Restore assigned recovery path on refresh from MongoDB incident
+      if (incident?.recoveryPath?.length) {
+        setRecoveryAnalysis((prev) => ({
+          ...(prev || {}),
+          status: 'RECOVERY_ASSIGNED',
+          selectedRecovery: {
+            candidateId: incident.selectedCandidateId,
+            vehicleId: incident.recoveryVehicleId,
+            vehicleNumber: incident.recoveryVehicleNumber,
+            path: incident.recoveryPath,
+            pickupCase: incident.pickupCase,
+          },
+          candidates: prev?.candidates || [],
+        }));
+      } else if (!incident || incident.status === 'RESOLVED') {
+        setRecoveryAnalysis(null);
+      }
       if (data.currentNode) setFocusNodeId(data.currentNode);
     } catch (err) {
       setSelectedShipment(null);
@@ -177,10 +230,12 @@ export default function App() {
     setRecoveryLoading(true);
     setRecoveryError(null);
     try {
-      const data = await getRecoveryAnalysis(id);
+      const data = await calculateRecovery(id);
       setRecoveryAnalysis(data);
       const path = data?.selectedRecovery?.path;
       if (path?.length) setFocusNodeId(path[0]);
+      // Refresh shipment so lifecycle shows RECOVERY_ANALYSIS when applicable
+      await loadShipment(id);
     } catch (err) {
       setRecoveryAnalysis(null);
       if (err instanceof ApiError && err.status === 404) {
@@ -191,7 +246,113 @@ export default function App() {
     } finally {
       setRecoveryLoading(false);
     }
-  }, [selectedShipment]);
+  }, [selectedShipment, loadShipment]);
+
+  const handleSimulateIncident = useCallback(async () => {
+    const id = selectedShipment?.id || selectedShipment?.trackingNumber;
+    if (!id) {
+      setShipmentError('Select a shipment before simulating an incident.');
+      return;
+    }
+    setSimulating(true);
+    setShipmentError(null);
+    setCompletionBanner(null);
+    setDriverNotification(null);
+    try {
+      const result = await simulateIncident(id, { autoAnalyze: false });
+      setActiveIncident(result.incident);
+      await loadShipment(id);
+      await loadDashboard();
+      setSearchHint(
+        `Incident ${result.incident?.incidentId} simulated — recovery required`,
+      );
+      // Trigger recovery engine as a separate step (keeps simulate fast / durable)
+      setRecoveryLoading(true);
+      try {
+        const data = await calculateRecovery(id);
+        setRecoveryAnalysis(data);
+        const path = data?.selectedRecovery?.path;
+        if (path?.length) setFocusNodeId(path[0]);
+        await loadShipment(id);
+      } catch (calcErr) {
+        setRecoveryError(errMsg(calcErr, 'Recovery analysis failed after incident'));
+      } finally {
+        setRecoveryLoading(false);
+      }
+    } catch (err) {
+      setShipmentError(errMsg(err, 'Failed to simulate incident'));
+    } finally {
+      setSimulating(false);
+    }
+  }, [selectedShipment, loadShipment, loadDashboard]);
+
+  const handleSelectRecovery = useCallback(
+    async (candidate) => {
+      const id = selectedShipment?.id || selectedShipment?.trackingNumber;
+      if (!id || !candidate) return;
+      setAssigning(true);
+      setRecoveryError(null);
+      try {
+        const result = await assignRecovery(id, {
+          candidateId: candidate.candidateId,
+          vehicleId: candidate.vehicleId,
+          path: candidate.path,
+          pickupCase: candidate.pickupCase,
+        });
+        setActiveIncident(result.incident);
+        setDriverNotification(result.driverNotification || null);
+        if (result.recovery) setRecoveryAnalysis(result.recovery);
+        if (result.assignment?.path?.length) {
+          setRecoveryAnalysis((prev) => ({
+            ...(prev || result.recovery || {}),
+            status: 'RECOVERY_ASSIGNED',
+            selectedRecovery: {
+              ...(prev?.selectedRecovery || {}),
+              ...result.assignment,
+            },
+          }));
+          setFocusNodeId(result.assignment.path[0]);
+        }
+        if (result.assignment?.vehicleId) {
+          await loadVehicle(result.assignment.vehicleId);
+        }
+        await loadShipment(id);
+        await loadDashboard();
+        setSearchHint(
+          `Recovery assigned to ${result.assignment?.vehicleNumber || result.assignment?.vehicleId}`,
+        );
+      } catch (err) {
+        setRecoveryError(errMsg(err, 'Failed to assign recovery'));
+      } finally {
+        setAssigning(false);
+      }
+    },
+    [selectedShipment, loadShipment, loadVehicle, loadDashboard],
+  );
+
+  const handleMarkRecovered = useCallback(async () => {
+    const id = selectedShipment?.id || selectedShipment?.trackingNumber;
+    if (!id) return;
+    setResolving(true);
+    setRecoveryError(null);
+    try {
+      const result = await resolveRecovery(id);
+      setActiveIncident(result.incident);
+      setCompletionBanner({
+        trackingNumber: result.shipment?.trackingNumber,
+        recoveryVehicleNumber: result.completion?.recoveryVehicleNumber,
+        recoveryRouteLabel: result.completion?.recoveryRouteLabel,
+        status: result.completion?.status || 'RECOVERED',
+      });
+      await loadShipment(id);
+      await loadDashboard();
+      setSearchHint(`Recovery completed for ${result.shipment?.trackingNumber || id}`);
+    } catch (err) {
+      setRecoveryError(errMsg(err, 'Failed to mark recovered'));
+    } finally {
+      setResolving(false);
+    }
+  }, [selectedShipment, loadShipment, loadDashboard]);
 
   const handleSearchSubmit = useCallback(async () => {
     const q = searchQuery.trim();
@@ -201,21 +362,23 @@ export default function App() {
     }
     setSearchHint('');
 
-    // 1) Try shipment lookup (primary)
     try {
       const shipment = await getShipment(q);
       setSelectedShipment(shipment);
       setShipmentError(null);
       setRecoveryAnalysis(null);
       setRecoveryError(null);
+      setCompletionBanner(null);
+      const incident = shipment.activeIncident || null;
+      setActiveIncident(incident && incident.status !== 'RESOLVED' ? incident : incident);
       if (shipment.currentNode) setFocusNodeId(shipment.currentNode);
       setSearchHint(`Loaded shipment ${shipment.trackingNumber || shipment.id}`);
+      await loadShipment(shipment.id);
       return;
     } catch {
       /* fall through */
     }
 
-    // 2) Local shipment list match
     const shipmentHit = shipments.find(
       (s) =>
         s.id === q ||
@@ -228,7 +391,6 @@ export default function App() {
       return;
     }
 
-    // 3) Vehicle lookup
     try {
       const vehicle = await getVehicle(q);
       setSelectedVehicle(vehicle);
@@ -252,7 +414,6 @@ export default function App() {
       return;
     }
 
-    // 4) Hub match
     const qLower = q.toLowerCase();
     const hubHit = hubs.find(
       (h) =>
@@ -272,6 +433,20 @@ export default function App() {
     setSearchHint(`No shipment, vehicle, or hub matched “${q}”.`);
     setShipmentError(`Shipment not found: ${q}`);
   }, [searchQuery, shipments, vehicles, hubs, loadShipment, loadVehicle]);
+
+  const incidentForAlert =
+    activeIncident &&
+    selectedShipment &&
+    (activeIncident.shipmentId === selectedShipment.id ||
+      !activeIncident.shipmentId)
+      ? activeIncident
+      : selectedShipment?.activeIncident || activeIncident;
+
+  const showAlert =
+    completionBanner ||
+    (incidentForAlert &&
+      incidentForAlert.status &&
+      incidentForAlert.status !== 'RESOLVED');
 
   return (
     <div className="app-shell">
@@ -307,6 +482,29 @@ export default function App() {
         error={listsError || graphError}
       />
 
+      {showAlert ? (
+        <IncidentAlert
+          incident={incidentForAlert}
+          shipment={selectedShipment}
+          completion={completionBanner}
+          onViewRecovery={analyzeRecovery}
+          onMarkRecovered={handleMarkRecovered}
+          recovering={recoveryLoading}
+          resolving={resolving}
+        />
+      ) : null}
+
+      {driverNotification ? (
+        <section className="panel driver-notify">
+          <h2>Driver Notification</h2>
+          <p className="muted">
+            Channel: {driverNotification.channel} · delivered:{' '}
+            {String(driverNotification.delivered)}
+          </p>
+          <pre className="driver-message">{driverNotification.message}</pre>
+        </section>
+      ) : null}
+
       <div className="main-grid">
         <LogisticsMap
           graph={graph}
@@ -316,6 +514,7 @@ export default function App() {
           selectedShipment={selectedShipment}
           selectedVehicle={selectedVehicle}
           recoveryAnalysis={recoveryAnalysis}
+          activeIncident={incidentForAlert}
           focusNodeId={focusNodeId}
         />
 
@@ -326,6 +525,10 @@ export default function App() {
             error={shipmentError}
             onAnalyze={analyzeRecovery}
             analyzing={recoveryLoading}
+            onSimulateIncident={handleSimulateIncident}
+            simulating={simulating}
+            onMarkRecovered={handleMarkRecovered}
+            resolving={resolving}
           />
           <VehiclePanel
             vehicle={selectedVehicle}
@@ -355,11 +558,19 @@ export default function App() {
           analysis={recoveryAnalysis}
           loading={recoveryLoading}
           error={recoveryError}
+          assignedCandidateId={
+            incidentForAlert?.status === 'ASSIGNED'
+              ? incidentForAlert.selectedCandidateId
+              : null
+          }
+          onSelectRecovery={handleSelectRecovery}
+          assigning={assigning}
         />
         <RecoveryPlan
           analysis={recoveryAnalysis}
           loading={recoveryLoading}
           error={recoveryError}
+          assigned={incidentForAlert?.status === 'ASSIGNED'}
         />
       </div>
     </div>

@@ -12,7 +12,7 @@ function fmt(value, digits = 1) {
   return Number(value).toFixed(digits);
 }
 
-export default function RecoveryPlan({ analysis, loading, error }) {
+export default function RecoveryPlan({ analysis, loading, error, assigned }) {
   if (loading) {
     return (
       <section className="panel">
@@ -70,7 +70,9 @@ export default function RecoveryPlan({ analysis, loading, error }) {
   return (
     <section className="panel recovery-plan">
       <h2>Selected Recovery Plan</h2>
-      <p className="ok-text">Status: {analysis.status}</p>
+      <p className={assigned ? 'ok-text' : 'ok-text'}>
+        Status: {assigned ? 'RECOVERY_ASSIGNED' : analysis.status}
+      </p>
       {analysis.selectionExplanation ? (
         <p className="muted">{analysis.selectionExplanation}</p>
       ) : null}
@@ -141,3 +143,4 @@ export default function RecoveryPlan({ analysis, loading, error }) {
     </section>
   );
 }
+
