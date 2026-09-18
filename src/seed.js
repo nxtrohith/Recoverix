@@ -59,6 +59,7 @@ export async function pushDataToMongo() {
       _id: locId,
       name: node.hub_name,
       code,
+      graphNodeKey: node.hub_name,
       type,
       address: `${facility}Logistics Facility, ${node.city}, Telangana`,
       city: node.city,
@@ -94,34 +95,8 @@ export async function pushDataToMongo() {
     console.log(`✓ Inserted ${rawNodesToInsert.length} records into "telangana_nodes" collection`);
   }
 
-  // 2. COORDINATES (from data/city_coordinates_cache.csv)
-  console.log('\n--- 2. Processing Coordinates ---');
-  const rawCities = parseCsv(path.join(dataDir, 'city_coordinates_cache.csv'));
-  const coordinateDocs = rawCities.map((c) => ({
-    city: c.city,
-    state: 'Telangana',
-    latitude: parseFloat(c.latitude),
-    longitude: parseFloat(c.longitude),
-    createdAt: new Date(),
-  }));
-
-  const coordinatesCol = db.collection('coordinates');
-  await coordinatesCol.deleteMany({});
-  if (coordinateDocs.length > 0) {
-    await coordinatesCol.insertMany(coordinateDocs);
-    console.log(`✓ Inserted ${coordinateDocs.length} records into "coordinates" collection`);
-  }
-
-  // Raw city_coordinates_cache
-  const cityCacheCol = db.collection('city_coordinates_cache');
-  await cityCacheCol.deleteMany({});
-  if (coordinateDocs.length > 0) {
-    await cityCacheCol.insertMany(coordinateDocs);
-    console.log(`✓ Inserted ${coordinateDocs.length} records into "city_coordinates_cache" collection`);
-  }
-
-  // 3. ROUTES & VEHICLES (from data/telangana_edges.csv)
-  console.log('\n--- 3. Processing Routes & Vehicles ---');
+  // 2. ROUTES & VEHICLES (from data/telangana_edges.csv)
+  console.log('\n--- 2. Processing Routes & Vehicles ---');
   const rawEdges = parseCsv(path.join(dataDir, 'telangana_edges.csv'));
 
   const vehicleDocs = [];
@@ -252,13 +227,11 @@ export async function pushDataToMongo() {
     console.log(`✓ Inserted ${rawEdgesToInsert.length} records into "telangana_edges" collection`);
   }
 
-  // 4. DISTRICTS, DISTRICT COORDINATES, HUBS & RECOVERY CANDIDATES
-  console.log('\n--- 4. Processing Core Datasets (Districts, Hubs, Recovery Candidates) ---');
+  // 3. DISTRICTS & HUBS
+  console.log('\n--- 3. Processing Core Geographic Datasets (Districts, Hubs) ---');
   const jsonFiles = [
-    { file: 'district_coordinates.json', col: 'district_coordinates' },
     { file: 'districts.json', col: 'districts' },
     { file: 'hubs.json', col: 'hubs' },
-    { file: 'recovery_candidates.json', col: 'recovery_candidates' },
   ];
 
   for (const { file, col } of jsonFiles) {
@@ -271,18 +244,6 @@ export async function pushDataToMongo() {
         await targetCol.insertMany(items);
         console.log(`✓ Inserted ${items.length} records into "${col}" collection`);
       }
-    }
-  }
-
-  // Also create alias collection 'recovery_options'
-  const recoveryCandidatesPath = path.join(dataDir, 'recovery_candidates.json');
-  if (fs.existsSync(recoveryCandidatesPath)) {
-    const recCandidates = JSON.parse(fs.readFileSync(recoveryCandidatesPath, 'utf8'));
-    const recOptionsCol = db.collection('recovery_options');
-    await recOptionsCol.deleteMany({});
-    if (recCandidates.length > 0) {
-      await recOptionsCol.insertMany(recCandidates);
-      console.log(`✓ Inserted ${recCandidates.length} records into "recovery_options" collection`);
     }
   }
 
