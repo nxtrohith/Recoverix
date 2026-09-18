@@ -1,0 +1,6 @@
+/* Global reset handled in App.css — keep this file minimal for redesign later. */
+html,
+body,
+#root {
+  height: 100%;
+}
