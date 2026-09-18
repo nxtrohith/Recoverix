@@ -33,6 +33,7 @@ export default function RecoveryTimeline({
   loading = false,
   eventsLoading = false,
   error = null,
+  hideTitle = false,
 }) {
   const current = resolveRecoveryDisplayStatus({
     shipment,
@@ -55,7 +56,7 @@ export default function RecoveryTimeline({
   if (!visible && !current) {
     return (
       <div className="recovery-section recovery-timeline-panel" aria-busy="true">
-        <h3>Recovery Status</h3>
+        {hideTitle ? null : <h3>Recovery Status</h3>}
         <p className="muted">Loading recovery status…</p>
       </div>
     );
@@ -64,7 +65,7 @@ export default function RecoveryTimeline({
   if (!current) {
     return (
       <div className="recovery-section recovery-timeline-panel">
-        <h3>Recovery Status</h3>
+        {hideTitle ? null : <h3>Recovery Status</h3>}
         {error ? (
           <p className="error-text">{error}</p>
         ) : (
@@ -88,7 +89,7 @@ export default function RecoveryTimeline({
       aria-busy={loading || undefined}
     >
       <div className="panel-header-row">
-        <h3>Recovery Status</h3>
+        {hideTitle ? <span /> : <h3>Recovery Status</h3>}
         <span className={`flag ${isComplete ? 'flag-ok' : 'flag-warn'}`}>
           {isComplete ? 'RECOVERY COMPLETE' : recoveryStepLabel(current)}
         </span>

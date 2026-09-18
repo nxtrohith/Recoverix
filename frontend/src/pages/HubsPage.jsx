@@ -1,32 +1,46 @@
+import { useMemo, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
-import { Package } from 'lucide-react'
-import ShipmentPanel from '../components/ShipmentPanel'
+import { MapPinned } from 'lucide-react'
+import HubPanel from '../components/HubPanel'
 import { PageHeader } from '@/components/ops/PageHeader'
-import { StatusBadge } from '@/components/ops/StatusBadge'
 import { EmptyState } from '@/components/ops/EmptyState'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 
-function truncateHub(value) {
-  if (!value) return null
-  const text = String(value)
-  if (text.length <= 28) return text
-  return `${text.slice(0, 26)}…`
-}
-
-export default function ShipmentsPage() {
+export default function HubsPage() {
   const ctx = useOutletContext()
-  const shipments = ctx.shipments || []
+  const hubs = useMemo(() => {
+    const list = [...(ctx.hubs || [])]
+    list.sort((a, b) =>
+      String(a.name || a.code || a.id).localeCompare(
+        String(b.name || b.code || b.id),
+        undefined,
+        { sensitivity: 'base' },
+      ),
+    )
+    return list
+  }, [ctx.hubs])
+
+  const [selectedId, setSelectedId] = useState(null)
+  const selectedHub =
+    hubs.find((h) => h.id === selectedId) ||
+    hubs.find((h) => h.graphNodeKey === ctx.focusNodeId) ||
+    null
+
+  function selectHub(hub) {
+    setSelectedId(hub.id)
+    if (hub.graphNodeKey) ctx.setFocusNodeId?.(hub.graphNodeKey)
+  }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <PageHeader
-        kicker="Live manifest"
-        title="Shipments"
-        description="Inspect routing, lifecycle, and recovery state"
+        kicker="Network directory"
+        title="Hubs"
+        description="Operational locations and Telangana graph bindings"
         actions={
           <Badge variant="neutral" className="font-mono tabular-nums">
-            {shipments.length} total
+            {hubs.length} hubs
           </Badge>
         }
       />
@@ -34,14 +48,12 @@ export default function ShipmentsPage() {
       <div className="grid min-h-0 flex-1 overflow-hidden lg:grid-cols-[minmax(280px,360px)_1fr]">
         <aside
           className="flex min-h-0 flex-col overflow-hidden border-b-2 border-border bg-secondary-background lg:border-r-2 lg:border-b-0"
-          aria-label="Shipments list"
+          aria-label="Hubs list"
         >
           <div className="flex shrink-0 items-center justify-between border-b-2 border-border px-4 py-3">
-            <h2 className="text-sm font-heading tracking-tight">
-              All shipments
-            </h2>
+            <h2 className="text-sm font-heading tracking-tight">All hubs</h2>
             <span className="font-mono text-xs tabular-nums text-muted-foreground">
-              {shipments.length}
+              {hubs.length}
             </span>
           </div>
           {ctx.listsError ? (
@@ -51,19 +63,19 @@ export default function ShipmentsPage() {
           ) : null}
 
           <div className="min-h-0 flex-1 overflow-y-auto scrollbar">
-            {!shipments.length ? (
+            {!hubs.length ? (
               <EmptyState
-                icon={<Package className="size-5" />}
-                title="No shipments"
-                description="Nothing loaded from the API yet."
+                icon={<MapPinned className="size-5" />}
+                title="No hubs"
+                description="No location data loaded from the API."
                 className="py-12"
               />
             ) : (
               <ul className="flex flex-col gap-1 p-2">
-                {shipments.map((s) => {
-                  const isSelected = ctx.selectedShipment?.id === s.id
+                {hubs.map((h) => {
+                  const isSelected = selectedHub?.id === h.id
                   return (
-                    <li key={s.id}>
+                    <li key={h.id}>
                       <button
                         type="button"
                         className={cn(
@@ -72,26 +84,33 @@ export default function ShipmentsPage() {
                             ? 'border-border bg-main shadow-shadow'
                             : 'border-transparent hover:border-border hover:bg-background',
                         )}
-                        onClick={() => ctx.loadShipment(s.id)}
+                        onClick={() => selectHub(h)}
                         aria-current={isSelected ? 'true' : undefined}
                       >
                         <span
                           className="flex size-8 shrink-0 items-center justify-center rounded-base border-2 border-border bg-secondary-background"
                           aria-hidden
                         >
-                          <Package className="size-3.5" />
+                          <MapPinned className="size-3.5" />
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-sm font-semibold">
-                            {s.trackingNumber || s.id}
+                            {h.name || h.code || h.id}
                           </span>
                           <span className="mt-0.5 block truncate text-xs text-muted-foreground">
-                            {s.destination
-                              ? truncateHub(s.destination)
-                              : s.status || 'Unknown status'}
+                            {[h.city, h.code].filter(Boolean).join(' · ') ||
+                              h.graphNodeKey ||
+                              'Unbound'}
                           </span>
                         </span>
-                        <StatusBadge status={s.status} />
+                        {h.type ? (
+                          <Badge
+                            variant="neutral"
+                            className="max-w-20 truncate px-1.5 py-0 text-[0.65rem] uppercase"
+                          >
+                            {h.type}
+                          </Badge>
+                        ) : null}
                       </button>
                     </li>
                   )
@@ -102,25 +121,7 @@ export default function ShipmentsPage() {
         </aside>
 
         <main className="min-h-0 overflow-y-auto bg-background/40 p-4 sm:p-5">
-          <ShipmentPanel
-            key={ctx.selectedShipment?.id || 'empty'}
-            shipment={ctx.selectedShipment}
-            incident={ctx.incidentForAlert}
-            recoveryAnalysis={ctx.recoveryAnalysis}
-            vehicles={ctx.vehicles}
-            loading={ctx.shipmentLoading}
-            error={ctx.shipmentError}
-            onAnalyze={ctx.analyzeRecovery}
-            analyzing={ctx.recoveryLoading}
-            onSimulateIncident={ctx.handleSimulateIncident}
-            simulating={ctx.simulating}
-            onAssign={ctx.handleAssignPersistedPlan}
-            assigning={ctx.assigning}
-            onConfirmPickup={ctx.handleConfirmPickup}
-            confirmingPickup={ctx.confirmingPickup}
-            onMarkRecovered={ctx.handleMarkRecovered}
-            resolving={ctx.resolving}
-          />
+          <HubPanel hub={selectedHub} />
         </main>
       </div>
     </div>

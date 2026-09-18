@@ -9,6 +9,7 @@ export default function LocationDivergence({
   shipment,
   incident,
   recoveryNetwork,
+  hideTitle = false,
 }) {
   if (!shipment && !recoveryNetwork) return null;
 
@@ -56,7 +57,7 @@ export default function LocationDivergence({
   if (!hasDivergence) {
     return (
       <div className="recovery-section location-divergence">
-        <h3>Location Divergence</h3>
+        {hideTitle ? null : <h3>Location Divergence</h3>}
         <p className="muted">Expected / actual location not available from the API.</p>
       </div>
     );
@@ -68,14 +69,23 @@ export default function LocationDivergence({
         showMisplacedCallout ? 'location-divergence-misplaced' : ''
       }`}
     >
-      <div className="panel-header-row">
-        <h3>Location Divergence</h3>
-        {showMisplacedCallout ? (
-          <span className="flag flag-warn">MISPLACED</span>
-        ) : backendMisplaced ? (
-          <span className="flag flag-warn">MISPLACED FLAG</span>
-        ) : null}
-      </div>
+      {hideTitle ? null : (
+        <div className="panel-header-row">
+          <h3>Location Divergence</h3>
+          {showMisplacedCallout ? (
+            <span className="flag flag-warn">MISPLACED</span>
+          ) : backendMisplaced ? (
+            <span className="flag flag-warn">MISPLACED FLAG</span>
+          ) : null}
+        </div>
+      )}
+      {hideTitle && (showMisplacedCallout || backendMisplaced) ? (
+        <div className="mb-3 flex justify-end">
+          <span className="flag flag-warn">
+            {showMisplacedCallout ? 'MISPLACED' : 'MISPLACED FLAG'}
+          </span>
+        </div>
+      ) : null}
 
       <p className="divergence-caption muted">
         Recovery starts from the <strong>actual recorded location</strong>, not the

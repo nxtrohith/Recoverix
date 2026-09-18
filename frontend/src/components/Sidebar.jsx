@@ -1,60 +1,26 @@
-import { NavLink } from 'react-router-dom';
-import './Sidebar.css';
-
-/* ─── Icon components ─── */
-function Icon({ children, ...props }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-      {...props}
-    >
-      {children}
-    </svg>
-  );
-}
-
-function LogoIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden>
-      <rect x="2" y="7" width="14" height="10" rx="2" fill="#4f46e5" />
-      <path d="M16 10h3l3 3v4h-6V10z" fill="#818cf8" />
-      <circle cx="6.5" cy="17" r="1.5" fill="white" />
-      <circle cx="14.5" cy="17" r="1.5" fill="white" />
-    </svg>
-  );
-}
-
-function OverviewIcon()  { return <Icon><path d="M3 6.5 9 4l6 2.5L21 4v15.5L15 22l-6-2.5L3 22V6.5z"/><path d="M9 4v15.5M15 6.5V22"/></Icon>; }
-function ShipmentIcon()  { return <Icon><path d="M3 8.5 12 4l9 4.5v7L12 20 3 15.5v-7z"/><path d="M12 20V11M3.5 8.5 12 13l8.5-4.5"/></Icon>; }
-function TruckIcon()     { return <Icon><path d="M3 7h11v10H3zM14 10h4l3 3v4h-7V10z"/><circle cx="7" cy="17" r="1.5"/><circle cx="17" cy="17" r="1.5"/></Icon>; }
-function AlertIcon()     { return <Icon><path d="M12 3 21 19H3L12 3z"/><path d="M12 10v4M12 16.5v.5"/></Icon>; }
-function SearchIcon()    { return <Icon><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></Icon>; }
-function HubsIcon()      { return <Icon><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></Icon>; }
-function RefreshIcon()   { return <Icon><path d="M20 11a8 8 0 0 0-14.6-4.6M4 4v5h5"/><path d="M4 13a8 8 0 0 0 14.6 4.6M20 20v-5h-5"/></Icon>; }
+import { NavLink } from 'react-router-dom'
+import {
+  AlertTriangle,
+  LayoutDashboard,
+  MapPinned,
+  Package,
+  RefreshCw,
+  Search,
+  Truck,
+} from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 
 const NAV = [
-  { to: '/dashboard',          end: true,  label: 'Overview',   icon: 'overview',  countKey: null },
-  { to: '/dashboard/shipments',            label: 'Shipments',  icon: 'shipment',  countKey: 'shipments' },
-  { to: '/dashboard/vehicles',             label: 'Vehicles',   icon: 'truck',     countKey: 'vehicles' },
-  { to: '/dashboard/recovery',             label: 'Incidents',  icon: 'alert',     badgeKey: 'incident' },
-  { to: '/dashboard/search',               label: 'Search',     icon: 'search',    countKey: null },
-];
-
-function NavIconEl({ type }) {
-  if (type === 'overview') return <OverviewIcon />;
-  if (type === 'shipment') return <ShipmentIcon />;
-  if (type === 'truck')    return <TruckIcon />;
-  if (type === 'alert')    return <AlertIcon />;
-  if (type === 'search')   return <SearchIcon />;
-  if (type === 'hubs')     return <HubsIcon />;
-  return <SearchIcon />;
-}
+  { to: '/dashboard', end: true, label: 'Overview', icon: LayoutDashboard },
+  { to: '/dashboard/shipments', label: 'Shipments', icon: Package, countKey: 'shipments' },
+  { to: '/dashboard/vehicles', label: 'Fleet', icon: Truck, countKey: 'vehicles' },
+  { to: '/dashboard/hubs', label: 'Hubs', icon: MapPinned, countKey: 'hubs' },
+  { to: '/dashboard/recovery', label: 'Exceptions', icon: AlertTriangle, badgeKey: 'incident' },
+  { to: '/dashboard/search', label: 'Search', icon: Search },
+]
 
 export default function Sidebar({
   incidentCount = 0,
@@ -70,124 +36,162 @@ export default function Sidebar({
   onSearchSubmit,
   searchHint = '',
 }) {
-  const counts = { shipments: shipmentsCount, vehicles: vehiclesCount, hubs: hubsCount };
+  const counts = {
+    shipments: shipmentsCount,
+    vehicles: vehiclesCount,
+    hubs: hubsCount,
+  }
 
   const statusLabel = healthLoading
-    ? 'Connecting…'
+    ? 'Connecting'
     : healthError
-    ? 'Offline'
-    : health?.status === 'ok'
-    ? 'Connected'
-    : 'Unknown';
+      ? 'Offline'
+      : health?.status === 'ok'
+        ? 'Live'
+        : 'Unknown'
 
-  const statusClass = healthLoading
-    ? 'status-pending'
-    : healthError || health?.status !== 'ok'
-    ? 'status-bad'
-    : 'status-ok';
-
-  const nodeCount = health?.graph?.nodeCount;
+  const statusOk = !healthLoading && !healthError && health?.status === 'ok'
 
   return (
-    <aside className="workspace-panel" aria-label="Main navigation">
-      {/* Header */}
-      <div className="ws-header">
-        <div className="ws-brand-row">
-          <div className="ws-brand-logo" aria-hidden>
-            <LogoIcon />
+    <aside
+      className="flex w-[var(--sidebar-w)] shrink-0 flex-col border-r-2 border-border bg-secondary-background max-md:w-full max-md:border-r-0 max-md:border-b-2"
+      aria-label="Main navigation"
+    >
+      <div className="border-b-2 border-border px-4 py-4">
+        <div className="flex items-center gap-3">
+          <div
+            className="flex size-10 items-center justify-center rounded-base border-2 border-border bg-main shadow-shadow"
+            aria-hidden
+          >
+            <Truck className="size-5" strokeWidth={2.25} />
           </div>
-          <div className="ws-brand">
-            <span className="ws-brand-name">SH-205</span>
-            <span className="ws-brand-sub">Recovery Ops</span>
+          <div className="min-w-0">
+            <p className="truncate text-base font-heading tracking-tight">SH-205</p>
+            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+              Ops control
+            </p>
           </div>
         </div>
       </div>
 
-        {/* Search */}
-        <form
-          className="ws-search"
-          onSubmit={(e) => { e.preventDefault(); onSearchSubmit?.(); }}
-        >
-          <span className="ws-search-icon"><SearchIcon /></span>
-          <input
+      <form
+        className="border-b-2 border-border p-3"
+        onSubmit={(e) => {
+          e.preventDefault()
+          onSearchSubmit?.()
+        }}
+      >
+        <div className="relative">
+          <Search
+            className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden
+          />
+          <Input
             type="search"
-            placeholder="Search shipment, vehicle, hub…"
+            placeholder="Shipment, vehicle, hub…"
             value={searchQuery}
             onChange={(e) => onSearchChange?.(e.target.value)}
             aria-label="Global search"
+            className="h-9 pl-9 text-sm"
           />
-        </form>
-        {searchHint ? <p className="ws-search-hint">{searchHint}</p> : null}
+        </div>
+        {searchHint ? (
+          <p className="mt-2 text-xs text-muted-foreground">{searchHint}</p>
+        ) : null}
+      </form>
 
-        {/* Nav */}
-        <nav className="ws-nav">
-          <p className="ws-section-label">Workspace</p>
-          {NAV.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              className={({ isActive }) =>
-                `ws-link${isActive ? ' is-active' : ''}`
-              }
+      <nav className="flex-1 overflow-y-auto p-3 scrollbar">
+        <p className="mb-2 px-2 text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+          Operations
+        </p>
+        <ul className="flex flex-col gap-1">
+          {NAV.map((item) => {
+            const Icon = item.icon
+            return (
+              <li key={item.to}>
+                <NavLink
+                  to={item.to}
+                  end={item.end}
+                  className={({ isActive }) =>
+                    cn(
+                      'group flex items-center gap-2.5 rounded-base border-2 border-transparent px-2.5 py-2 text-sm font-medium transition-all duration-200',
+                      isActive
+                        ? 'border-border bg-main shadow-shadow'
+                        : 'hover:border-border hover:bg-background',
+                    )
+                  }
+                >
+                  <Icon className="size-4 shrink-0" strokeWidth={2.1} />
+                  <span className="flex-1 truncate">{item.label}</span>
+                  {item.badgeKey === 'incident' ? (
+                    <Badge
+                      variant="neutral"
+                      className={cn(
+                        'min-w-6 justify-center px-1.5 py-0 text-[0.65rem]',
+                        incidentCount > 0 && 'bg-status-misplaced/20',
+                      )}
+                    >
+                      {incidentCount}
+                    </Badge>
+                  ) : item.countKey ? (
+                    <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                      {counts[item.countKey] ?? 0}
+                    </span>
+                  ) : null}
+                </NavLink>
+              </li>
+            )
+          })}
+        </ul>
+
+        <p className="mt-6 mb-2 px-2 text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+          Network
+        </p>
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2.5 rounded-base px-2.5 py-2 text-sm">
+            <LayoutDashboard className="size-4 text-muted-foreground" />
+            <span className="flex-1">Graph nodes</span>
+            <span className="font-mono text-xs tabular-nums">
+              {health?.graph?.nodeCount ?? '—'}
+            </span>
+          </div>
+        </div>
+      </nav>
+
+      <div className="border-t-2 border-border p-3">
+        <div className="flex items-center gap-2 rounded-base border-2 border-border bg-background px-2.5 py-2">
+          <span
+            className={cn(
+              'size-2 shrink-0 rounded-[1px]',
+              statusOk ? 'bg-status-delivered' : healthLoading ? 'bg-status-delayed' : 'bg-status-misplaced',
+            )}
+            aria-hidden
+          />
+          <span className="min-w-0 flex-1 truncate text-xs font-medium">
+            Backend {statusLabel}
+            {health?.graph?.loaded ? ` · ${health.graph.nodeCount}n` : ''}
+          </span>
+          {onRefreshHealth ? (
+            <Button
+              type="button"
+              variant="neutral"
+              size="icon-xs"
+              onClick={onRefreshHealth}
+              title="Refresh backend status"
+              aria-label="Refresh backend status"
+              className="shadow-none"
             >
-              <span className="ws-link-icon">
-                <NavIconEl type={item.icon} />
-              </span>
-              <span className="ws-link-label">{item.label}</span>
-              {item.badgeKey === 'incident' ? (
-                <span className={`ws-count${incidentCount > 0 ? ' ws-count-alert' : ''}`}>
-                  {incidentCount}
-                </span>
-              ) : item.countKey ? (
-                <span className="ws-count">{counts[item.countKey] ?? 0}</span>
-              ) : null}
-            </NavLink>
-          ))}
-        </nav>
-
-        <div className="ws-browse-section">
-          <p className="ws-section-label">Network</p>
-          <div className="ws-browse-item">
-            <span className="ws-browse-icon"><HubsIcon /></span>
-            <span className="ws-browse-label">Hubs</span>
-            <span className="ws-count">{hubsCount}</span>
-          </div>
-          <div className="ws-browse-item">
-            <span className="ws-browse-icon">
-              <Icon>
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-              </Icon>
-            </span>
-            <span className="ws-browse-label">Graph nodes</span>
-            <span className="ws-count">{nodeCount ?? '—'}</span>
-          </div>
+              <RefreshCw className="size-3.5" />
+            </Button>
+          ) : null}
         </div>
-
-        {/* Footer */}
-        <div className="ws-footer">
-          <div className={`ws-status ${statusClass}`}>
-            <span className="status-dot" />
-            <span className="ws-status-label">
-              Backend {statusLabel}
-              {health?.graph?.loaded ? ` · ${health.graph.nodeCount}n` : ''}
-            </span>
-            {onRefreshHealth ? (
-              <button
-                type="button"
-                className="ws-refresh"
-                onClick={onRefreshHealth}
-                title="Refresh backend status"
-                aria-label="Refresh backend status"
-              >
-                <RefreshIcon />
-              </button>
-            ) : null}
-          </div>
-          <NavLink to="/" className="ws-home-link">
-            ← Landing page
-          </NavLink>
-        </div>
-      </aside>
-  );
+        <NavLink
+          to="/"
+          className="mt-2 block px-1 text-xs font-medium text-muted-foreground transition-colors duration-200 hover:text-foreground"
+        >
+          ← Landing
+        </NavLink>
+      </div>
+    </aside>
+  )
 }

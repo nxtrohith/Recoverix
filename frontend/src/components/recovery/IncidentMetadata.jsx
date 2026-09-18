@@ -13,11 +13,11 @@ function MetaField({ label, value }) {
 /**
  * Incident metadata — only fields present on the API payload.
  */
-export default function IncidentMetadata({ incident, shipment }) {
+export default function IncidentMetadata({ incident, shipment, hideTitle = false }) {
   if (!incident) {
     return (
       <div className="recovery-section incident-metadata">
-        <h3>Incident Metadata</h3>
+        {hideTitle ? null : <h3>Incident Metadata</h3>}
         <p className="muted">No incident record for this shipment.</p>
       </div>
     );
@@ -56,7 +56,7 @@ export default function IncidentMetadata({ incident, shipment }) {
   if (!hasAny) {
     return (
       <div className="recovery-section incident-metadata">
-        <h3>Incident Metadata</h3>
+        {hideTitle ? null : <h3>Incident Metadata</h3>}
         <p className="muted">Incident metadata fields not available.</p>
       </div>
     );
@@ -64,7 +64,7 @@ export default function IncidentMetadata({ incident, shipment }) {
 
   return (
     <div className="recovery-section incident-metadata">
-      <h3>Incident Metadata</h3>
+      {hideTitle ? null : <h3>Incident Metadata</h3>}
       <dl className="detail-grid">
         <MetaField label="Incident ID" value={incidentId} />
         <MetaField label="Incident type" value={incident.incidentType} />

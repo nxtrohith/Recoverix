@@ -21,8 +21,8 @@ export default function RecoveryCandidates({
 
   if (loading) {
     return (
-      <section className="panel recovery-candidates">
-        <h2>Recovery Vehicles</h2>
+      <section className="panel recovery-candidates shadow-shadow">
+        <h2>Recovery vehicles</h2>
         <p className="muted">Loading recovery candidates…</p>
       </section>
     );
@@ -30,8 +30,8 @@ export default function RecoveryCandidates({
 
   if (error) {
     return (
-      <section className="panel recovery-candidates">
-        <h2>Recovery Vehicles</h2>
+      <section className="panel recovery-candidates shadow-shadow">
+        <h2>Recovery vehicles</h2>
         <p className="error-text">{error}</p>
       </section>
     );
@@ -40,9 +40,9 @@ export default function RecoveryCandidates({
   if (!analysis) {
     return (
       <section className="panel recovery-candidates">
-        <h2>Recovery Vehicles</h2>
+        <h2>Recovery vehicles</h2>
         <p className="muted">
-          Simulate an incident or click “Analyze Recovery” to load candidates.
+          Simulate an incident or run recovery analysis to load candidates.
         </p>
       </section>
     );
@@ -98,9 +98,9 @@ export default function RecoveryCandidates({
   };
 
   return (
-    <section className="panel recovery-candidates">
+    <section className="panel recovery-candidates shadow-shadow">
       <div className="panel-header-row">
-        <h2>Recovery Vehicles</h2>
+        <h2>Recovery vehicles</h2>
         <p className="muted candidate-count-summary">
           {network.candidateCount ?? candidates.length} total ·{' '}
           {network.feasibleCount ?? feasible.length} feasible
