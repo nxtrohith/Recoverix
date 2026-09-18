@@ -99,8 +99,17 @@ def mask_phone(phone: str) -> str:
     return clean
 
 
+def clean_hub_for_speech(hub_name: str | None) -> str:
+    """Clean operational hub node keys into natural speech form (removes _ and (Telangana))."""
+    if not hub_name:
+        return "హబ్"
+    cleaned = re.sub(r"\s*\([^\)]*\)", "", str(hub_name))
+    cleaned = cleaned.replace("_", " ")
+    cleaned = re.sub(r"\s+[A-Z]$", "", cleaned.strip())
+    return cleaned.strip() or str(hub_name)
+
+
 def build_telugu_recovery_message(
-    *,
     shipment_id: str,
     pickup_hub: str,
     destination_hub: str,
@@ -110,11 +119,17 @@ def build_telugu_recovery_message(
     Build natural Telugu voice opening line for recovery call.
     Dynamically includes shipment ID, pickup hub, and final destination.
     """
-    greeting = f"నమస్కారం {driver_name} గారు." if driver_name else "నమస్కారం."
+    clean_pickup = clean_hub_for_speech(pickup_hub)
+    clean_dest = clean_hub_for_speech(destination_hub)
+
+    # Use driver name if it's a person name, not a vehicle plate like TS-09-...
+    is_plate = bool(re.match(r"^[A-Z]{2}[-\s]?\d{2}", str(driver_name or "").strip()))
+    greeting = f"నమస్కారం {driver_name} గారు." if (driver_name and not is_plate) else "నమస్కారం."
+
     return (
         f"{greeting} మీకు ఒక ముఖ్యమైన రికవరీ అసైన్మెంట్ ఉంది. "
         f"షిప్మెంట్ {shipment_id} తప్పు హబ్లో ఉన్నట్లు గుర్తించబడింది. "
-        f"మీరు {pickup_hub} కి వెళ్లి ఆ షిప్మెంట్ను తీసుకుని {destination_hub} కి తరలించాలి. "
+        f"మీరు {clean_pickup} కి వెళ్లి ఆ షిప్మెంట్ను తీసుకుని {clean_dest} కి తరలించాలి. "
         f"దయచేసి ఈ అసైన్మెంట్ను నిర్ధారించండి."
     )
 
@@ -345,7 +360,6 @@ def place_instant_outbound_call(
 
 
 def call_driver(
-    *,
     driver_phone: str,
     shipment_id: str,
     pickup_hub: str,
@@ -360,10 +374,15 @@ def call_driver(
 
     Responsibilities:
       - Normalizes phone number to E.164.
-      - Validates that the number is usable.
+      - Validates that the number is a real usable phone number.
       - Builds recovery call context dynamically in Telugu (or test message).
       - Triggers Sarvam Voice Agent outbound calling.
-      - Logs progress safely with masked phone number and no exposed credentials.
+      - Logs progress safely with masked phone number and no exposed credentials:
+          [SARVAM] call requested
+          [SARVAM] driver phone resolved
+          [SARVAM] outbound call initiated
+          [SARVAM] call failed
+      - Never exposes SARVAM_API_KEY in logs or API responses.
       - Returns structured status:
         { "success": bool, "call_id": str | None, "status": str, "error": str | None, "phone": str, "message": str }
     """
@@ -396,6 +415,9 @@ def call_driver(
             destination_hub=destination_hub,
             driver_name=driver_name,
         )
+
+    clean_pickup = clean_hub_for_speech(pickup_hub)
+    clean_dest = clean_hub_for_speech(destination_hub)
 
     call_meta = {
         "shipmentId": str(shipment_id),

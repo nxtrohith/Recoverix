@@ -222,3 +222,8 @@ class SarvamTestCallRequest(BaseModel):
 class RetryCallRequest(BaseModel):
     phone: Optional[str] = None
 
+
+class UpdateCallStatusRequest(BaseModel):
+    status: str
+    failure_reason: Optional[str] = None
+

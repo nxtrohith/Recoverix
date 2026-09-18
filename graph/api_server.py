@@ -58,6 +58,7 @@ from graph.api_models import (
     ShipmentDetailResponse,
     ShipmentListResponse,
     SimulateIncidentRequest,
+    UpdateCallStatusRequest,
     VehicleDetailResponse,
     VehicleListResponse,
 )
@@ -79,6 +80,7 @@ from graph.incident_service import (
     resolve_recovery,
     retry_recovery_call,
     simulate_misplaced_incident,
+    update_recovery_call_status,
 )
 from graph.recovery_orchestrator import (
     RecoveryError,
@@ -519,6 +521,74 @@ def get_driver_call_status(shipment_id: str) -> dict[str, Any]:
     """
     db = get_db()
     return get_recovery_call_status(db, shipment_id)
+
+
+@app.post(
+    "/api/recovery/{shipment_id}/call-status",
+    summary="Update driver call status (e.g. driver confirmed, declined, answered)",
+    tags=["recovery"],
+)
+def post_update_driver_call_status(
+    shipment_id: str,
+    body: UpdateCallStatusRequest,
+) -> dict[str, Any]:
+    """
+    Update driver call status for an assigned recovery incident.
+    Allowed statuses: 'calling', 'answered', 'confirmed', 'declined', 'failed', 'retry_available'.
+    """
+    db = get_db()
+    return update_recovery_call_status(
+        db,
+        shipment_id,
+        status=body.status,
+        failure_reason=body.failure_reason,
+    )
+
+
+@app.post(
+    "/api/sarvam/webhook",
+    summary="Sarvam Voice Agent webhook receiver for call lifecycle events",
+    tags=["sarvam"],
+)
+async def post_sarvam_webhook(request: Request) -> dict[str, Any]:
+    """
+    Receive asynchronous lifecycle webhooks from Sarvam Voice Agent telephony.
+    Updates call status and driver response in MongoDB.
+    """
+    try:
+        data = await request.json()
+    except Exception:
+        data = {}
+
+    call_id = data.get("attempt_id") or data.get("call_id")
+    event = str(data.get("event") or data.get("status") or "").lower()
+    shipment_id = (
+        data.get("metadata", {}).get("shipmentId")
+        or data.get("app_config", {}).get("agent_variables", {}).get("shipment_id")
+    )
+
+    if call_id and shipment_id:
+        db = get_db()
+        status_map = {
+            "call_started": "calling",
+            "ringing": "calling",
+            "answered": "answered",
+            "in_progress": "answered",
+            "confirmed": "confirmed",
+            "declined": "declined",
+            "rejected": "declined",
+            "completed": "confirmed",
+            "failed": "failed",
+            "busy": "failed",
+            "no_answer": "failed",
+        }
+        mapped_status = status_map.get(event, event or "answered")
+        try:
+            update_recovery_call_status(db, shipment_id, status=mapped_status)
+        except Exception:
+            pass
+
+    return {"status": "ok", "received": True}
 
 
 @app.post(
