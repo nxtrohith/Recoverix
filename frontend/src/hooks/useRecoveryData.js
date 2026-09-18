@@ -6,20 +6,23 @@
  * advanced optimistically in React.
  */
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ApiError,
   analyzeRecovery as apiAnalyzeRecovery,
   assignRecovery as apiAssignRecovery,
   calculateRecovery as apiCalculateRecovery,
   getActiveIncidents,
+  getDriverCallStatus,
   getIncidentByShipment,
   getRecovery,
   getShipment,
   pickupRecovery,
   resolveRecovery as apiResolveRecovery,
+  retryDriverCall,
   simulateIncident,
 } from '../api/client';
+
 
 function errMsg(err, fallback) {
   if (err instanceof ApiError) return err.message;
@@ -57,9 +60,12 @@ export function useRecoveryData(options = {}) {
 
   const [completionBanner, setCompletionBanner] = useState(null);
   const [driverNotification, setDriverNotification] = useState(null);
+  const [driverCall, setDriverCall] = useState(null);
+  const [retryingCall, setRetryingCall] = useState(false);
   const [actionError, setActionError] = useState(null);
   const [actionFeedback, setActionFeedback] = useState(null);
   const lastFailedActionRef = useRef(null);
+
 
   const [simulating, setSimulating] = useState(false);
   const [assigning, setAssigning] = useState(false);
@@ -375,14 +381,26 @@ export function useRecoveryData(options = {}) {
       const result = await apiAssignRecovery(id, {});
       setActiveIncident(result.incident);
       setDriverNotification(result.driverNotification || null);
+      setDriverCall(result.call || null);
       // Refresh from server — do not invent the next lifecycle status locally
       await refreshAfterMutation(id);
       if (result.assignment?.vehicleId && onLoadVehicle) {
         await onLoadVehicle(result.assignment.vehicleId);
       }
-      setActionFeedback(
-        `Vehicle ${result.assignment?.vehicleNumber || result.assignment?.vehicleId || ''} assigned — driver contacted (simulated).`.trim(),
-      );
+      if (result.call?.status === 'initiated') {
+        const destMsg = result.driver?.phone || result.call?.phone || 'driver';
+        setActionFeedback(
+          `Vehicle ${result.assignment?.vehicleNumber || result.assignment?.vehicleId || ''} assigned — Sarvam Telugu outbound call initiated to ${destMsg}.`.trim(),
+        );
+      } else if (result.call?.status === 'failed') {
+        setActionError(
+          `Vehicle assigned, but driver call failed: ${result.call?.error || 'Telephony error'}. Click 'Retry Call' to try again.`,
+        );
+      } else {
+        setActionFeedback(
+          `Vehicle ${result.assignment?.vehicleNumber || result.assignment?.vehicleId || ''} assigned.`,
+        );
+      }
       if (onHint) {
         onHint(
           `Recovery assigned to ${result.assignment?.vehicleNumber || result.assignment?.vehicleId}`,
@@ -397,6 +415,35 @@ export function useRecoveryData(options = {}) {
       setAssigning(false);
     }
   }, [selectedShipment, refreshAfterMutation, onLoadVehicle, onHint]);
+
+  const handleRetryDriverCall = useCallback(
+    async (explicitPhone = null) => {
+      const id = shipmentKey(selectedShipment);
+      if (!id) return;
+      setRetryingCall(true);
+      setActionError(null);
+      try {
+        const res = await retryDriverCall(id, { phone: explicitPhone });
+        setDriverCall(res.call || null);
+        if (res.incident) setActiveIncident(res.incident);
+        if (res.call?.status === 'initiated') {
+          setActionFeedback(
+            `Calling driver (${res.driver?.phone || res.call?.phone || 'assigned'})...`,
+          );
+        } else {
+          setActionError(`Call failed: ${res.call?.error || 'Unknown error'}`);
+        }
+        return res;
+      } catch (err) {
+        const message = errMsg(err, 'Failed to place driver call');
+        setActionError(message);
+      } finally {
+        setRetryingCall(false);
+      }
+    },
+    [selectedShipment],
+  );
+
 
   /** @deprecated Prefer handleAssignPersistedPlan — kept for any legacy call sites. */
   const handleSelectRecovery = useCallback(
@@ -498,6 +545,45 @@ export function useRecoveryData(options = {}) {
     lastFailedActionRef.current = null;
   }, []);
 
+  // Sync driverCall state when activeIncident loads or updates
+  useEffect(() => {
+    if (activeIncident?.driverCallStatus || activeIncident?.driverCallAttemptId) {
+      setDriverCall({
+        triggered: activeIncident.driverCallStatus !== 'not_triggered',
+        status: activeIncident.driverCallStatus || 'initiated',
+        call_id: activeIncident.driverCallAttemptId,
+        phone: activeIncident.driverCallPhone,
+        error: activeIncident.driverCallError,
+        channel: activeIncident.driverCallChannel,
+      });
+    }
+  }, [activeIncident]);
+
+  // Poll driver call status when in flight
+  useEffect(() => {
+    const id = shipmentKey(selectedShipment);
+    if (!id || !driverCall?.call_id) return;
+    if (
+      driverCall.status !== 'initiated' &&
+      driverCall.status !== 'in_progress' &&
+      driverCall.status !== 'ringing'
+    ) {
+      return;
+    }
+    const interval = setInterval(async () => {
+      try {
+        const res = await getDriverCallStatus(id);
+        if (res?.call?.status && res.call.status !== driverCall.status) {
+          setDriverCall((prev) => ({ ...prev, ...res.call }));
+          if (res.incident) setActiveIncident(res.incident);
+        }
+      } catch {
+        // ignore polling error
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [selectedShipment, driverCall?.call_id, driverCall?.status]);
+
   return {
     // data
     selectedShipment,
@@ -509,6 +595,7 @@ export function useRecoveryData(options = {}) {
     activeIncidents,
     completionBanner,
     driverNotification,
+    driverCall,
     actionError,
     actionFeedback,
 
@@ -524,6 +611,7 @@ export function useRecoveryData(options = {}) {
     // action flags
     simulating,
     assigning,
+    retryingCall,
     confirmingPickup,
     resolving,
 
@@ -536,6 +624,7 @@ export function useRecoveryData(options = {}) {
     analyzeRecovery,
     handleSimulateIncident,
     handleAssignPersistedPlan,
+    handleRetryDriverCall,
     handleSelectRecovery,
     handleConfirmPickup,
     handleMarkRecovered,
@@ -546,3 +635,4 @@ export function useRecoveryData(options = {}) {
 }
 
 export default useRecoveryData;
+

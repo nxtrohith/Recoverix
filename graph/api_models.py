@@ -212,3 +212,13 @@ class AssignRecoveryRequest(BaseModel):
     path: Optional[list[str]] = None
     pickupCase: Optional[str] = None
     score: Optional[float] = None
+
+
+class SarvamTestCallRequest(BaseModel):
+    phone: str
+    shipment_id: str = "SHP-TEST-001"
+
+
+class RetryCallRequest(BaseModel):
+    phone: Optional[str] = None
+

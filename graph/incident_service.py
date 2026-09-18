@@ -28,9 +28,16 @@ from graph.recovery_persistence import (
 from graph.services.driver_communication import (
     build_late_detection_message,
     build_recovery_assignment_message,
+    resolve_driver_phone,
     send_driver_notification,
 )
+from graph.services.sarvam_outbound import (
+    call_driver,
+    get_outbound_call_status,
+    mask_phone,
+)
 from graph.shipment_state import apply_shipment_event, sync_expected_location
+
 
 
 # Active (unresolved) incident statuses for the demo workflow:
@@ -176,6 +183,10 @@ def serialize_incident(db: Database, doc: dict[str, Any]) -> dict[str, Any]:
         "lateDetectionCallChannel": doc.get("lateDetectionCallChannel"),
         "driverCallAttemptId": doc.get("driverCallAttemptId"),
         "driverCallChannel": doc.get("driverCallChannel"),
+        "driverCallStatus": doc.get("driverCallStatus"),
+        "driverCallPhone": doc.get("driverCallPhone"),
+        "driverCallError": doc.get("driverCallError"),
+        "driverCallTriggeredAt": _iso(doc.get("driverCallTriggeredAt")),
         "analysisStatus": doc.get("analysisStatus"),
         "lifecycleStatus": None,  # filled by callers with shipment context
         "assignedAt": _iso(doc.get("assignedAt")),
@@ -184,6 +195,7 @@ def serialize_incident(db: Database, doc: dict[str, Any]) -> dict[str, Any]:
         "resolvedAt": _iso(doc.get("resolvedAt")),
         "updatedAt": _iso(doc.get("updatedAt")),
     }
+
 
 
 def get_active_incident_for_shipment(
@@ -626,28 +638,99 @@ def assign_recovery(
     recovery_vehicle_doc = (
         db["vehicles"].find_one({"_id": recovery_vehicle_oid}) or {}
     )
-    message = build_recovery_assignment_message(
-        shipment_tracking=shipment.get("trackingNumber", ""),
-        shipment_id=str(ship_oid),
-        pickup_hub=pickup_hub,
-        destination=destination,
-        recovery_route=recovery_path,
-        vehicle_number=driver_id,
+    driver_name = (
+        recovery_vehicle_doc.get("driverName")
+        or recovery_vehicle_doc.get("driver")
+        or driver_id
     )
-    notify = send_driver_notification(
-        str(recovery_vehicle_oid),
-        message,
-        call_kind="recovery_assign",
-        vehicle_doc=recovery_vehicle_doc,
-        metadata={
-            "shipmentId": str(ship_oid),
-            "incidentId": incident.get("incidentId"),
-            "candidateId": candidate,
-            "pickupCase": pickup,
-            "pickupNode": pickup_hub,
-            "destinationNode": destination,
-        },
+
+    # Check idempotency: has a call already been placed for this incident assignment?
+    existing_call = db["driver_calls"].find_one(
+        {"incident_id": str(incident["_id"])},
+        sort=[("created_at", -1)],
     )
+
+    if existing_call and existing_call.get("status") in (
+        "initiated",
+        "connected",
+        "completed",
+        "ringing",
+        "in_progress",
+    ):
+        call_id = existing_call.get("call_id")
+        call_status = existing_call.get("status", "initiated")
+        driver_phone = existing_call.get("driver_phone")
+        call_error = None
+        call_triggered = True
+        notify_delivered = True
+        notify_channel = existing_call.get("channel", "sarvam_voice")
+        notify_message = existing_call.get("message", "")
+        notify_detail = "Existing call already placed for this recovery assignment (duplicate prevented)"
+        notify_sent_at = _iso(existing_call.get("created_at")) or now.isoformat()
+        notify_simulated = existing_call.get("channel") != "sarvam_voice"
+        notify_lang = existing_call.get("language", "Telugu")
+    else:
+        message = build_recovery_assignment_message(
+            shipment_tracking=shipment.get("trackingNumber", ""),
+            shipment_id=str(ship_oid),
+            pickup_hub=pickup_hub,
+            destination=destination,
+            recovery_route=recovery_path,
+            vehicle_number=driver_id,
+        )
+        notify = send_driver_notification(
+            str(recovery_vehicle_oid),
+            message,
+            call_kind="recovery_assign",
+            vehicle_doc=recovery_vehicle_doc,
+            metadata={
+                "shipmentId": str(ship_oid),
+                "incidentId": incident.get("incidentId"),
+                "candidateId": candidate,
+                "pickupCase": pickup,
+                "pickupNode": pickup_hub,
+                "destinationNode": destination,
+                "driverName": driver_name,
+            },
+        )
+        call_id = notify.attempt_id
+        call_status = "initiated" if notify.delivered else "failed"
+        driver_phone = notify.phone
+        call_error = notify.detail if not notify.delivered else None
+        call_triggered = bool(
+            notify.attempt_id
+            or (notify.channel == "sarvam_voice" and notify.delivered)
+        )
+        notify_delivered = notify.delivered
+        notify_channel = notify.channel
+        notify_message = notify.message
+        notify_detail = notify.detail
+        notify_sent_at = notify.sent_at
+        notify_simulated = notify.simulated
+        notify_lang = notify.language or "Telugu"
+
+        call_record = {
+            "call_id": call_id or str(uuid4()),
+            "driver_phone": driver_phone,
+            "shipment_id": str(ship_oid),
+            "assignment_id": str(incident["_id"]),
+            "incident_id": str(incident["_id"]),
+            "status": call_status,
+            "channel": notify_channel,
+            "language": notify_lang,
+            "message": notify_message,
+            "created_at": now,
+            "completed_at": None,
+            "failure_reason": call_error,
+            "metadata": {
+                "candidateId": candidate,
+                "pickupHub": pickup_hub,
+                "destinationHub": destination,
+                "vehicleNumber": driver_id,
+                "driverName": driver_name,
+            },
+        }
+        db["driver_calls"].insert_one(call_record)
 
     option_oid = _to_oid(selected.get("recoveryOptionId"))
     if option_oid is None and persisted_option:
@@ -678,9 +761,13 @@ def assign_recovery(
                 "recoveryScore": recovery_score,
                 "assignedAt": now,
                 "pickupConfirmedAt": None,
-                "driverMessage": notify.message,
-                "driverCallAttemptId": notify.attempt_id,
-                "driverCallChannel": notify.channel,
+                "driverMessage": notify_message,
+                "driverCallAttemptId": call_id,
+                "driverCallChannel": notify_channel,
+                "driverCallStatus": call_status,
+                "driverCallPhone": driver_phone,
+                "driverCallError": call_error,
+                "driverCallTriggeredAt": now,
                 "selectedRecoveryOption": option_oid,
                 "analysisStatus": (analysis or {}).get("status")
                 or incident.get("analysisStatus")
@@ -752,6 +839,13 @@ def assign_recovery(
         opt = db["recoveryoptions"].find_one({"_id": option_oid})
         plan_payload = serialize_recovery_plan(opt)
 
+    if call_status == "initiated":
+        summary_message = f"Recovery assigned — Sarvam Telugu outbound call initiated to driver ({mask_phone(driver_phone or '')})"
+    elif call_status == "failed":
+        summary_message = f"Recovery assigned, but driver call failed: {call_error}"
+    else:
+        summary_message = "Recovery assigned"
+
     return {
         "incident": incident_payload,
         "shipment": {
@@ -770,6 +864,7 @@ def assign_recovery(
             "vehicleId": str(recovery_vehicle_oid),
             "vehicleNumber": driver_id,
             "driverId": driver_id,
+            "driverName": driver_name,
             "path": recovery_path,
             "pickupCase": pickup,
             "pickupNode": pickup_hub,
@@ -778,27 +873,269 @@ def assign_recovery(
             "recoveryOptionId": str(option_oid) if option_oid else None,
             "assignedAt": _iso(now),
         },
+        "driver": {
+            "phone": driver_phone,
+            "driverId": driver_id,
+            "driverName": driver_name,
+            "vehicleId": str(recovery_vehicle_oid),
+            "vehicleNumber": driver_id,
+        },
+        "call": {
+            "triggered": call_triggered,
+            "status": call_status,
+            "call_id": call_id,
+            "phone": driver_phone,
+            "error": call_error,
+            "language": notify_lang,
+        },
         "recoveryPlan": plan_payload,
         "driverNotification": {
-            "vehicleId": notify.vehicle_id,
-            "message": notify.message,
-            "channel": notify.channel,
-            "delivered": notify.delivered,
-            "sentAt": notify.sent_at,
-            "detail": notify.detail,
-            "attemptId": notify.attempt_id,
-            "callKind": notify.call_kind,
-            "phone": notify.phone,
-            "language": notify.language,
-            "simulated": notify.simulated,
+            "vehicleId": str(recovery_vehicle_oid),
+            "message": notify_message,
+            "channel": notify_channel,
+            "delivered": notify_delivered,
+            "sentAt": notify_sent_at,
+            "detail": notify_detail,
+            "attemptId": call_id,
+            "callKind": "recovery_assign",
+            "phone": driver_phone,
+            "language": notify_lang,
+            "simulated": notify_simulated,
         },
         "recovery": analysis,
+        "message": summary_message,
+    }
+
+
+def retry_recovery_call(
+    db: Database,
+    shipment_id: str,
+    *,
+    phone: str | None = None,
+) -> dict[str, Any]:
+    """
+    Explicitly trigger or retry an outbound Sarvam phone call to the driver
+    for an assigned recovery incident.
+    """
+    shipment = _find_shipment(db, shipment_id)
+    if shipment is None:
+        raise ShipmentNotFoundError(shipment_id)
+
+    ship_oid = shipment["_id"]
+    incident = get_active_incident_for_shipment(db, ship_oid)
+    if incident is None:
+        incident = get_latest_incident_for_shipment(db, ship_oid)
+    if incident is None:
+        raise RecoveryError(
+            "NO_INCIDENT",
+            f"No incident found for shipment {shipment_id}",
+            http_status=404,
+        )
+
+    recovery_vehicle_oid = incident.get("recoveryVehicle") or shipment.get("assignedVehicle")
+    if not recovery_vehicle_oid:
+        raise RecoveryError(
+            "NO_RECOVERY_VEHICLE",
+            "No recovery vehicle assigned to this incident yet",
+            http_status=400,
+        )
+
+    vehicle_doc = db["vehicles"].find_one({"_id": recovery_vehicle_oid}) or {}
+    driver_id = incident.get("recoveryDriverId") or _vehicle_number(db, recovery_vehicle_oid)
+    driver_name = (
+        vehicle_doc.get("driverName")
+        or vehicle_doc.get("driver")
+        or driver_id
+    )
+
+    pickup_hub = (
+        incident.get("pickupNode")
+        or (incident.get("recoveryPath") or [None])[0]
+        or _loc_name(db, shipment.get("currentLocation"))
+        or "Current Hub"
+    )
+    destination = (
+        incident.get("destinationNode")
+        or (incident.get("recoveryPath") or [None])[-1]
+        or _loc_name(db, shipment.get("destination"))
+        or "Destination Hub"
+    )
+
+    message = build_recovery_assignment_message(
+        shipment_tracking=shipment.get("trackingNumber", ""),
+        shipment_id=str(ship_oid),
+        pickup_hub=pickup_hub,
+        destination=destination,
+        recovery_route=list(incident.get("recoveryPath") or []),
+        vehicle_number=driver_id,
+    )
+
+    notify = send_driver_notification(
+        str(recovery_vehicle_oid),
+        message,
+        call_kind="recovery_assign",
+        phone=phone,
+        vehicle_doc=vehicle_doc,
+        metadata={
+            "shipmentId": str(ship_oid),
+            "incidentId": incident.get("incidentId"),
+            "candidateId": incident.get("selectedCandidateId"),
+            "pickupCase": incident.get("pickupCase"),
+            "pickupNode": pickup_hub,
+            "destinationNode": destination,
+            "driverName": driver_name,
+            "isRetry": "true",
+        },
+    )
+
+    now = _now()
+    call_id = notify.attempt_id
+    call_status = "initiated" if notify.delivered else "failed"
+    call_error = notify.detail if not notify.delivered else None
+    driver_phone = notify.phone
+
+    call_record = {
+        "call_id": call_id or str(uuid4()),
+        "driver_phone": driver_phone,
+        "shipment_id": str(ship_oid),
+        "assignment_id": str(incident["_id"]),
+        "incident_id": str(incident["_id"]),
+        "status": call_status,
+        "channel": notify.channel,
+        "language": notify.language or "Telugu",
+        "message": notify.message,
+        "created_at": now,
+        "completed_at": None,
+        "failure_reason": call_error,
+        "is_retry": True,
+        "metadata": {
+            "pickupHub": pickup_hub,
+            "destinationHub": destination,
+            "vehicleNumber": driver_id,
+            "driverName": driver_name,
+        },
+    }
+    db["driver_calls"].insert_one(call_record)
+
+    db["incidents"].update_one(
+        {"_id": incident["_id"]},
+        {
+            "$set": {
+                "driverCallAttemptId": call_id,
+                "driverCallChannel": notify.channel,
+                "driverCallStatus": call_status,
+                "driverCallPhone": driver_phone,
+                "driverCallError": call_error,
+                "driverCallTriggeredAt": now,
+                "driverMessage": notify.message,
+                "updatedAt": now,
+            }
+        },
+    )
+
+    updated_incident = db["incidents"].find_one({"_id": incident["_id"]})
+    return {
+        "success": notify.delivered,
+        "call": {
+            "triggered": bool(
+                notify.attempt_id
+                or (notify.channel == "sarvam_voice" and notify.delivered)
+            ),
+            "status": call_status,
+            "call_id": call_id,
+            "phone": driver_phone,
+            "error": call_error,
+            "language": notify.language or "Telugu",
+        },
+        "driver": {
+            "phone": driver_phone,
+            "driverId": driver_id,
+            "driverName": driver_name,
+            "vehicleId": str(recovery_vehicle_oid),
+            "vehicleNumber": driver_id,
+        },
+        "incident": serialize_incident(db, updated_incident),
         "message": (
-            "Recovery assigned — Sarvam driver call placed"
-            if not notify.simulated and notify.channel == "sarvam_voice"
-            else "Recovery assigned — driver contact logged (Sarvam fallback)"
+            f"Retry call initiated to driver ({mask_phone(driver_phone or '')})"
+            if notify.delivered
+            else f"Retry call failed: {call_error}"
         ),
     }
+
+
+def get_recovery_call_status(
+    db: Database,
+    shipment_id: str,
+) -> dict[str, Any]:
+    """
+    Get current driver outbound call status for a shipment recovery assignment.
+    Polls Sarvam if call_id is active and status is 'initiated' or 'in_progress'.
+    """
+    shipment = _find_shipment(db, shipment_id)
+    if shipment is None:
+        raise ShipmentNotFoundError(shipment_id)
+
+    ship_oid = shipment["_id"]
+    incident = get_active_incident_for_shipment(db, ship_oid)
+    if incident is None:
+        incident = get_latest_incident_for_shipment(db, ship_oid)
+    if incident is None:
+        raise RecoveryError(
+            "NO_INCIDENT",
+            f"No incident found for shipment {shipment_id}",
+            http_status=404,
+        )
+
+    latest_call = db["driver_calls"].find_one(
+        {"incident_id": str(incident["_id"])},
+        sort=[("created_at", -1)],
+    )
+
+    call_id = incident.get("driverCallAttemptId") or (
+        latest_call.get("call_id") if latest_call else None
+    )
+    call_status = incident.get("driverCallStatus") or (
+        latest_call.get("status") if latest_call else "not_triggered"
+    )
+    call_error = incident.get("driverCallError") or (
+        latest_call.get("failure_reason") if latest_call else None
+    )
+    call_phone = incident.get("driverCallPhone") or (
+        latest_call.get("driver_phone") if latest_call else None
+    )
+
+    # If call was initiated, check live status from Sarvam
+    if call_id and call_status in ("initiated", "in_progress", "ringing"):
+        sarvam_status = get_outbound_call_status(call_id)
+        if sarvam_status.get("ok"):
+            remote_status = sarvam_status.get("status", call_status)
+            if remote_status != call_status:
+                call_status = remote_status
+                now = _now()
+                db["driver_calls"].update_one(
+                    {"call_id": call_id},
+                    {"$set": {"status": remote_status, "updated_at": now}},
+                )
+                db["incidents"].update_one(
+                    {"_id": incident["_id"]},
+                    {"$set": {"driverCallStatus": remote_status, "updatedAt": now}},
+                )
+
+    return {
+        "ok": True,
+        "shipmentId": str(ship_oid),
+        "incidentId": incident.get("incidentId"),
+        "call": {
+            "triggered": bool(call_id or call_status != "not_triggered"),
+            "status": call_status,
+            "call_id": call_id,
+            "phone": call_phone,
+            "error": call_error,
+            "attemptId": call_id,
+        },
+        "incident": serialize_incident(db, incident),
+    }
+
 
 
 # ---------------------------------------------------------------------------

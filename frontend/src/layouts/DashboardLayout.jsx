@@ -117,6 +117,7 @@ export default function DashboardLayout() {
     setActiveIncident,
     completionBanner,
     driverNotification,
+    driverCall,
     actionError,
     actionFeedback,
     shipmentLoading,
@@ -128,6 +129,7 @@ export default function DashboardLayout() {
     incidentsError,
     simulating,
     assigning,
+    retryingCall,
     confirmingPickup,
     resolving,
     loadShipment,
@@ -135,12 +137,14 @@ export default function DashboardLayout() {
     analyzeRecovery,
     handleSimulateIncident,
     handleAssignPersistedPlan,
+    handleRetryDriverCall,
     handleConfirmPickup,
     handleMarkRecovered,
     retryLastAction,
     clearActionError,
     clearRecoverySelection,
   } = recovery;
+
 
   const refreshHealth = useCallback(async () => {
     setHealthLoading(true);
@@ -349,6 +353,7 @@ export default function DashboardLayout() {
       incidentForAlert,
       completionBanner,
       driverNotification,
+      driverCall,
       actionError,
       actionFeedback,
       shipmentLoading,
@@ -359,11 +364,13 @@ export default function DashboardLayout() {
       incidentsError,
       simulating,
       assigning,
+      retryingCall,
       confirmingPickup,
       resolving,
       analyzeRecovery,
       handleSimulateIncident,
       handleAssignPersistedPlan,
+      handleRetryDriverCall,
       handleConfirmPickup,
       handleMarkRecovered,
       retryLastAction,
@@ -399,6 +406,7 @@ export default function DashboardLayout() {
       incidentForAlert,
       completionBanner,
       driverNotification,
+      driverCall,
       actionError,
       actionFeedback,
       shipmentLoading,
@@ -409,11 +417,13 @@ export default function DashboardLayout() {
       incidentsError,
       simulating,
       assigning,
+      retryingCall,
       confirmingPickup,
       resolving,
       analyzeRecovery,
       handleSimulateIncident,
       handleAssignPersistedPlan,
+      handleRetryDriverCall,
       handleConfirmPickup,
       handleMarkRecovered,
       retryLastAction,
@@ -422,6 +432,7 @@ export default function DashboardLayout() {
       searchHint,
     ],
   );
+
 
   return (
     <div className="dashboard-shell">

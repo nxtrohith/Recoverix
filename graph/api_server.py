@@ -53,6 +53,8 @@ from graph.api_models import (
     GraphStatusModel,
     HealthResponse,
     HubListResponse,
+    RetryCallRequest,
+    SarvamTestCallRequest,
     ShipmentDetailResponse,
     ShipmentListResponse,
     SimulateIncidentRequest,
@@ -72,14 +74,17 @@ from graph.graph_cache import cache_status, get_db, get_graph, refresh_graph
 from graph.incident_service import (
     assign_recovery,
     confirm_recovery_pickup,
+    get_recovery_call_status,
     list_active_incidents,
     resolve_recovery,
+    retry_recovery_call,
     simulate_misplaced_incident,
 )
 from graph.recovery_orchestrator import (
     RecoveryError,
     analyze_shipment_recovery,
 )
+
 
 
 # ---------------------------------------------------------------------------
@@ -114,7 +119,7 @@ else:
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    """Warm the in-memory NetworkX graph once at startup."""
+    """Warm the in-memory NetworkX graph once at startup and validate Sarvam config."""
     try:
         cached = get_graph()
         print(
@@ -124,7 +129,26 @@ async def lifespan(_app: FastAPI):
         )
     except Exception as exc:
         print(f"Warning: graph not ready at startup: {exc}", flush=True)
+
+    try:
+        from graph.services.sarvam_outbound import load_sarvam_outbound_config
+        cfg = load_sarvam_outbound_config()
+        if cfg.ready:
+            print(
+                f"[SARVAM] Outbound Voice Agent configured: app_id={cfg.app_id}, "
+                f"language={cfg.default_language}, connection={cfg.connection_id or 'default'}",
+                flush=True,
+            )
+        else:
+            print(
+                f"[SARVAM] Warning: Outbound calling not fully configured — missing: {', '.join(cfg.missing)}",
+                flush=True,
+            )
+    except Exception as exc:
+        print(f"[SARVAM] Warning loading config at startup: {exc}", flush=True)
+
     yield
+
 
 
 app = FastAPI(
@@ -467,7 +491,66 @@ def post_assign_recovery(
 
 
 @app.post(
+    "/api/recovery/{shipment_id}/retry-call",
+    summary="Explicitly retry outbound Sarvam phone call to recovery driver",
+    tags=["recovery"],
+)
+def post_retry_recovery_call(
+    shipment_id: str,
+    body: RetryCallRequest | None = None,
+) -> dict[str, Any]:
+    """
+    Explicitly trigger or retry an outbound Sarvam phone call to the driver
+    for an assigned recovery incident. Not triggered automatically by polling.
+    """
+    db = get_db()
+    explicit_phone = body.phone if body else None
+    return retry_recovery_call(db, shipment_id, phone=explicit_phone)
+
+
+@app.get(
+    "/api/recovery/{shipment_id}/call-status",
+    summary="Get current driver outbound call status for a shipment",
+    tags=["recovery"],
+)
+def get_driver_call_status(shipment_id: str) -> dict[str, Any]:
+    """
+    Get current driver call status, polling Sarvam live if a call is in progress.
+    """
+    db = get_db()
+    return get_recovery_call_status(db, shipment_id)
+
+
+@app.post(
+    "/api/sarvam/test-call",
+    summary="[TEST ONLY] Immediate real-time Sarvam Telugu driver call test",
+    tags=["sarvam"],
+)
+def post_sarvam_test_call(body: SarvamTestCallRequest) -> dict[str, Any]:
+    """
+    Safe backend test endpoint for immediate real-time testing.
+    Triggers a real Sarvam outbound call using the configured Voice Agent
+    and speaks a short Telugu test message containing the supplied shipment ID.
+    Clearly marked as TEST endpoint and must not be triggered by dashboard polling.
+    """
+    from graph.services.sarvam_outbound import call_driver
+
+    res = call_driver(
+        driver_phone=body.phone,
+        shipment_id=body.shipment_id,
+        pickup_hub="Test Pickup Hub",
+        destination_hub="Test Destination Hub",
+        language="Telugu",
+        is_test=True,
+    )
+    if not res.get("success"):
+        raise HTTPException(status_code=400, detail=res)
+    return res
+
+
+@app.post(
     "/api/recovery/{shipment_id}/pickup",
+
     summary="Simulate driver pickup confirmation",
     tags=["recovery"],
 )

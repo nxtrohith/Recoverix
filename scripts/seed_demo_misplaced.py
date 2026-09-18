@@ -27,15 +27,20 @@ Usage
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from bson import ObjectId
+from dotenv import load_dotenv
+
 
 _ROOT = Path(__file__).resolve().parent.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
+load_dotenv(_ROOT / ".env")
+
 
 from graph.graph_builder import connect_mongo
 from graph.shipment_state import get_shipment_state
@@ -135,17 +140,26 @@ def seed(db, *, reset: bool) -> str:
     )
 
     # Place recovery vehicle at the actual (misplaced) hub for at_node pickup
+    # and configure driver contact info for outbound calling
+    demo_driver_phone = (
+        _ROOT / ".env"
+    )  # just reference or use os.getenv
+    demo_phone = (os.getenv("SARVAM_DEMO_DRIVER_PHONE") or "+917780645727").strip()
     db["vehicles"].update_one(
         {"_id": vehicle["_id"]},
         {
             "$set": {
                 "currentLocation": actual["_id"],
                 "status": "in_transit",
+                "phone": demo_phone,
+                "driverPhone": demo_phone,
+                "driverName": "Ramesh (Demo Driver)",
                 "updatedAt": now,
             }
         },
     )
     vehicle_id = vehicle["_id"]
+
 
     db["shipments"].insert_one(
         {
