@@ -123,9 +123,30 @@
       "dependsOn": ["frontend.api"]
     },
     {
+      "id": "frontend.components.recovery",
+      "path": "frontend/src/components/recovery/RecoveryIncidentView.jsx",
+      "dependsOn": ["frontend.types", "frontend.hooks.useRecoveryData"]
+    },
+    {
+      "id": "frontend.components.RecoveryCandidates",
+      "path": "frontend/src/components/RecoveryCandidates.jsx",
+      "dependsOn": ["frontend.components.recovery", "frontend.types"]
+    },
+    {
+      "id": "frontend.components.RecoveryPlan",
+      "path": "frontend/src/components/RecoveryPlan.jsx",
+      "dependsOn": ["frontend.components.recovery", "frontend.types"]
+    },
+    {
       "id": "frontend.app",
       "path": "frontend/src/App.jsx",
-      "dependsOn": ["frontend.api", "frontend.hooks.useRecoveryData"]
+      "dependsOn": [
+        "frontend.api",
+        "frontend.hooks.useRecoveryData",
+        "frontend.components.recovery",
+        "frontend.components.RecoveryCandidates",
+        "frontend.components.RecoveryPlan"
+      ]
     }
   ]
 }

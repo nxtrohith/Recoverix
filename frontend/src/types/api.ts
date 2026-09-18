@@ -46,6 +46,18 @@ export type IncidentStatus =
   | 'RESOLVED'
   | string;
 
+/**
+ * Operator-facing recovery steps (UI mapping).
+ * DRIVER_CONTACTED is not a Mongo status — ASSIGNED implies driver contacted.
+ */
+export type RecoveryDisplayStatus =
+  | 'RECOVERY_REQUIRED'
+  | 'ASSIGNED'
+  | 'DRIVER_CONTACTED'
+  | 'PICKUP_CONFIRMED'
+  | 'RECOVERED'
+  | 'RESOLVED';
+
 export type RecoveryOptionStatus =
   | 'proposed'
   | 'selected'
@@ -140,6 +152,7 @@ export interface Shipment {
   expectedNode?: string | null;
   actualNode?: string | null;
   expectedLocation?: string | null;
+  /** Present on recovery analysis; shipment detail uses currentLocation as actual. */
   actualLocation?: string | null;
   plannedRoute?: string[];
   isMisplaced?: boolean | null;

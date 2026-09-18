@@ -15,6 +15,7 @@ import IncidentAlert from './components/IncidentAlert';
 import LogisticsMap from './components/LogisticsMap';
 import MetricsBar from './components/MetricsBar';
 import RecoveryCandidates from './components/RecoveryCandidates';
+import { RecoveryIncidentView } from './components/recovery';
 import RecoveryPlan from './components/RecoveryPlan';
 import SearchPanel from './components/SearchPanel';
 import ShipmentPanel from './components/ShipmentPanel';
@@ -128,15 +129,15 @@ export default function App() {
     setShipmentError,
     recoveryLoading,
     recoveryError,
+    incidentsLoading,
+    incidentsError,
     simulating,
-    assigning,
     confirmingPickup,
     resolving,
     loadShipment,
     refreshActiveIncidents,
     analyzeRecovery,
     handleSimulateIncident,
-    handleSelectRecovery,
     handleConfirmPickup,
     handleMarkRecovered,
     clearRecoverySelection,
@@ -330,6 +331,18 @@ export default function App() {
         />
       ) : null}
 
+      <RecoveryIncidentView
+        shipment={selectedShipment}
+        incident={incidentForAlert}
+        recoveryAnalysis={recoveryAnalysis}
+        shipmentLoading={shipmentLoading}
+        shipmentError={shipmentError}
+        incidentLoading={incidentsLoading && !incidentForAlert}
+        incidentError={incidentsError}
+        recoveryLoading={recoveryLoading}
+        recoveryError={recoveryError}
+      />
+
       {driverNotification ? (
         <section className="panel driver-notify">
           <h2>Driver Contacted (Simulated)</h2>
@@ -396,19 +409,24 @@ export default function App() {
           analysis={recoveryAnalysis}
           loading={recoveryLoading}
           error={recoveryError}
+          vehicles={vehicles}
+          selectedCandidateId={
+            recoveryAnalysis?.selectedRecovery?.candidateId ||
+            recoveryAnalysis?.recoveryPlan?.candidateId ||
+            null
+          }
           assignedCandidateId={
             incidentForAlert?.status === 'ASSIGNED' ||
             incidentForAlert?.status === 'PICKUP_CONFIRMED'
               ? incidentForAlert.selectedCandidateId
               : null
           }
-          onSelectRecovery={handleSelectRecovery}
-          assigning={assigning}
         />
         <RecoveryPlan
           analysis={recoveryAnalysis}
           loading={recoveryLoading}
           error={recoveryError}
+          vehicles={vehicles}
           assigned={
             incidentForAlert?.status === 'ASSIGNED' ||
             incidentForAlert?.status === 'PICKUP_CONFIRMED'
