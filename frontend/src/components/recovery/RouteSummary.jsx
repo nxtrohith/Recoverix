@@ -7,6 +7,7 @@ import { firstPresent } from './recoveryStatus';
 export default function RouteSummary({
   shipment,
   recoveryNetwork,
+  hideTitle = false,
 }) {
   const stops =
     (Array.isArray(shipment?.plannedRoute) && shipment.plannedRoute.length
@@ -38,7 +39,7 @@ export default function RouteSummary({
   if (!stops.length && !origin && !destination) {
     return (
       <div className="recovery-section route-summary">
-        <h3>Route / Shipment Details</h3>
+        {hideTitle ? null : <h3>Route / Shipment Details</h3>}
         <p className="muted">Planned route stops not available from the API.</p>
         {(origin || destination) && (
           <p>
@@ -58,7 +59,7 @@ export default function RouteSummary({
 
   return (
     <div className="recovery-section route-summary">
-      <h3>Route / Shipment Details</h3>
+      {hideTitle ? null : <h3>Route / Shipment Details</h3>}
       <p className="muted route-endpoints">
         {origin || '—'}
         <span className="divergence-arrow"> → </span>

@@ -1,22 +1,18 @@
-import { useOutletContext } from 'react-router-dom';
-import SearchPanel from '../components/SearchPanel';
+import { useOutletContext } from 'react-router-dom'
+import SearchPanel from '../components/SearchPanel'
+import { PageHeader } from '@/components/ops/PageHeader'
 
 export default function SearchPage() {
-  const ctx = useOutletContext();
+  const ctx = useOutletContext()
 
   return (
-    <>
-      {/* Top bar */}
-      <div className="dashboard-topbar">
-        <div>
-          <div className="dashboard-topbar-title">Search</div>
-        </div>
-        <div className="dashboard-topbar-actions">
-          <span className="text-xs muted">Browse all shipments, vehicles &amp; hubs</span>
-        </div>
-      </div>
-
-      <div className="page-padded">
+    <div className="flex min-h-0 flex-1 flex-col">
+      <PageHeader
+        kicker="Network index"
+        title="Search"
+        description="Find any shipment, vehicle, or hub in the operating network"
+      />
+      <div className="flex-1 overflow-y-auto px-4 py-5 sm:px-6 lg:px-8">
         <SearchPanel
           shipments={ctx.shipments}
           vehicles={ctx.vehicles}
@@ -26,12 +22,14 @@ export default function SearchPage() {
           onSelectShipment={ctx.loadShipment}
           onSelectVehicle={ctx.loadVehicle}
           onSelectHub={(hub) => {
-            if (hub.graphNodeKey) ctx.setFocusNodeId(hub.graphNodeKey);
-            ctx.setSearchHint?.(`Focused hub ${hub.name || hub.graphNodeKey || hub.id}`);
+            if (hub.graphNodeKey) ctx.setFocusNodeId(hub.graphNodeKey)
+            ctx.setSearchHint?.(
+              `Focused hub ${hub.name || hub.graphNodeKey || hub.id}`,
+            )
           }}
           listError={ctx.listsError}
         />
       </div>
-    </>
-  );
+    </div>
+  )
 }

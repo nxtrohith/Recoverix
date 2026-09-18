@@ -1,3 +1,55 @@
+import { Package, Truck, MapPinned } from 'lucide-react'
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { StatusBadge } from '@/components/ops/StatusBadge'
+import { cn } from '@/lib/utils'
+
+function BrowseColumn({ title, count, icon, children }) {
+  return (
+    <Card size="sm" className="min-h-0 shadow-none">
+      <CardHeader className="border-b-2 border-border py-3">
+        <CardTitle className="flex items-center gap-2 text-sm">
+          {icon}
+          <span className="flex-1">{title}</span>
+          <span className="font-mono text-xs tabular-nums text-muted-foreground">
+            {count}
+          </span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-0">
+        <ScrollArea className="h-[min(52vh,480px)]">{children}</ScrollArea>
+      </CardContent>
+    </Card>
+  )
+}
+
+function BrowseButton({ selected, onClick, title, subtitle, badge }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'flex w-full flex-col gap-1 border-b-2 border-border px-3 py-2.5 text-left transition-colors duration-200 last:border-b-0',
+        selected ? 'bg-main' : 'hover:bg-background',
+      )}
+    >
+      <span className="flex items-center justify-between gap-2">
+        <strong className="truncate text-sm">{title}</strong>
+        {badge}
+      </span>
+      {subtitle ? (
+        <span className="truncate text-xs text-muted-foreground">{subtitle}</span>
+      ) : null}
+    </button>
+  )
+}
+
 export default function SearchPanel({
   shipments,
   vehicles,
@@ -10,85 +62,88 @@ export default function SearchPanel({
   listError,
 }) {
   return (
-    <section className="search-panel panel">
-      <h2>Browse</h2>
-      {listError ? <p className="error-text">{listError}</p> : null}
+    <section className="space-y-4">
+      {listError ? (
+        <Alert variant="destructive">
+          <AlertDescription>{listError}</AlertDescription>
+        </Alert>
+      ) : null}
 
-      <div className="browse-columns">
-        <div>
-          <h3>Shipments ({shipments?.length ?? 0})</h3>
+      <div className="grid gap-4 lg:grid-cols-3">
+        <BrowseColumn
+          title="Shipments"
+          count={shipments?.length ?? 0}
+          icon={<Package className="size-4" />}
+        >
           {!shipments?.length ? (
-            <p className="muted">No shipments loaded.</p>
+            <p className="px-3 py-8 text-center text-sm text-muted-foreground">
+              No shipments loaded.
+            </p>
           ) : (
-            <ul className="browse-list">
-              {shipments.map((s) => (
-                <li key={s.id}>
-                  <button
-                    type="button"
-                    className={selectedShipmentId === s.id ? 'selected' : ''}
-                    onClick={() => onSelectShipment(s.id)}
-                  >
-                    <strong>{s.trackingNumber || s.id}</strong>
-                    <span>
-                      {s.status}
-                      {s.destination ? ` → ${s.destination}` : ''}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
+            shipments.map((s) => (
+              <BrowseButton
+                key={s.id}
+                selected={selectedShipmentId === s.id}
+                onClick={() => onSelectShipment(s.id)}
+                title={s.trackingNumber || s.id}
+                subtitle={`${s.status || '—'}${s.destination ? ` → ${s.destination}` : ''}`}
+                badge={<StatusBadge status={s.status} />}
+              />
+            ))
           )}
-        </div>
+        </BrowseColumn>
 
-        <div>
-          <h3>Vehicles ({vehicles?.length ?? 0})</h3>
+        <BrowseColumn
+          title="Vehicles"
+          count={vehicles?.length ?? 0}
+          icon={<Truck className="size-4" />}
+        >
           {!vehicles?.length ? (
-            <p className="muted">No vehicles loaded.</p>
+            <p className="px-3 py-8 text-center text-sm text-muted-foreground">
+              No vehicles loaded.
+            </p>
           ) : (
-            <ul className="browse-list">
-              {vehicles.map((v) => (
-                <li key={v.id}>
-                  <button
-                    type="button"
-                    className={selectedVehicleId === v.id ? 'selected' : ''}
-                    onClick={() => onSelectVehicle(v.id)}
-                  >
-                    <strong>{v.vehicleNumber || v.id}</strong>
-                    <span>
-                      {v.status}
-                      {v.currentLocationName ? ` @ ${v.currentLocationName}` : ''}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
+            vehicles.map((v) => (
+              <BrowseButton
+                key={v.id}
+                selected={selectedVehicleId === v.id}
+                onClick={() => onSelectVehicle(v.id)}
+                title={v.vehicleNumber || v.id}
+                subtitle={`${v.status || '—'}${v.currentLocationName ? ` @ ${v.currentLocationName}` : ''}`}
+                badge={<StatusBadge status={v.status} />}
+              />
+            ))
           )}
-        </div>
+        </BrowseColumn>
 
-        <div>
-          <h3>Hubs ({hubs?.length ?? 0})</h3>
+        <BrowseColumn
+          title="Hubs"
+          count={hubs?.length ?? 0}
+          icon={<MapPinned className="size-4" />}
+        >
           {!hubs?.length ? (
-            <p className="muted">No hubs loaded.</p>
+            <p className="px-3 py-8 text-center text-sm text-muted-foreground">
+              No hubs loaded.
+            </p>
           ) : (
-            <ul className="browse-list">
+            <>
               {hubs.slice(0, 40).map((h) => (
-                <li key={h.id}>
-                  <button type="button" onClick={() => onSelectHub(h)}>
-                    <strong>{h.name || h.code || h.id}</strong>
-                    <span>
-                      {h.type}
-                      {h.graphNodeKey ? ` · ${h.graphNodeKey}` : ''}
-                    </span>
-                  </button>
-                </li>
+                <BrowseButton
+                  key={h.id}
+                  onClick={() => onSelectHub(h)}
+                  title={h.name || h.code || h.id}
+                  subtitle={`${h.type || 'hub'}${h.graphNodeKey ? ` · ${h.graphNodeKey}` : ''}`}
+                />
               ))}
               {hubs.length > 40 ? (
-                <li className="muted">…and {hubs.length - 40} more (use search)</li>
+                <p className="px-3 py-3 text-xs text-muted-foreground">
+                  …and {hubs.length - 40} more (use global search)
+                </p>
               ) : null}
-            </ul>
+            </>
           )}
-        </div>
+        </BrowseColumn>
       </div>
     </section>
-  );
+  )
 }

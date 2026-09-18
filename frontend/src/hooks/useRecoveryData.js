@@ -71,6 +71,7 @@ export function useRecoveryData(options = {}) {
   const [assigning, setAssigning] = useState(false);
   const [confirmingPickup, setConfirmingPickup] = useState(false);
   const [resolving, setResolving] = useState(false);
+  const shipmentRequestRef = useRef(0);
 
   const refreshActiveIncidents = useCallback(async () => {
     setIncidentsLoading(true);
@@ -98,10 +99,12 @@ export function useRecoveryData(options = {}) {
   const loadShipment = useCallback(
     async (id, { fetchRecoveryPlan = true } = {}) => {
       if (!id) return null;
+      const requestId = ++shipmentRequestRef.current;
       setShipmentLoading(true);
       setShipmentError(null);
       try {
         const data = await getShipment(id);
+        if (requestId !== shipmentRequestRef.current) return null;
         setSelectedShipment(data);
         const incident = data.activeIncident || null;
         setActiveIncident(incident);
@@ -162,6 +165,7 @@ export function useRecoveryData(options = {}) {
         ) {
           try {
             const recovery = await getRecovery(id);
+            if (requestId !== shipmentRequestRef.current) return null;
             setRecoveryAnalysis(recovery);
             const path = recovery?.selectedRecovery?.path;
             if (path?.length && onFocusNode) onFocusNode(path[0]);
@@ -173,6 +177,7 @@ export function useRecoveryData(options = {}) {
         if (data.currentNode && onFocusNode) onFocusNode(data.currentNode);
         return data;
       } catch (err) {
+        if (requestId !== shipmentRequestRef.current) return null;
         setSelectedShipment(null);
         if (err instanceof ApiError && err.status === 404) {
           setShipmentError(`Shipment not found: ${id}`);
@@ -181,7 +186,9 @@ export function useRecoveryData(options = {}) {
         }
         return null;
       } finally {
-        setShipmentLoading(false);
+        if (requestId === shipmentRequestRef.current) {
+          setShipmentLoading(false);
+        }
       }
     },
     [onFocusNode],

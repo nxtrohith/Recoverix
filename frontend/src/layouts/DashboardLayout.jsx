@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Outlet } from 'react-router-dom'
 import {
   ApiError,
   getApiBaseUrl,
@@ -10,104 +10,120 @@ import {
   getShipments,
   getVehicle,
   getVehicles,
-} from '../api/client';
-import Sidebar from '../components/Sidebar';
-import { useRecoveryData } from '../hooks/useRecoveryData';
-import './DashboardLayout.css';
+} from '../api/client'
+import Sidebar from '../components/Sidebar'
+import { useRecoveryData } from '../hooks/useRecoveryData'
 
 function errMsg(err, fallback) {
-  if (err instanceof ApiError) return err.message;
-  if (err?.message) return err.message;
-  return fallback;
+  if (err instanceof ApiError) return err.message
+  if (err?.message) return err.message
+  return fallback
 }
 
 export default function DashboardLayout() {
-  const [health, setHealth] = useState(null);
-  const [healthError, setHealthError] = useState(null);
-  const [healthLoading, setHealthLoading] = useState(true);
+  const [health, setHealth] = useState(null)
+  const [healthError, setHealthError] = useState(null)
+  const [healthLoading, setHealthLoading] = useState(true)
 
-  const [graph, setGraph] = useState(null);
-  const [graphLoading, setGraphLoading] = useState(true);
-  const [graphError, setGraphError] = useState(null);
+  const [graph, setGraph] = useState(null)
+  const [graphLoading, setGraphLoading] = useState(true)
+  const [graphError, setGraphError] = useState(null)
 
-  const [hubs, setHubs] = useState([]);
-  const [vehicles, setVehicles] = useState([]);
-  const [shipments, setShipments] = useState([]);
-  const [listsLoading, setListsLoading] = useState(true);
-  const [listsError, setListsError] = useState(null);
+  const [hubs, setHubs] = useState([])
+  const [vehicles, setVehicles] = useState([])
+  const [shipments, setShipments] = useState([])
+  const [listsLoading, setListsLoading] = useState(true)
+  const [listsError, setListsError] = useState(null)
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchHint, setSearchHint] = useState('');
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchHint, setSearchHint] = useState('')
 
-  const [selectedVehicle, setSelectedVehicle] = useState(null);
-  const [vehicleLoading, setVehicleLoading] = useState(false);
-  const [vehicleError, setVehicleError] = useState(null);
+  const [selectedVehicle, setSelectedVehicle] = useState(null)
+  const [vehicleLoading, setVehicleLoading] = useState(false)
+  const [vehicleError, setVehicleError] = useState(null)
+  const vehicleRequestRef = useRef(0)
+  const vehiclesRef = useRef(vehicles)
+  vehiclesRef.current = vehicles
 
-  const [focusNodeId, setFocusNodeId] = useState(null);
-  const [previewCandidateId, setPreviewCandidateId] = useState(null);
+  const [focusNodeId, setFocusNodeId] = useState(null)
+  const [previewCandidateId, setPreviewCandidateId] = useState(null)
 
   const loadVehicle = useCallback(async (id) => {
-    if (!id) return;
-    setVehicleLoading(true);
-    setVehicleError(null);
+    if (!id) return
+    const requestId = ++vehicleRequestRef.current
+    setVehicleError(null)
+
+    // Select immediately from the list so highlight + card match the click,
+    // then enrich with the detail fetch (avoids stale out-of-order responses).
+    const fromList = vehiclesRef.current.find((v) => v.id === id) || null
+    if (fromList) {
+      setSelectedVehicle(fromList)
+      if (fromList.currentNode) setFocusNodeId(fromList.currentNode)
+    }
+
+    setVehicleLoading(true)
     try {
-      const data = await getVehicle(id);
-      setSelectedVehicle(data);
-      if (data.currentNode) setFocusNodeId(data.currentNode);
+      const data = await getVehicle(id)
+      if (requestId !== vehicleRequestRef.current) return
+      setSelectedVehicle(data)
+      if (data.currentNode) setFocusNodeId(data.currentNode)
     } catch (err) {
-      setSelectedVehicle(null);
+      if (requestId !== vehicleRequestRef.current) return
+      if (!fromList) setSelectedVehicle(null)
       if (err instanceof ApiError && err.status === 404) {
-        setVehicleError(`Vehicle not found: ${id}`);
+        setVehicleError(`Vehicle not found: ${id}`)
       } else {
-        setVehicleError(errMsg(err, 'Failed to load vehicle'));
+        setVehicleError(errMsg(err, 'Failed to load vehicle'))
       }
     } finally {
-      setVehicleLoading(false);
+      if (requestId === vehicleRequestRef.current) {
+        setVehicleLoading(false)
+      }
     }
-  }, []);
+  }, [])
 
   const loadDashboardLists = useCallback(async () => {
-    setListsLoading(true);
-    setListsError(null);
+    setListsLoading(true)
+    setListsError(null)
 
     const results = await Promise.allSettled([
       getHubs(),
       getVehicles(),
       getShipments(),
-    ]);
+    ])
 
-    const [hubsRes, vehiclesRes, shipmentsRes] = results;
-    const listErrors = [];
+    const [hubsRes, vehiclesRes, shipmentsRes] = results
+    const listErrors = []
 
     if (hubsRes.status === 'fulfilled') {
-      setHubs(hubsRes.value?.hubs || []);
+      setHubs(hubsRes.value?.hubs || [])
     } else {
-      setHubs([]);
-      listErrors.push(`hubs: ${errMsg(hubsRes.reason, 'failed')}`);
+      setHubs([])
+      listErrors.push(`hubs: ${errMsg(hubsRes.reason, 'failed')}`)
     }
     if (vehiclesRes.status === 'fulfilled') {
-      setVehicles(vehiclesRes.value?.vehicles || []);
+      setVehicles(vehiclesRes.value?.vehicles || [])
     } else {
-      setVehicles([]);
-      listErrors.push(`vehicles: ${errMsg(vehiclesRes.reason, 'failed')}`);
+      setVehicles([])
+      listErrors.push(`vehicles: ${errMsg(vehiclesRes.reason, 'failed')}`)
     }
     if (shipmentsRes.status === 'fulfilled') {
-      setShipments(shipmentsRes.value?.shipments || []);
+      setShipments(shipmentsRes.value?.shipments || [])
     } else {
-      setShipments([]);
-      listErrors.push(`shipments: ${errMsg(shipmentsRes.reason, 'failed')}`);
+      setShipments([])
+      listErrors.push(`shipments: ${errMsg(shipmentsRes.reason, 'failed')}`)
     }
 
-    setListsError(listErrors.length ? listErrors.join(' · ') : null);
-    setListsLoading(false);
-  }, []);
+    setListsError(listErrors.length ? listErrors.join(' · ') : null)
+    setListsLoading(false)
+  }, [])
 
   const recovery = useRecoveryData({
     onDashboardRefresh: loadDashboardLists,
     onLoadVehicle: loadVehicle,
     onFocusNode: setFocusNodeId,
     onHint: setSearchHint,
-  });
+  })
 
   const {
     selectedShipment,
@@ -143,35 +159,35 @@ export default function DashboardLayout() {
     retryLastAction,
     clearActionError,
     clearRecoverySelection,
-  } = recovery;
+  } = recovery
 
 
   const refreshHealth = useCallback(async () => {
-    setHealthLoading(true);
+    setHealthLoading(true)
     try {
-      const data = await getHealth();
-      setHealth(data);
-      setHealthError(null);
+      const data = await getHealth()
+      setHealth(data)
+      setHealthError(null)
     } catch (err) {
-      setHealth(null);
-      setHealthError(errMsg(err, 'Backend unavailable'));
+      setHealth(null)
+      setHealthError(errMsg(err, 'Backend unavailable'))
     } finally {
-      setHealthLoading(false);
+      setHealthLoading(false)
     }
-  }, []);
+  }, [])
 
   const loadDashboard = useCallback(async () => {
-    setGraphLoading(true);
-    setGraphError(null);
+    setGraphLoading(true)
+    setGraphError(null)
 
-    const graphResult = await Promise.allSettled([getGraph()]);
+    const graphResult = await Promise.allSettled([getGraph()])
     if (graphResult[0].status === 'fulfilled') {
-      setGraph(graphResult[0].value);
+      setGraph(graphResult[0].value)
     } else {
-      setGraph(null);
-      setGraphError(errMsg(graphResult[0].reason, 'Failed to load graph'));
+      setGraph(null)
+      setGraphError(errMsg(graphResult[0].reason, 'Failed to load graph'))
     }
-    setGraphLoading(false);
+    setGraphLoading(false)
 
     const [_, incidentList] = await Promise.all([
       loadDashboardLists(),
@@ -186,31 +202,31 @@ export default function DashboardLayout() {
   }, [loadDashboardLists, refreshActiveIncidents, selectedShipment, loadShipment]);
 
   useEffect(() => {
-    refreshHealth();
-    loadDashboard();
-    const timer = setInterval(refreshHealth, 30000);
-    return () => clearInterval(timer);
-  }, [refreshHealth, loadDashboard]);
+    refreshHealth()
+    loadDashboard()
+    const timer = setInterval(refreshHealth, 30000)
+    return () => clearInterval(timer)
+  }, [refreshHealth, loadDashboard])
 
   const handleSearchSubmit = useCallback(async () => {
-    const q = searchQuery.trim();
+    const q = searchQuery.trim()
     if (!q) {
-      setSearchHint('Enter a shipment ID, vehicle ID, or hub name.');
-      return;
+      setSearchHint('Enter a shipment ID, vehicle ID, or hub name.')
+      return
     }
-    setSearchHint('');
+    setSearchHint('')
 
     try {
-      const shipment = await getShipment(q);
-      setSelectedShipment(shipment);
-      setShipmentError(null);
-      clearRecoverySelection();
-      const incident = shipment.activeIncident || null;
-      setActiveIncident(incident);
-      if (shipment.currentNode) setFocusNodeId(shipment.currentNode);
-      setSearchHint(`Loaded shipment ${shipment.trackingNumber || shipment.id}`);
-      await loadShipment(shipment.id);
-      return;
+      const shipment = await getShipment(q)
+      setSelectedShipment(shipment)
+      setShipmentError(null)
+      clearRecoverySelection()
+      const incident = shipment.activeIncident || null
+      setActiveIncident(incident)
+      if (shipment.currentNode) setFocusNodeId(shipment.currentNode)
+      setSearchHint(`Loaded shipment ${shipment.trackingNumber || shipment.id}`)
+      await loadShipment(shipment.id)
+      return
     } catch {
       /* fall through */
     }
@@ -220,20 +236,22 @@ export default function DashboardLayout() {
         s.id === q ||
         s.trackingNumber === q ||
         String(s.trackingNumber || '').toLowerCase() === q.toLowerCase(),
-    );
+    )
     if (shipmentHit) {
-      await loadShipment(shipmentHit.id);
-      setSearchHint(`Loaded shipment ${shipmentHit.trackingNumber || shipmentHit.id}`);
-      return;
+      await loadShipment(shipmentHit.id)
+      setSearchHint(`Loaded shipment ${shipmentHit.trackingNumber || shipmentHit.id}`)
+      return
     }
 
     try {
-      const vehicle = await getVehicle(q);
-      setSelectedVehicle(vehicle);
-      setVehicleError(null);
-      if (vehicle.currentNode) setFocusNodeId(vehicle.currentNode);
-      setSearchHint(`Loaded vehicle ${vehicle.vehicleNumber || vehicle.id}`);
-      return;
+      const vehicle = await getVehicle(q)
+      vehicleRequestRef.current += 1
+      setSelectedVehicle(vehicle)
+      setVehicleError(null)
+      setVehicleLoading(false)
+      if (vehicle.currentNode) setFocusNodeId(vehicle.currentNode)
+      setSearchHint(`Loaded vehicle ${vehicle.vehicleNumber || vehicle.id}`)
+      return
     } catch {
       /* fall through */
     }
@@ -243,14 +261,14 @@ export default function DashboardLayout() {
         v.id === q ||
         v.vehicleNumber === q ||
         String(v.vehicleNumber || '').toLowerCase() === q.toLowerCase(),
-    );
+    )
     if (vehicleHit) {
-      await loadVehicle(vehicleHit.id);
-      setSearchHint(`Loaded vehicle ${vehicleHit.vehicleNumber || vehicleHit.id}`);
-      return;
+      await loadVehicle(vehicleHit.id)
+      setSearchHint(`Loaded vehicle ${vehicleHit.vehicleNumber || vehicleHit.id}`)
+      return
     }
 
-    const qLower = q.toLowerCase();
+    const qLower = q.toLowerCase()
     const hubHit = hubs.find(
       (h) =>
         h.id === q ||
@@ -259,15 +277,15 @@ export default function DashboardLayout() {
         String(h.name || '').toLowerCase() === qLower ||
         String(h.name || '').toLowerCase().includes(qLower) ||
         String(h.graphNodeKey || '').toLowerCase().includes(qLower),
-    );
+    )
     if (hubHit) {
-      if (hubHit.graphNodeKey) setFocusNodeId(hubHit.graphNodeKey);
-      setSearchHint(`Focused hub ${hubHit.name || hubHit.graphNodeKey || hubHit.id}`);
-      return;
+      if (hubHit.graphNodeKey) setFocusNodeId(hubHit.graphNodeKey)
+      setSearchHint(`Focused hub ${hubHit.name || hubHit.graphNodeKey || hubHit.id}`)
+      return
     }
 
-    setSearchHint(`No shipment, vehicle, or hub matched “${q}”.`);
-    setShipmentError(`Shipment not found: ${q}`);
+    setSearchHint(`No shipment, vehicle, or hub matched “${q}”.`)
+    setShipmentError(`Shipment not found: ${q}`)
   }, [
     searchQuery,
     shipments,
@@ -279,7 +297,7 @@ export default function DashboardLayout() {
     setShipmentError,
     clearRecoverySelection,
     setActiveIncident,
-  ]);
+  ])
 
   const incidentForAlert =
     activeIncident &&
@@ -287,49 +305,60 @@ export default function DashboardLayout() {
     (activeIncident.shipmentId === selectedShipment.id ||
       !activeIncident.shipmentId)
       ? activeIncident
-      : selectedShipment?.activeIncident || activeIncident;
+      : selectedShipment?.activeIncident || activeIncident
 
   const recoveryVehicleIdForMap =
     incidentForAlert?.recoveryVehicleId ||
     recoveryAnalysis?.selectedRecovery?.vehicleId ||
     recoveryAnalysis?.recoveryPlan?.selectedVehicleId ||
-    null;
+    null
 
+  // Enrich path detail for the recovery vehicle when it is already selected
+  // (or nothing is selected yet). Never steal focus from an explicit Fleet/Search pick.
   useEffect(() => {
     const incidentOpen =
-      incidentForAlert?.status && incidentForAlert.status !== 'RESOLVED';
-    if (!recoveryVehicleIdForMap || !incidentOpen) return;
+      incidentForAlert?.status && incidentForAlert.status !== 'RESOLVED'
+    if (!recoveryVehicleIdForMap || !incidentOpen) return
+
+    if (
+      selectedVehicle &&
+      selectedVehicle.id !== recoveryVehicleIdForMap
+    ) {
+      return
+    }
+
     if (
       selectedVehicle?.id === recoveryVehicleIdForMap &&
       selectedVehicle.currentPath !== undefined
     ) {
-      return;
+      return
     }
-    loadVehicle(recoveryVehicleIdForMap);
+
+    loadVehicle(recoveryVehicleIdForMap)
   }, [
     recoveryVehicleIdForMap,
     selectedVehicle?.id,
     selectedVehicle?.currentPath,
     incidentForAlert?.status,
     loadVehicle,
-  ]);
+  ])
 
   useEffect(() => {
-    if (!recoveryAnalysis) setPreviewCandidateId(null);
-  }, [recoveryAnalysis]);
+    if (!recoveryAnalysis) setPreviewCandidateId(null)
+  }, [recoveryAnalysis])
 
   const showAlert =
     completionBanner ||
     (incidentForAlert &&
       incidentForAlert.status &&
-      incidentForAlert.status !== 'RESOLVED');
+      incidentForAlert.status !== 'RESOLVED')
 
   const incidentBadge =
     incidentForAlert &&
     incidentForAlert.status &&
     incidentForAlert.status !== 'RESOLVED'
       ? 1
-      : 0;
+      : 0
 
   const outletContext = useMemo(
     () => ({
@@ -440,11 +469,11 @@ export default function DashboardLayout() {
       showAlert,
       searchHint,
     ],
-  );
+  )
 
 
   return (
-    <div className="dashboard-shell">
+    <div className="app-grain flex h-dvh max-h-dvh overflow-hidden max-md:flex-col">
       <Sidebar
         incidentCount={incidentBadge}
         hubsCount={hubs.length}
@@ -459,13 +488,11 @@ export default function DashboardLayout() {
         onSearchSubmit={handleSearchSubmit}
         searchHint={searchHint}
       />
-      <div className="dashboard-main">
-        <div className="dashboard-content">
-          <div className="dashboard-page">
-            <Outlet context={outletContext} />
-          </div>
-        </div>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <main id="main" className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <Outlet context={outletContext} />
+        </main>
       </div>
     </div>
-  );
+  )
 }

@@ -56,6 +56,7 @@ export default function RecoveryActions({
   onRetry,
   onRetryCall,
   onClearError,
+  hideTitle = false,
 }) {
   const [confirmKind, setConfirmKind] = useState(null);
 
@@ -189,7 +190,7 @@ export default function RecoveryActions({
 
   return (
     <div className="recovery-section recovery-actions" aria-label="Recovery actions">
-      <h3>Recovery Actions</h3>
+      {hideTitle ? null : <h3>Recovery Actions</h3>}
 
       {isComplete ? (
         <div className="recovery-complete-banner" role="status">

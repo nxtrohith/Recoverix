@@ -170,9 +170,9 @@ export default function RecoveryPlan({
   const m = selectedFull?.metrics || {};
 
   return (
-    <section className="panel recovery-plan recovery-plan-selected">
+    <section className="panel recovery-plan recovery-plan-selected shadow-shadow">
       <div className="panel-header-row">
-        <h2>Selected Recovery Plan</h2>
+        <h2>Selected recovery plan</h2>
         <span className="badge badge-selected">SELECTED</span>
       </div>
 
