@@ -9,6 +9,7 @@
     "db:cleanup": "node scripts/cleanup_database.js",
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
+    "server": "tsx src/server.ts",
     "typecheck": "tsc --noEmit",
     "build": "tsc"
   },
@@ -25,10 +26,14 @@
   },
   "homepage": "https://github.com/nxtrohith/Conv-Software-Hackathon#readme",
   "dependencies": {
+    "cors": "^2.8.6",
     "dotenv": "^18.0.0",
+    "express": "^5.2.1",
     "mongoose": "^9.10.1"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
     "@types/node": "^26.6.1",
     "nodemon": "^3.1.14",
     "tsx": "^4.23.13",
