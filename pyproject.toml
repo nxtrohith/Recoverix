@@ -1,0 +1,21 @@
+[project]
+name = "sh205-graph"
+version = "0.1.0"
+description = "NetworkX graph layer for SH-205 Intelligent Shipment Piggybacking"
+requires-python = ">=3.11"
+dependencies = [
+    "pymongo",
+    "dnspython",
+    "python-dotenv",
+    "networkx",
+    "pandas",
+    "pyvis",
+    "geopy",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["graph"]

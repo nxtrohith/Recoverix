@@ -50,6 +50,9 @@ const routeSchema = new Schema(
     capacity: { type: capacitySchema, required: true },
     currentLoad: { type: capacitySchema, required: true },
     status: { type: String, enum: ROUTE_STATUSES, required: true },
+    /** Observed topology metadata retained from the Telangana edge dataset. */
+    tripCount: { type: Number, required: false },
+    routeTypes: { type: String, required: false },
   },
   { timestamps: true },
 );

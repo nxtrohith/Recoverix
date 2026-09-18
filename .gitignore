@@ -4,3 +4,13 @@ dist/
 coverage/
 *.log
 .DS_Store
+.env 
+delhivery_data.csv 
+
+# Python / uv
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.Python
+

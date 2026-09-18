@@ -15,6 +15,8 @@ const locationSchema = new Schema(
   {
     name: { type: String, required: true },
     code: { type: String, required: true },
+    /** Stable key of the corresponding topology node in `telangana_nodes`. */
+    graphNodeKey: { type: String, required: false },
     type: { type: String, enum: LOCATION_TYPES, required: true },
     address: { type: String, required: true },
     city: { type: String, required: true },
@@ -24,6 +26,7 @@ const locationSchema = new Schema(
 );
 
 locationSchema.index({ code: 1 }, { unique: true });
+locationSchema.index({ graphNodeKey: 1 }, { unique: true, sparse: true });
 locationSchema.index({ city: 1, type: 1 });
 
 export type ILocation = InferSchemaType<typeof locationSchema>;
