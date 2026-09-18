@@ -9,31 +9,61 @@ import {
 } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import {
+  buildRecoveryMapState,
+  nodeLatLng,
+} from './recovery/recoveryMapState';
+import { candidateTypeLabel } from './recovery/candidateUtils';
 
 const TELANGANA_CENTER = [17.9, 79.0];
 const DEFAULT_ZOOM = 7;
 
-function FitBounds({ positions }) {
+/** Visual hierarchy — keep within existing App.css palette. */
+const COLORS = {
+  hub: '#64748b',
+  hubStroke: '#1e293b',
+  edge: '#94a3b8',
+  expectedRoute: '#64748b',
+  expectedNode: '#94a3b8',
+  actual: '#e11d48',
+  actualStroke: '#9f1239',
+  vehicle: '#38bdf8',
+  vehicleStroke: '#0369a1',
+  recoveryVehicle: '#f59e0b',
+  recoveryVehicleStroke: '#b45309',
+  affectedVehicle: '#fb7185',
+  affectedStroke: '#9f1239',
+  vehicleRoute: '#0ea5e9',
+  recoveryToPickup: '#ea580c',
+  recoveryToDest: '#c2410c',
+  recoveryPath: '#ea580c',
+  recoveryHub: '#fb923c',
+  destination: '#22c55e',
+  destinationStroke: '#166534',
+  preview: '#a8a29e',
+  origin: '#94a3b8',
+  originStroke: '#334155',
+};
+
+function FitBounds({ positions, fitKey }) {
   const map = useMap();
   useEffect(() => {
     const valid = (positions || []).filter(
       (p) => Array.isArray(p) && p.length === 2 && p.every((n) => Number.isFinite(n)),
     );
     if (valid.length >= 2) {
-      map.fitBounds(L.latLngBounds(valid), { padding: [40, 40] });
+      map.fitBounds(L.latLngBounds(valid), { padding: [48, 48], maxZoom: 11 });
     } else if (valid.length === 1) {
       map.setView(valid[0], 10);
     }
-  }, [map, positions]);
+  }, [map, positions, fitKey]);
   return null;
 }
 
-function nodeLatLng(node) {
-  if (!node) return null;
-  const lat = node.latitude;
-  const lon = node.longitude;
-  if (lat == null || lon == null) return null;
-  return [lat, lon];
+function nodeLabel(nodeById, id) {
+  if (!id) return '—';
+  const n = nodeById?.get(id);
+  return n?.name || id;
 }
 
 export default function LogisticsMap({
@@ -46,6 +76,7 @@ export default function LogisticsMap({
   recoveryAnalysis,
   activeIncident,
   focusNodeId,
+  previewCandidateId = null,
 }) {
   const nodeById = useMemo(() => {
     const map = new Map();
@@ -66,51 +97,36 @@ export default function LogisticsMap({
       .filter(Boolean);
   }, [graph, nodeById]);
 
-  // Prefer assigned / pickup-confirmed incident path over ephemeral analysis
-  const recoveryPath =
-    ((activeIncident?.status === 'ASSIGNED' ||
-      activeIncident?.status === 'PICKUP_CONFIRMED') &&
-    activeIncident?.recoveryPath?.length
-      ? activeIncident.recoveryPath
-      : null) ||
-    recoveryAnalysis?.selectedRecovery?.path ||
-    [];
-  const recoveryLatLngs = useMemo(() => {
-    return recoveryPath
-      .map((id) => nodeLatLng(nodeById.get(id)))
-      .filter(Boolean);
-  }, [recoveryPath, nodeById]);
-
-  const shipmentOrigin = nodeLatLng(nodeById.get(selectedShipment?.originNode));
-  const shipmentCurrent = nodeLatLng(
-    nodeById.get(selectedShipment?.currentNode),
+  const recovery = useMemo(
+    () =>
+      buildRecoveryMapState({
+        graph,
+        selectedShipment,
+        recoveryAnalysis,
+        activeIncident,
+        vehicles,
+        selectedVehicle,
+        previewCandidateId,
+      }),
+    [
+      graph,
+      selectedShipment,
+      recoveryAnalysis,
+      activeIncident,
+      vehicles,
+      selectedVehicle,
+      previewCandidateId,
+    ],
   );
-  const shipmentDest = nodeLatLng(
-    nodeById.get(selectedShipment?.destinationNode),
-  );
-
-  const incidentHub = nodeLatLng(nodeById.get(activeIncident?.hubName));
-
-  const recoveryVehicleId =
-    activeIncident?.recoveryVehicleId ||
-    recoveryAnalysis?.selectedRecovery?.vehicleId;
-  const affectedVehicleId = activeIncident?.vehicleId;
-  const recoveryVehicle =
-    vehicles.find((v) => v.id === recoveryVehicleId) ||
-    (selectedVehicle?.id === recoveryVehicleId ? selectedVehicle : null);
-
-  const plannedCorridor = useMemo(() => {
-    const pts = [];
-    if (shipmentOrigin) pts.push(shipmentOrigin);
-    if (shipmentCurrent) pts.push(shipmentCurrent);
-    if (shipmentDest) pts.push(shipmentDest);
-    return pts;
-  }, [shipmentOrigin, shipmentCurrent, shipmentDest]);
 
   const hasIncident =
     Boolean(activeIncident) &&
     activeIncident.status &&
     activeIncident.status !== 'RESOLVED';
+
+  const showRecoveryOverlays = recovery.active && hasIncident;
+
+  const affectedVehicleId = activeIncident?.vehicleId || null;
 
   const fitPositions = useMemo(() => {
     const pts = [];
@@ -118,14 +134,19 @@ export default function LogisticsMap({
       const p = nodeLatLng(nodeById.get(focusNodeId));
       if (p) pts.push(p);
     }
-    if (shipmentOrigin) pts.push(shipmentOrigin);
-    if (shipmentCurrent) pts.push(shipmentCurrent);
-    if (shipmentDest) pts.push(shipmentDest);
-    if (incidentHub) pts.push(incidentHub);
-    pts.push(...recoveryLatLngs);
-    if (selectedVehicle?.currentNode) {
-      const p = nodeLatLng(nodeById.get(selectedVehicle.currentNode));
-      if (p) pts.push(p);
+    if (showRecoveryOverlays && recovery.fitPositions.length) {
+      pts.push(...recovery.fitPositions);
+    } else {
+      const origin = nodeLatLng(nodeById.get(selectedShipment?.originNode));
+      const current = nodeLatLng(nodeById.get(selectedShipment?.currentNode));
+      const dest = nodeLatLng(nodeById.get(selectedShipment?.destinationNode));
+      if (origin) pts.push(origin);
+      if (current) pts.push(current);
+      if (dest) pts.push(dest);
+      if (selectedVehicle?.currentNode) {
+        const p = nodeLatLng(nodeById.get(selectedVehicle.currentNode));
+        if (p) pts.push(p);
+      }
     }
     if (!pts.length) {
       for (const n of graph?.nodes || []) {
@@ -137,14 +158,35 @@ export default function LogisticsMap({
   }, [
     focusNodeId,
     nodeById,
-    shipmentOrigin,
-    shipmentCurrent,
-    shipmentDest,
-    incidentHub,
-    recoveryLatLngs,
+    showRecoveryOverlays,
+    recovery.fitPositions,
+    selectedShipment,
     selectedVehicle,
     graph,
   ]);
+
+  const fitKey = showRecoveryOverlays
+    ? [
+        activeIncident?.incidentId || activeIncident?.id || '',
+        recovery.vehicleId || '',
+        recovery.selectedCandidateId || '',
+        previewCandidateId || '',
+        (recovery.recoveryPath || []).join(','),
+      ].join('|')
+    : focusNodeId || selectedShipment?.id || selectedVehicle?.id || 'default';
+
+  // Non-recovery corridor fallback (origin → current → dest)
+  const plannedCorridor = useMemo(() => {
+    if (showRecoveryOverlays) return [];
+    const pts = [];
+    const origin = nodeLatLng(nodeById.get(selectedShipment?.originNode));
+    const current = nodeLatLng(nodeById.get(selectedShipment?.currentNode));
+    const dest = nodeLatLng(nodeById.get(selectedShipment?.destinationNode));
+    if (origin) pts.push(origin);
+    if (current) pts.push(current);
+    if (dest) pts.push(dest);
+    return pts;
+  }, [showRecoveryOverlays, nodeById, selectedShipment]);
 
   if (loading) {
     return (
@@ -173,18 +215,55 @@ export default function LogisticsMap({
     );
   }
 
+  const recoveryHubSet = new Set(
+    showRecoveryOverlays ? recovery.recoveryPath || [] : [],
+  );
+
   return (
     <section className="map-panel panel">
       <h2>Logistics Map</h2>
       <div className="map-legend">
         <span><i className="swatch hub" /> hubs</span>
-        <span><i className="swatch edge" /> routes</span>
+        <span><i className="swatch edge" /> network</span>
         <span><i className="swatch vehicle" /> vehicles</span>
         <span><i className="swatch ship" /> shipment</span>
         <span><i className="swatch dest" /> destination</span>
-        <span><i className="swatch recovery" /> recovery path</span>
-        {hasIncident ? <span><i className="swatch incident" /> incident hub</span> : null}
+        {showRecoveryOverlays ? (
+          <>
+            <span><i className="swatch expected-route" /> expected route</span>
+            <span><i className="swatch pickup" /> recovery pickup</span>
+            <span><i className="swatch recovery" /> recovery path</span>
+            <span><i className="swatch vehicle-route" /> vehicle route</span>
+            {recovery.pickupCase ? (
+              <span className="map-legend-type">
+                type: {recovery.pickupCaseLabel}
+              </span>
+            ) : null}
+          </>
+        ) : (
+          <span><i className="swatch recovery" /> recovery path</span>
+        )}
       </div>
+      {showRecoveryOverlays ? (
+        <p className="map-recovery-caption muted">
+          Hub positions from network graph — not live GPS.
+          {recovery.pickupNode ? (
+            <>
+              {' '}
+              Pickup at <strong>{nodeLabel(nodeById, recovery.pickupNode)}</strong>
+              {recovery.expectedNode &&
+              recovery.expectedNode !== recovery.pickupNode ? (
+                <>
+                  {' '}
+                  (expected was{' '}
+                  <strong>{nodeLabel(nodeById, recovery.expectedNode)}</strong>)
+                </>
+              ) : null}
+              .
+            </>
+          ) : null}
+        </p>
+      ) : null}
       <div className="map-canvas">
         <MapContainer
           center={TELANGANA_CENTER}
@@ -196,42 +275,124 @@ export default function LogisticsMap({
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          <FitBounds positions={fitPositions} />
+          <FitBounds positions={fitPositions} fitKey={fitKey} />
 
+          {/* Background network edges */}
           {edgePositions.map((latlngs, idx) => (
             <Polyline
               key={`e-${idx}`}
               positions={latlngs}
-              pathOptions={{ color: '#94a3b8', weight: 1.5, opacity: 0.55 }}
+              pathOptions={{
+                color: COLORS.edge,
+                weight: 1.5,
+                opacity: showRecoveryOverlays ? 0.35 : 0.55,
+              }}
             />
           ))}
 
-          {/* Planned corridor: Origin → Current → Destination (pre-recovery) */}
-          {!recoveryLatLngs.length && plannedCorridor.length >= 2 ? (
+          {/* Expected shipment route (backend plannedRoute only) */}
+          {showRecoveryOverlays && recovery.expectedLatLngs.length >= 2 ? (
             <Polyline
-              positions={plannedCorridor}
+              positions={recovery.expectedLatLngs}
               pathOptions={{
-                color: hasIncident ? '#be123c' : '#64748b',
-                weight: hasIncident ? 4 : 3,
-                opacity: 0.85,
-                dashArray: hasIncident ? '8 6' : undefined,
+                color: COLORS.expectedRoute,
+                weight: 3,
+                opacity: 0.75,
+                dashArray: '10 8',
               }}
             />
           ) : null}
 
+          {/* Existing vehicle movement (backend currentPath only) */}
+          {showRecoveryOverlays && recovery.vehicleRouteLatLngs.length >= 2 ? (
+            <Polyline
+              positions={recovery.vehicleRouteLatLngs}
+              pathOptions={{
+                color: COLORS.vehicleRoute,
+                weight: 4,
+                opacity: 0.7,
+                dashArray: '2 10',
+              }}
+            />
+          ) : null}
+
+          {/* Candidate preview (inspect only — de-emphasized) */}
+          {showRecoveryOverlays &&
+          recovery.preview?.latLngs?.length >= 2 ? (
+            <Polyline
+              positions={recovery.preview.latLngs}
+              pathOptions={{
+                color: COLORS.preview,
+                weight: 3,
+                opacity: 0.55,
+                dashArray: '4 6',
+              }}
+            />
+          ) : null}
+
+          {/* Recovery path: vehicle → pickup → destination (split when possible) */}
+          {showRecoveryOverlays &&
+          recovery.toPickupLatLngs.length >= 2 ? (
+            <Polyline
+              positions={recovery.toPickupLatLngs}
+              pathOptions={{
+                color: COLORS.recoveryToPickup,
+                weight: 5,
+                opacity: 0.95,
+              }}
+            />
+          ) : null}
+          {showRecoveryOverlays &&
+          recovery.fromPickupLatLngs.length >= 2 ? (
+            <Polyline
+              positions={recovery.fromPickupLatLngs}
+              pathOptions={{
+                color: COLORS.recoveryToDest,
+                weight: 5,
+                opacity: 0.95,
+              }}
+            />
+          ) : null}
+          {showRecoveryOverlays &&
+          recovery.toPickupLatLngs.length < 2 &&
+          recovery.fromPickupLatLngs.length < 2 &&
+          recovery.recoveryLatLngs.length >= 2 ? (
+            <Polyline
+              positions={recovery.recoveryLatLngs}
+              pathOptions={{
+                color: COLORS.recoveryPath,
+                weight: 5,
+                opacity: 0.95,
+              }}
+            />
+          ) : null}
+
+          {/* Non-recovery planned corridor */}
+          {!showRecoveryOverlays && plannedCorridor.length >= 2 ? (
+            <Polyline
+              positions={plannedCorridor}
+              pathOptions={{
+                color: COLORS.expectedRoute,
+                weight: 3,
+                opacity: 0.85,
+              }}
+            />
+          ) : null}
+
+          {/* Hub nodes */}
           {(graph.nodes || []).map((n) => {
             const pos = nodeLatLng(n);
             if (!pos) return null;
-            const onRecovery = recoveryPath.includes(n.id);
+            const onRecovery = recoveryHubSet.has(n.id);
             return (
               <CircleMarker
                 key={n.id}
                 center={pos}
                 radius={onRecovery ? 7 : 5}
                 pathOptions={{
-                  color: onRecovery ? '#c2410c' : '#1e293b',
-                  fillColor: onRecovery ? '#fb923c' : '#64748b',
-                  fillOpacity: 0.85,
+                  color: onRecovery ? COLORS.recoveryToDest : COLORS.hubStroke,
+                  fillColor: onRecovery ? COLORS.recoveryHub : COLORS.hub,
+                  fillOpacity: showRecoveryOverlays && !onRecovery ? 0.55 : 0.85,
                   weight: onRecovery ? 2 : 1,
                 }}
               >
@@ -239,56 +400,103 @@ export default function LogisticsMap({
                   <strong>{n.name || n.id}</strong>
                   <br />
                   {n.type} · {n.district}
-                  {onRecovery ? ' · recovery hub' : ''}
+                  {onRecovery ? ' · on recovery path' : ''}
                 </Popup>
               </CircleMarker>
             );
           })}
 
-          {vehicles.map((v) => {
-            const pos = nodeLatLng(nodeById.get(v.currentNode));
-            if (!pos) return null;
-            const isRecovery = recoveryVehicleId && v.id === recoveryVehicleId;
-            const isAffected = affectedVehicleId && v.id === affectedVehicleId;
-            const isSelected = selectedVehicle?.id === v.id;
-            return (
-              <CircleMarker
-                key={`v-${v.id}`}
-                center={pos}
-                radius={isRecovery || isAffected || isSelected ? 9 : 6}
-                pathOptions={{
-                  color: isRecovery
-                    ? '#b45309'
-                    : isAffected
-                      ? '#9f1239'
-                      : '#0369a1',
-                  fillColor: isRecovery
-                    ? '#f59e0b'
-                    : isAffected
-                      ? '#fb7185'
-                      : '#38bdf8',
-                  fillOpacity: 0.95,
-                  weight: 2,
-                }}
-              >
-                <Popup>
-                  <strong>{v.vehicleNumber || v.id}</strong>
-                  <br />
-                  {v.status}
-                  {isRecovery ? ' · RECOVERY VEHICLE' : ''}
-                  {isAffected && !isRecovery ? ' · AFFECTED VEHICLE' : ''}
-                </Popup>
-              </CircleMarker>
-            );
-          })}
-
-          {shipmentOrigin && !hasIncident ? (
+          {/* Expected hub marker */}
+          {showRecoveryOverlays &&
+          recovery.expectedPos &&
+          recovery.expectedNode !== recovery.actualNode ? (
             <CircleMarker
-              center={shipmentOrigin}
+              center={recovery.expectedPos}
+              radius={9}
+              pathOptions={{
+                color: COLORS.originStroke,
+                fillColor: COLORS.expectedNode,
+                fillOpacity: 0.95,
+                weight: 2,
+                dashArray: '3 3',
+              }}
+            >
+              <Popup>
+                Expected location
+                <br />
+                {nodeLabel(nodeById, recovery.expectedNode)}
+              </Popup>
+            </CircleMarker>
+          ) : null}
+
+          {/* Actual / recovery pickup — most prominent */}
+          {showRecoveryOverlays && recovery.pickupPos ? (
+            <CircleMarker
+              center={recovery.pickupPos}
+              radius={14}
+              pathOptions={{
+                color: COLORS.actualStroke,
+                fillColor: COLORS.actual,
+                fillOpacity: 1,
+                weight: 3,
+              }}
+            >
+              <Popup>
+                <strong>RECOVERY PICKUP</strong>
+                <br />
+                Actual: {nodeLabel(nodeById, recovery.pickupNode)}
+                {recovery.expectedNode ? (
+                  <>
+                    <br />
+                    Expected: {nodeLabel(nodeById, recovery.expectedNode)}
+                  </>
+                ) : null}
+                <br />
+                <span className="muted">Hub record — not live GPS</span>
+              </Popup>
+            </CircleMarker>
+          ) : null}
+
+          {/* Destination */}
+          {(showRecoveryOverlays
+            ? recovery.destinationPos
+            : nodeLatLng(nodeById.get(selectedShipment?.destinationNode))) ? (
+            <CircleMarker
+              center={
+                showRecoveryOverlays
+                  ? recovery.destinationPos
+                  : nodeLatLng(nodeById.get(selectedShipment?.destinationNode))
+              }
+              radius={10}
+              pathOptions={{
+                color: COLORS.destinationStroke,
+                fillColor: COLORS.destination,
+                fillOpacity: 1,
+                weight: 2,
+              }}
+            >
+              <Popup>
+                Destination
+                <br />
+                {nodeLabel(
+                  nodeById,
+                  showRecoveryOverlays
+                    ? recovery.destinationNode
+                    : selectedShipment?.destinationNode,
+                )}
+              </Popup>
+            </CircleMarker>
+          ) : null}
+
+          {/* Origin (non-recovery or when distinct) */}
+          {!showRecoveryOverlays &&
+          nodeLatLng(nodeById.get(selectedShipment?.originNode)) ? (
+            <CircleMarker
+              center={nodeLatLng(nodeById.get(selectedShipment?.originNode))}
               radius={8}
               pathOptions={{
-                color: '#334155',
-                fillColor: '#94a3b8',
+                color: COLORS.originStroke,
+                fillColor: COLORS.origin,
                 fillOpacity: 1,
                 weight: 2,
               }}
@@ -301,94 +509,148 @@ export default function LogisticsMap({
             </CircleMarker>
           ) : null}
 
-          {shipmentCurrent ? (
+          {!showRecoveryOverlays &&
+          nodeLatLng(nodeById.get(selectedShipment?.currentNode)) ? (
             <CircleMarker
-              center={shipmentCurrent}
-              radius={hasIncident ? 12 : 10}
+              center={nodeLatLng(nodeById.get(selectedShipment?.currentNode))}
+              radius={10}
               pathOptions={{
-                color: '#9f1239',
-                fillColor: '#e11d48',
+                color: COLORS.actualStroke,
+                fillColor: COLORS.actual,
                 fillOpacity: 1,
-                weight: hasIncident ? 3 : 2,
+                weight: 2,
               }}
             >
               <Popup>
-                {hasIncident ? 'Incident hub / shipment current' : 'Shipment current'}
+                Shipment current
                 <br />
                 {selectedShipment?.trackingNumber || selectedShipment?.id}
               </Popup>
             </CircleMarker>
           ) : null}
 
-          {shipmentDest ? (
-            <CircleMarker
-              center={shipmentDest}
-              radius={10}
-              pathOptions={{
-                color: '#166534',
-                fillColor: '#22c55e',
-                fillOpacity: 1,
-                weight: 2,
-              }}
-            >
-              <Popup>
-                Destination
-                <br />
-                {selectedShipment?.destination || selectedShipment?.destinationNode}
-              </Popup>
-            </CircleMarker>
-          ) : null}
-
-          {recoveryLatLngs.length >= 2 ? (
-            <Polyline
-              positions={recoveryLatLngs}
-              pathOptions={{ color: '#ea580c', weight: 5, opacity: 0.95 }}
-            />
-          ) : null}
-
-          {recoveryPath.map((nodeId) => {
-            const pos = nodeLatLng(nodeById.get(nodeId));
+          {/* Fleet vehicles */}
+          {vehicles.map((v) => {
+            const pos = nodeLatLng(nodeById.get(v.currentNode));
             if (!pos) return null;
+            const isRecovery =
+              showRecoveryOverlays &&
+              recovery.vehicleId &&
+              v.id === recovery.vehicleId;
+            const isAffected =
+              affectedVehicleId && v.id === affectedVehicleId && !isRecovery;
+            const isSelected = selectedVehicle?.id === v.id && !isRecovery;
+            // Hide default marker when dedicated recovery marker renders
+            if (isRecovery) return null;
             return (
               <CircleMarker
-                key={`rp-${nodeId}`}
+                key={`v-${v.id}`}
                 center={pos}
-                radius={6}
+                radius={isAffected || isSelected ? 9 : 6}
                 pathOptions={{
-                  color: '#c2410c',
-                  fillColor: '#fb923c',
-                  fillOpacity: 0.95,
+                  color: isAffected
+                    ? COLORS.affectedStroke
+                    : COLORS.vehicleStroke,
+                  fillColor: isAffected
+                    ? COLORS.affectedVehicle
+                    : COLORS.vehicle,
+                  fillOpacity: showRecoveryOverlays ? 0.45 : 0.95,
                   weight: 2,
                 }}
               >
-                <Popup>Recovery node: {nodeId}</Popup>
+                <Popup>
+                  <strong>{v.vehicleNumber || v.id}</strong>
+                  <br />
+                  {v.status}
+                  {isAffected ? ' · AFFECTED VEHICLE' : ''}
+                </Popup>
               </CircleMarker>
             );
           })}
 
-          {recoveryVehicle && !vehicles.some((v) => v.id === recoveryVehicle.id) ? (
-            (() => {
-              const pos = nodeLatLng(nodeById.get(recoveryVehicle.currentNode));
-              if (!pos) return null;
-              return (
-                <CircleMarker
-                  center={pos}
-                  radius={9}
-                  pathOptions={{
-                    color: '#b45309',
-                    fillColor: '#f59e0b',
-                    fillOpacity: 0.95,
-                    weight: 2,
-                  }}
-                >
-                  <Popup>Recovery vehicle</Popup>
-                </CircleMarker>
-              );
-            })()
+          {/* Selected recovery vehicle — dedicated marker + popup */}
+          {showRecoveryOverlays && recovery.vehiclePos ? (
+            <CircleMarker
+              center={recovery.vehiclePos}
+              radius={11}
+              pathOptions={{
+                color: COLORS.recoveryVehicleStroke,
+                fillColor: COLORS.recoveryVehicle,
+                fillOpacity: 1,
+                weight: 3,
+              }}
+            >
+              <Popup>
+                <strong>
+                  Vehicle{' '}
+                  {recovery.vehicleNumber || recovery.vehicleId || '—'}
+                </strong>
+                <br />
+                Driver: {recovery.driverHandle || '—'}
+                <br />
+                Type:{' '}
+                {recovery.pickupCase
+                  ? recovery.pickupCaseLabel
+                  : '—'}
+                <br />
+                Current node:{' '}
+                {nodeLabel(nodeById, recovery.vehicleCurrentNode)}
+                {recovery.pickupCase === 'at_node' ? (
+                  <>
+                    <br />
+                    Already at pickup
+                  </>
+                ) : null}
+                {recovery.pickupCase === 'pass_through' ? (
+                  <>
+                    <br />
+                    Existing route intersects pickup
+                  </>
+                ) : null}
+                {recovery.pickupCase === 'detour' ? (
+                  <>
+                    <br />
+                    Detour to pickup then destination
+                  </>
+                ) : null}
+              </Popup>
+            </CircleMarker>
           ) : null}
+
+          {/* Preview vehicle (inspect) */}
+          {showRecoveryOverlays &&
+          recovery.preview?.vehicle?.currentNode &&
+          recovery.preview.vehicleId !== recovery.vehicleId
+            ? (() => {
+                const pos = nodeLatLng(
+                  nodeById.get(recovery.preview.vehicle.currentNode),
+                );
+                if (!pos) return null;
+                return (
+                  <CircleMarker
+                    key={`preview-v-${recovery.preview.vehicleId}`}
+                    center={pos}
+                    radius={8}
+                    pathOptions={{
+                      color: '#78716c',
+                      fillColor: COLORS.preview,
+                      fillOpacity: 0.85,
+                      weight: 2,
+                    }}
+                  >
+                    <Popup>
+                      Preview:{' '}
+                      {recovery.preview.vehicleNumber ||
+                        recovery.preview.vehicleId}
+                      <br />
+                      {candidateTypeLabel(recovery.preview.pickupCase)}
+                    </Popup>
+                  </CircleMarker>
+                );
+              })()
+            : null}
         </MapContainer>
       </div>
     </section>
   );
 }
-
