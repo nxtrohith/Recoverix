@@ -39,7 +39,7 @@ export const RecoveryBanner: React.FC<RecoveryBannerProps> = ({
             {/* Header with pulsing alert */}
             <View style={styles.alertHeader}>
               <View style={styles.alertIconPulse}>
-                <AlertTriangle size={24} color="#f59e0b" />
+                <AlertTriangle size={22} color="#B45309" />
               </View>
               <View style={styles.alertHeaderTitle}>
                 <Text style={styles.alertCategory}>DISPATCH OVERRIDE</Text>
@@ -114,9 +114,9 @@ export const RecoveryBanner: React.FC<RecoveryBannerProps> = ({
                 onPress={() => onAccept(assignment)}
                 activeOpacity={0.85}
               >
-                <ShieldCheck size={18} color="#ffffff" />
+                <ShieldCheck size={18} color="#FFFFFF" />
                 <Text style={styles.acceptBtnText}>ACCEPT RECOVERY</Text>
-                <ArrowRight size={18} color="#ffffff" />
+                <ArrowRight size={18} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
           </View>
@@ -128,7 +128,7 @@ export const RecoveryBanner: React.FC<RecoveryBannerProps> = ({
         <View style={styles.modalOverlay}>
           <View style={[styles.alertCard, styles.arrivalCard]}>
             <View style={styles.arrivalIconCenter}>
-              <CheckCircle2 size={42} color="#f59e0b" />
+              <CheckCircle2 size={32} color="#15803D" />
             </View>
 
             <Text style={styles.arrivalTitle}>ARRIVED AT RECOVERY HUB</Text>
@@ -138,16 +138,12 @@ export const RecoveryBanner: React.FC<RecoveryBannerProps> = ({
 
             <View style={styles.pickupDetailBox}>
               <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Shipment</Text>
-                <Text style={styles.infoValHighlight}>{assignment.shipmentId}</Text>
+                <Text style={styles.infoLabel}>Cargo Units</Text>
+                <Text style={styles.infoVal}>{assignment.units} units</Text>
               </View>
               <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Required Cargo</Text>
-                <Text style={styles.infoValHighlight}>{assignment.units} Units</Text>
-              </View>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Next Delivery</Text>
-                <Text style={styles.infoVal}>{destinationWarehouse?.name || 'Warangal Depot'}</Text>
+                <Text style={styles.infoLabel}>Handling Code</Text>
+                <Text style={styles.infoValHighlight}>VAL-04 (Fragile / Sealed)</Text>
               </View>
             </View>
 
@@ -156,30 +152,31 @@ export const RecoveryBanner: React.FC<RecoveryBannerProps> = ({
               onPress={onConfirmPickup}
               activeOpacity={0.85}
             >
-              <Package size={20} color="#ffffff" />
-              <Text style={styles.confirmPickupText}>CONFIRM PICKUP & LOAD</Text>
-              <ArrowRight size={20} color="#ffffff" />
+              <Package size={17} color="#FFFFFF" />
+              <Text style={styles.confirmPickupText}>CONFIRM CARGO PICKUP</Text>
+              <ArrowRight size={17} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
 
-      {/* 3. FINAL DELIVERY COMPLETE CELEBRATION MODAL */}
+      {/* 3. RECOVERY DELIVERY COMPLETED MODAL */}
       <Modal visible={deliveryCompleteVisible} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={[styles.alertCard, styles.completeCard]}>
             <View style={styles.completeIconCenter}>
-              <ShieldCheck size={48} color="#10b981" />
+              <CheckCircle2 size={32} color="#15803D" />
             </View>
 
-            <Text style={styles.completeTitle}>MISSION COMPLETED</Text>
+            <Text style={styles.completeTitle}>RECOVERY DELIVERY COMPLETE</Text>
             <Text style={styles.completeSubtitle}>
-              Recovery Consignment Successfully Delivered!
+              Delivered safely to {destinationWarehouse?.name || 'Warangal Regional Depot'}
             </Text>
 
             <View style={styles.completeDetailBox}>
               <Text style={styles.completeDetailText}>
-                Shipment <Text style={{ fontWeight: '800', color: '#10b981' }}>{assignment.shipmentId}</Text> ({assignment.units} units) has been inspected and checked into {destinationWarehouse?.name}.
+                All {assignment.units} units successfully handed over to destination terminal staff.
+                Fleet dispatch has logged mission completion.
               </Text>
             </View>
 
@@ -188,7 +185,7 @@ export const RecoveryBanner: React.FC<RecoveryBannerProps> = ({
               onPress={onFinishDelivery}
               activeOpacity={0.85}
             >
-              <Text style={styles.finishDeliveryText}>RETURN TO STANDBY</Text>
+              <Text style={styles.finishDeliveryText}>RETURN TO COCKPIT</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -200,45 +197,43 @@ export const RecoveryBanner: React.FC<RecoveryBannerProps> = ({
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(2, 6, 23, 0.82)',
+    backgroundColor: 'rgba(17, 24, 39, 0.4)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
   },
   alertCard: {
     width: '100%',
-    maxWidth: 420,
-    backgroundColor: '#0f172a',
+    maxWidth: 400,
+    backgroundColor: '#FFFFFF',
     borderRadius: 20,
-    borderWidth: 2,
-    borderColor: '#f59e0b',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
     padding: 20,
-    shadowColor: '#f59e0b',
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
-    elevation: 16,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
+    elevation: 8,
   },
   arrivalCard: {
-    borderColor: '#f59e0b',
     alignItems: 'center',
   },
   completeCard: {
-    borderColor: '#10b981',
-    shadowColor: '#10b981',
     alignItems: 'center',
   },
   alertHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 14,
   },
   alertIconPulse: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: 'rgba(245, 158, 11, 0.18)',
-    borderWidth: 1.5,
-    borderColor: '#f59e0b',
+    width: 40,
+    height: 40,
+    borderRadius: 9999,
+    backgroundColor: '#FFFBEB',
+    borderWidth: 1,
+    borderColor: '#FEF3C7',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -247,34 +242,39 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   alertCategory: {
-    fontSize: 9.5,
+    fontSize: 10,
     fontWeight: '800',
-    color: '#f59e0b',
-    letterSpacing: 0.8,
+    color: '#B45309',
+    letterSpacing: 0.6,
   },
   alertTitle: {
-    fontSize: 17,
-    fontWeight: '900',
-    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#111827',
+    letterSpacing: -0.2,
   },
   priorityBadge: {
-    backgroundColor: '#dc2626',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FEE2E2',
+    borderWidth: 1,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderRadius: 9999,
   },
   priorityText: {
-    color: '#ffffff',
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 0.5,
+    color: '#B91C1C',
+    fontSize: 9.5,
+    fontWeight: '800',
+    letterSpacing: 0.3,
   },
   infoBox: {
-    backgroundColor: '#1e293b',
-    borderRadius: 12,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
     padding: 12,
-    marginBottom: 14,
-    gap: 8,
+    marginBottom: 12,
+    gap: 6,
   },
   infoRow: {
     flexDirection: 'row',
@@ -282,57 +282,60 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
   },
   infoLabel: {
-    fontSize: 11,
-    color: '#94a3b8',
+    fontSize: 11.5,
+    color: '#6B7280',
     fontWeight: '600',
   },
   infoVal: {
     fontSize: 12,
-    color: '#e2e8f0',
-    fontWeight: '700',
+    color: '#111827',
+    fontWeight: '600',
   },
   infoValHighlight: {
-    fontSize: 13,
-    color: '#38bdf8',
+    fontSize: 12,
+    color: '#111827',
     fontWeight: '800',
   },
   infoValReason: {
-    fontSize: 11,
-    color: '#fbbf24',
+    fontSize: 11.5,
+    color: '#B45309',
+    fontWeight: '600',
     maxWidth: '65%',
     textAlign: 'right',
   },
   routeWorkflowBox: {
-    backgroundColor: '#1e293b',
-    borderRadius: 12,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
     padding: 14,
-    marginBottom: 18,
+    marginBottom: 16,
   },
   routeStep: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   stepDot: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    marginRight: 12,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 10,
   },
   dotAmber: {
-    backgroundColor: '#f59e0b',
+    backgroundColor: '#B45309',
     borderWidth: 2,
-    borderColor: '#fef3c7',
+    borderColor: '#FFFFFF',
   },
   dotGreen: {
-    backgroundColor: '#10b981',
+    backgroundColor: '#15803D',
     borderWidth: 2,
-    borderColor: '#d1fae5',
+    borderColor: '#FFFFFF',
   },
   stepConnector: {
     width: 2,
     height: 20,
-    backgroundColor: '#475569',
-    marginLeft: 6,
+    backgroundColor: '#E5E7EB',
+    marginLeft: 5,
     marginVertical: 2,
   },
   stepContent: {
@@ -341,154 +344,156 @@ const styles = StyleSheet.create({
   stepLabel: {
     fontSize: 9,
     fontWeight: '800',
-    color: '#94a3b8',
+    color: '#6B7280',
     letterSpacing: 0.5,
   },
   stepName: {
-    fontSize: 13.5,
+    fontSize: 13,
     fontWeight: '800',
-    color: '#f8fafc',
+    color: '#111827',
   },
   stepCity: {
     fontSize: 11,
-    color: '#64748b',
+    color: '#6B7280',
+    marginTop: 1,
   },
   btnRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 10,
   },
   dismissBtn: {
     flex: 1,
-    backgroundColor: '#1e293b',
-    paddingVertical: 14,
-    borderRadius: 12,
+    backgroundColor: '#F3F4F6',
+    paddingVertical: 13,
+    borderRadius: 9999,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#E5E7EB',
   },
   dismissBtnText: {
-    color: '#94a3b8',
-    fontSize: 12,
+    color: '#111827',
+    fontSize: 11.5,
     fontWeight: '800',
+    letterSpacing: 0.3,
   },
   acceptBtn: {
     flex: 2,
     flexDirection: 'row',
-    backgroundColor: '#d97706',
-    paddingVertical: 14,
-    borderRadius: 12,
+    backgroundColor: '#111827',
+    paddingVertical: 13,
+    borderRadius: 9999,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    shadowColor: '#d97706',
-    shadowOpacity: 0.5,
-    shadowRadius: 6,
-    elevation: 6,
+    gap: 6,
   },
   acceptBtnText: {
-    color: '#ffffff',
-    fontSize: 13,
-    fontWeight: '900',
-    letterSpacing: 0.6,
+    color: '#FFFFFF',
+    fontSize: 12.5,
+    fontWeight: '800',
+    letterSpacing: 0.3,
   },
   arrivalIconCenter: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    backgroundColor: 'rgba(245, 158, 11, 0.15)',
-    borderWidth: 2,
-    borderColor: '#f59e0b',
+    width: 56,
+    height: 56,
+    borderRadius: 9999,
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1,
+    borderColor: '#DCFCE7',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 14,
   },
   arrivalTitle: {
-    fontSize: 18,
-    fontWeight: '900',
-    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#111827',
     textAlign: 'center',
   },
   arrivalSubtitle: {
-    fontSize: 13,
-    color: '#f59e0b',
+    fontSize: 12.5,
+    color: '#15803D',
     fontWeight: '700',
     marginBottom: 16,
     textAlign: 'center',
   },
   pickupDetailBox: {
     width: '100%',
-    backgroundColor: '#1e293b',
-    borderRadius: 12,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
     padding: 14,
-    marginBottom: 18,
-    gap: 10,
+    marginBottom: 16,
+    gap: 8,
   },
   confirmPickupBtn: {
     width: '100%',
     flexDirection: 'row',
-    backgroundColor: '#10b981',
-    paddingVertical: 15,
-    borderRadius: 12,
+    backgroundColor: '#111827',
+    paddingVertical: 13,
+    borderRadius: 9999,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
+    gap: 8,
   },
   confirmPickupText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '900',
-    letterSpacing: 0.6,
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.3,
   },
   completeIconCenter: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: 'rgba(16, 185, 129, 0.18)',
-    borderWidth: 2,
-    borderColor: '#10b981',
+    width: 56,
+    height: 56,
+    borderRadius: 9999,
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1,
+    borderColor: '#DCFCE7',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 14,
   },
   completeTitle: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: '#ffffff',
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#111827',
     textAlign: 'center',
   },
   completeSubtitle: {
-    fontSize: 13,
-    color: '#10b981',
+    fontSize: 12.5,
+    color: '#15803D',
     fontWeight: '700',
     marginBottom: 14,
     textAlign: 'center',
   },
   completeDetailBox: {
     width: '100%',
-    backgroundColor: '#1e293b',
-    borderRadius: 12,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
     padding: 14,
-    marginBottom: 18,
+    marginBottom: 16,
   },
   completeDetailText: {
-    fontSize: 13,
-    color: '#cbd5e1',
-    lineHeight: 19,
+    fontSize: 12.5,
+    color: '#4B5563',
+    lineHeight: 18,
     textAlign: 'center',
   },
   finishDeliveryBtn: {
     width: '100%',
-    backgroundColor: '#0284c7',
-    paddingVertical: 15,
-    borderRadius: 12,
+    backgroundColor: '#111827',
+    paddingVertical: 13,
+    borderRadius: 9999,
     alignItems: 'center',
     justifyContent: 'center',
   },
   finishDeliveryText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '900',
-    letterSpacing: 0.6,
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.3,
   },
 });

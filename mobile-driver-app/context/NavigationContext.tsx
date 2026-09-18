@@ -137,18 +137,33 @@ export const NavigationProvider: React.FC<{ children: ReactNode }> = ({ children
 
   const targetWarehouse =
     mode === 'RECOVERY_LEG_1' ? recoveryWarehouse : destinationWarehouse;
+  const targetWarehouseRef = useRef<Warehouse | null>(targetWarehouse);
+  targetWarehouseRef.current = targetWarehouse;
+
+  const modeRef = useRef<NavigationMode>(mode);
+  modeRef.current = mode;
+
+  const isVoiceMutedRef = useRef<boolean>(isVoiceMuted);
+  isVoiceMutedRef.current = isVoiceMuted;
+
+  const currentStepIndexRef = useRef<number>(currentStepIndex);
+  currentStepIndexRef.current = currentStepIndex;
+
+  const driverLocationRef = useRef<LocationCoordinate>(driverLocation);
+  driverLocationRef.current = driverLocation;
 
   // 1. Recalculate route helper (used on manual request or auto off-route deviation)
   const recalculateRoute = useCallback(async () => {
-    if (!targetWarehouse || isReroutingRef.current) return;
+    const target = targetWarehouseRef.current;
+    if (!target || isReroutingRef.current) return;
 
     isReroutingRef.current = true;
     setIsRerouting(true);
 
     try {
       const newRoute = await navigationService.getRouteToWarehouseAsync(
-        driverLocation,
-        targetWarehouse,
+        driverLocationRef.current,
+        target,
         'Current Position'
       );
 
@@ -159,35 +174,43 @@ export const NavigationProvider: React.FC<{ children: ReactNode }> = ({ children
         newRoute.id.startsWith('GOOGLE') ? 'CONNECTED' : 'FALLBACK_MODE'
       );
 
-      voiceGuidanceService.announceRerouteCompleted(targetWarehouse.name);
+      voiceGuidanceService.announceRerouteCompleted(target.name);
     } catch {
       // Fallback cleanly
     } finally {
       setIsRerouting(false);
       isReroutingRef.current = false;
     }
-  }, [targetWarehouse, driverLocation]);
+  }, []);
 
-  // 2. Listen to location changes from locationService
+  const recalculateRouteRef = useRef(recalculateRoute);
+  recalculateRouteRef.current = recalculateRoute;
+
+  // 2. Listen to location changes from locationService (subscribes ONCE)
   useEffect(() => {
     const unsubscribe = locationService.watchLocation((loc) => {
       setDriverLocation(loc);
 
       const gpsStatus = locationService.getGpsStatus();
       const currentRoute = activeRouteRef.current;
-      const isNavigating =
-        mode === 'NAVIGATING' ||
-        mode === 'RECOVERY_LEG_1' ||
-        mode === 'RECOVERY_LEG_2';
+      const currentMode = modeRef.current;
+      const currentTarget = targetWarehouseRef.current;
+      const currentMuted = isVoiceMutedRef.current;
+      const stepIdx = currentStepIndexRef.current;
 
-      if (isNavigating && currentRoute && targetWarehouse) {
+      const isNavigating =
+        currentMode === 'NAVIGATING' ||
+        currentMode === 'RECOVERY_LEG_1' ||
+        currentMode === 'RECOVERY_LEG_2';
+
+      if (isNavigating && currentRoute && currentTarget) {
         // Run Turn-by-Turn Guidance Engine
         const updated = guidanceEngine.evaluateGuidance(
           loc,
           currentRoute,
-          currentStepIndex,
-          targetWarehouse,
-          isVoiceMuted,
+          stepIdx,
+          currentTarget,
+          currentMuted,
           gpsStatus
         );
 
@@ -208,24 +231,24 @@ export const NavigationProvider: React.FC<{ children: ReactNode }> = ({ children
         // Automatic Off-Route Detection & Auto Reroute
         if (updated.isOffRoute && !isReroutingRef.current) {
           voiceGuidanceService.announceRerouting();
-          recalculateRoute();
+          recalculateRouteRef.current();
         }
 
         // Geofenced Arrival Check
-        if (guidanceEngine.checkArrival(loc, targetWarehouse, 150)) {
-          voiceGuidanceService.announceArrival(targetWarehouse.name);
+        if (guidanceEngine.checkArrival(loc, currentTarget, 150)) {
+          voiceGuidanceService.announceArrival(currentTarget.name);
 
-          if (mode === 'RECOVERY_LEG_1') {
+          if (currentMode === 'RECOVERY_LEG_1') {
             setArrivalModalVisible(true);
             setMode('AT_RECOVERY');
             locationService.pauseSimulation();
             setIsSimPaused(true);
-          } else if (mode === 'RECOVERY_LEG_2') {
+          } else if (currentMode === 'RECOVERY_LEG_2') {
             setDeliveryCompleteVisible(true);
             setMode('DELIVERED');
             locationService.pauseSimulation();
             setIsSimPaused(true);
-          } else if (mode === 'NAVIGATING') {
+          } else if (currentMode === 'NAVIGATING') {
             setArrivalModalVisible(true);
             locationService.pauseSimulation();
             setIsSimPaused(true);
@@ -243,7 +266,7 @@ export const NavigationProvider: React.FC<{ children: ReactNode }> = ({ children
     });
 
     return unsubscribe;
-  }, [mode, targetWarehouse, currentStepIndex, isVoiceMuted, recalculateRoute]);
+  }, []);
 
   // 3. Subscribe to recovery assignments
   useEffect(() => {

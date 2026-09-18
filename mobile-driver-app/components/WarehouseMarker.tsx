@@ -18,22 +18,21 @@ export const WarehouseMarker: React.FC<WarehouseMarkerProps> = ({
   isSelected = false,
   onPress,
 }) => {
-  let bgColor = '#1e293b';
-  let borderColor = '#64748b';
-  let textColor = '#cbd5e1';
+  let bgColor = '#FFFFFF';
+  let borderColor = '#E5E7EB';
+  let textColor = '#111827';
+  let iconColor = '#4B5563';
 
   if (isRecovery) {
-    bgColor = '#78350f';
-    borderColor = '#f59e0b';
-    textColor = '#fef3c7';
-  } else if (isDestination) {
-    bgColor = '#064e3b';
-    borderColor = '#10b981';
-    textColor = '#d1fae5';
-  } else if (isSelected) {
-    bgColor = '#0c4a6e';
-    borderColor = '#38bdf8';
-    textColor = '#e0f2fe';
+    bgColor = '#FFFBEB';
+    borderColor = '#FDE68A';
+    textColor = '#B45309';
+    iconColor = '#B45309';
+  } else if (isDestination || isSelected) {
+    bgColor = '#111827';
+    borderColor = '#111827';
+    textColor = '#FFFFFF';
+    iconColor = '#FFFFFF';
   }
 
   return (
@@ -42,14 +41,14 @@ export const WarehouseMarker: React.FC<WarehouseMarkerProps> = ({
       onPress={() => onPress?.(warehouse)}
       style={styles.wrapper}
     >
-      {/* Label bubble */}
+      {/* Label pill */}
       <View style={[styles.pill, { backgroundColor: bgColor, borderColor }]}>
         {isRecovery ? (
-          <AlertTriangle size={11} color="#f59e0b" style={styles.icon} />
+          <AlertTriangle size={11} color={iconColor} style={styles.icon} />
         ) : isDestination ? (
-          <Flag size={11} color="#10b981" style={styles.icon} />
+          <Flag size={11} color={iconColor} style={styles.icon} />
         ) : (
-          <Building2 size={11} color="#94a3b8" style={styles.icon} />
+          <Building2 size={11} color={iconColor} style={styles.icon} />
         )}
         <Text style={[styles.title, { color: textColor }]}>
           {warehouse.city || warehouse.name}
@@ -57,7 +56,7 @@ export const WarehouseMarker: React.FC<WarehouseMarkerProps> = ({
       </View>
 
       {/* Pin stem and dot */}
-      <View style={[styles.pinDot, { backgroundColor: borderColor }]} />
+      <View style={[styles.pinDot, { backgroundColor: borderColor === '#E5E7EB' ? '#9CA3AF' : borderColor }]} />
     </TouchableOpacity>
   );
 };
@@ -70,15 +69,15 @@ const styles = StyleSheet.create({
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-    borderWidth: 1.5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.6,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 9999,
+    borderWidth: 1,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
     shadowRadius: 3,
-    elevation: 4,
+    elevation: 2,
   },
   icon: {
     marginRight: 4,
@@ -86,12 +85,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 10.5,
     fontWeight: '700',
-    letterSpacing: 0.2,
+    letterSpacing: -0.1,
   },
   pinDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
     marginTop: 2,
   },
 });

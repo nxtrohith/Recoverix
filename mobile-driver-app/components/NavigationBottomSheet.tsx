@@ -54,7 +54,7 @@ export const NavigationBottomSheet: React.FC<NavigationBottomSheetProps> = ({
       {/* Recovery Phase Header Badge */}
       {(isRecovery1 || isRecovery2) && (
         <View style={[styles.recoveryBanner, isRecovery1 ? styles.leg1Banner : styles.leg2Banner]}>
-          <Text style={styles.recoveryBannerText}>
+          <Text style={[styles.recoveryBannerText, isRecovery1 ? styles.leg1Text : styles.leg2Text]}>
             {isRecovery1
               ? '🚨 RECOVERY ROUTE · LEG 1 OF 2 (PICKUP)'
               : '✓ CARGO SECURED · LEG 2 OF 2 (FINAL DELIVERY)'}
@@ -66,8 +66,8 @@ export const NavigationBottomSheet: React.FC<NavigationBottomSheetProps> = ({
       <View style={styles.destinationRow}>
         <View style={styles.pinIconBox}>
           <MapPin
-            size={20}
-            color={isRecovery1 ? '#f59e0b' : isRecovery2 ? '#10b981' : '#38bdf8'}
+            size={18}
+            color={isRecovery1 ? '#B45309' : '#111827'}
           />
         </View>
         <View style={styles.destTextContainer}>
@@ -116,7 +116,7 @@ export const NavigationBottomSheet: React.FC<NavigationBottomSheetProps> = ({
       {/* Rerouting Banner */}
       {isRerouting && (
         <View style={styles.reroutingBanner}>
-          <RefreshCw size={14} color="#f59e0b" />
+          <RefreshCw size={14} color="#B45309" />
           <Text style={styles.reroutingText}>Route Deviation · Recalculating Path...</Text>
         </View>
       )}
@@ -156,9 +156,11 @@ export const NavigationBottomSheet: React.FC<NavigationBottomSheetProps> = ({
               disabled={!destination}
               activeOpacity={0.85}
             >
-              <Navigation size={18} color="#ffffff" />
-              <Text style={styles.primaryBtnText}>START NAVIGATION</Text>
-              <ArrowRight size={18} color="#ffffff" />
+              <Navigation size={17} color={destination ? '#FFFFFF' : '#9CA3AF'} />
+              <Text style={[styles.primaryBtnText, !destination && styles.disabledBtnText]}>
+                START NAVIGATION
+              </Text>
+              <ArrowRight size={17} color={destination ? '#FFFFFF' : '#9CA3AF'} />
             </TouchableOpacity>
 
             {destination && onLaunchExternalGoogleMaps && (
@@ -168,7 +170,7 @@ export const NavigationBottomSheet: React.FC<NavigationBottomSheetProps> = ({
                 activeOpacity={0.8}
                 accessibilityLabel="Open in Google Maps"
               >
-                <ExternalLink size={16} color="#38bdf8" />
+                <ExternalLink size={16} color="#111827" />
                 <Text style={styles.gmapsBtnText}>GMAP</Text>
               </TouchableOpacity>
             )}
@@ -180,7 +182,7 @@ export const NavigationBottomSheet: React.FC<NavigationBottomSheetProps> = ({
               onPress={onStopNavigation}
               activeOpacity={0.85}
             >
-              <XSquare size={18} color="#ffffff" />
+              <XSquare size={17} color="#B91C1C" />
               <Text style={styles.stopBtnText}>END NAVIGATION</Text>
             </TouchableOpacity>
 
@@ -192,9 +194,9 @@ export const NavigationBottomSheet: React.FC<NavigationBottomSheetProps> = ({
                 accessibilityLabel="Toggle Voice Guidance"
               >
                 {isVoiceMuted ? (
-                  <VolumeX size={18} color="#f87171" />
+                  <VolumeX size={17} color="#B91C1C" />
                 ) : (
-                  <Volume2 size={18} color="#10b981" />
+                  <Volume2 size={17} color="#111827" />
                 )}
               </TouchableOpacity>
             )}
@@ -206,7 +208,7 @@ export const NavigationBottomSheet: React.FC<NavigationBottomSheetProps> = ({
                 activeOpacity={0.8}
                 accessibilityLabel="Open in Google Maps"
               >
-                <ExternalLink size={16} color="#38bdf8" />
+                <ExternalLink size={16} color="#111827" />
                 <Text style={styles.gmapsBtnText}>GMAP</Text>
               </TouchableOpacity>
             )}
@@ -221,42 +223,47 @@ const styles = StyleSheet.create({
   sheetContainer: {
     position: 'absolute',
     bottom: 12,
-    left: 12,
-    right: 12,
+    left: 14,
+    right: 14,
     zIndex: 100,
-    backgroundColor: '#0f172a',
-    borderRadius: 18,
-    borderWidth: 1.5,
-    borderColor: '#334155',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
     padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.6,
-    shadowRadius: 10,
-    elevation: 12,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 8,
   },
   recoveryBanner: {
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderRadius: 8,
-    marginBottom: 10,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 9999,
+    marginBottom: 12,
     alignItems: 'center',
   },
   leg1Banner: {
-    backgroundColor: 'rgba(245, 158, 11, 0.2)',
-    borderColor: '#f59e0b',
+    backgroundColor: '#FFFBEB',
+    borderColor: '#FEF3C7',
     borderWidth: 1,
   },
   leg2Banner: {
-    backgroundColor: 'rgba(16, 185, 129, 0.2)',
-    borderColor: '#10b981',
+    backgroundColor: '#F0FDF4',
+    borderColor: '#DCFCE7',
     borderWidth: 1,
   },
+  leg1Text: {
+    color: '#B45309',
+  },
+  leg2Text: {
+    color: '#15803D',
+  },
   recoveryBannerText: {
-    fontSize: 10,
+    fontSize: 10.5,
     fontWeight: '800',
-    color: '#f8fafc',
-    letterSpacing: 0.6,
+    letterSpacing: 0.3,
   },
   destinationRow: {
     flexDirection: 'row',
@@ -264,50 +271,56 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   pinIconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    backgroundColor: '#1e293b',
+    width: 36,
+    height: 36,
+    borderRadius: 9999,
+    backgroundColor: '#F3F4F6',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    marginRight: 10,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   destTextContainer: {
     flex: 1,
   },
   destSub: {
-    fontSize: 9.5,
-    fontWeight: '800',
-    color: '#94a3b8',
-    letterSpacing: 0.6,
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#6B7280',
+    letterSpacing: 0.5,
   },
   destTitle: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#f8fafc',
+    color: '#111827',
+    letterSpacing: -0.2,
   },
   destCity: {
     fontSize: 12,
-    color: '#64748b',
+    color: '#6B7280',
+    marginTop: 1,
   },
   changeBtn: {
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     paddingVertical: 6,
-    backgroundColor: '#1e293b',
-    borderRadius: 8,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 9999,
     borderWidth: 1,
-    borderColor: '#38bdf8',
+    borderColor: '#E5E7EB',
   },
   changeBtnText: {
-    fontSize: 10,
+    fontSize: 10.5,
     fontWeight: '800',
-    color: '#38bdf8',
-    letterSpacing: 0.5,
+    color: '#111827',
+    letterSpacing: 0.3,
   },
   metricsRow: {
     flexDirection: 'row',
-    backgroundColor: '#1e293b',
-    borderRadius: 12,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
     paddingVertical: 10,
     paddingHorizontal: 12,
     alignItems: 'center',
@@ -321,115 +334,120 @@ const styles = StyleSheet.create({
   metricDivider: {
     width: 1,
     height: 22,
-    backgroundColor: '#334155',
+    backgroundColor: '#E5E7EB',
   },
   metricLabel: {
-    fontSize: 9,
+    fontSize: 9.5,
     fontWeight: '700',
-    color: '#94a3b8',
+    color: '#6B7280',
     letterSpacing: 0.5,
     marginBottom: 2,
   },
   metricValue: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#f8fafc',
+    color: '#111827',
+    letterSpacing: -0.2,
   },
   reroutingBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: 'rgba(245, 158, 11, 0.18)',
+    backgroundColor: '#FFFBEB',
     borderWidth: 1,
-    borderColor: '#f59e0b',
-    borderRadius: 8,
+    borderColor: '#FEF3C7',
+    borderRadius: 9999,
     paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginBottom: 10,
+    paddingVertical: 7,
+    marginBottom: 12,
   },
   reroutingText: {
-    color: '#fbbf24',
-    fontSize: 11.5,
-    fontWeight: '800',
-    letterSpacing: 0.3,
+    color: '#B45309',
+    fontSize: 11,
+    fontWeight: '700',
   },
   maneuverBox: {
-    backgroundColor: '#0c4a6e',
+    backgroundColor: '#F9FAFB',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
     paddingHorizontal: 12,
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: 14,
     marginBottom: 12,
     gap: 4,
   },
   maneuverTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
   },
   distBadge: {
-    backgroundColor: 'rgba(56, 189, 248, 0.25)',
+    backgroundColor: '#111827',
     paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#38bdf8',
+    paddingVertical: 4,
+    borderRadius: 9999,
   },
   distBadgeText: {
-    color: '#38bdf8',
-    fontSize: 12,
-    fontWeight: '900',
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '800',
   },
   maneuverText: {
     flex: 1,
-    color: '#e0f2fe',
-    fontSize: 12.5,
+    color: '#111827',
+    fontSize: 13,
     fontWeight: '700',
   },
   nextManeuverSubText: {
-    color: '#94a3b8',
+    color: '#6B7280',
     fontSize: 11,
+    fontWeight: '500',
     paddingLeft: 2,
-    fontStyle: 'italic',
   },
   actionRow: {
     marginTop: 2,
   },
   primaryBtn: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#0284c7',
-    paddingVertical: 14,
-    borderRadius: 12,
-    gap: 10,
-    shadowColor: '#0284c7',
-    shadowOpacity: 0.4,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  disabledBtn: {
-    backgroundColor: '#334155',
-  },
-  primaryBtnText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '800',
-    letterSpacing: 0.8,
-  },
-  stopBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#dc2626',
-    paddingVertical: 14,
-    borderRadius: 12,
+    backgroundColor: '#111827',
+    paddingVertical: 13,
+    borderRadius: 9999,
     gap: 8,
   },
-  stopBtnText: {
-    color: '#ffffff',
-    fontSize: 14,
+  disabledBtn: {
+    backgroundColor: '#F3F4F6',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  primaryBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
     fontWeight: '800',
-    letterSpacing: 0.8,
+    letterSpacing: 0.3,
+  },
+  disabledBtnText: {
+    color: '#9CA3AF',
+  },
+  stopBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FEF2F2',
+    paddingVertical: 13,
+    borderRadius: 9999,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#FEE2E2',
+  },
+  stopBtnText: {
+    color: '#B91C1C',
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.3,
   },
   buttonFlexRow: {
     flexDirection: 'row',
@@ -440,31 +458,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#1e293b',
-    borderWidth: 1.5,
-    borderColor: '#38bdf8',
-    paddingVertical: 14,
-    paddingHorizontal: 12,
-    borderRadius: 12,
+    backgroundColor: '#F3F4F6',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    paddingVertical: 13,
+    paddingHorizontal: 14,
+    borderRadius: 9999,
     gap: 6,
   },
   gmapsBtnText: {
-    color: '#38bdf8',
-    fontSize: 12,
+    color: '#111827',
+    fontSize: 11.5,
     fontWeight: '800',
-    letterSpacing: 0.5,
+    letterSpacing: 0.2,
   },
   voiceBtn: {
-    padding: 14,
-    backgroundColor: 'rgba(16, 185, 129, 0.15)',
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: '#10b981',
+    width: 46,
+    height: 46,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 9999,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
     alignItems: 'center',
     justifyContent: 'center',
   },
   voiceMutedBtn: {
-    backgroundColor: 'rgba(239, 68, 68, 0.15)',
-    borderColor: '#f87171',
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FEE2E2',
   },
 });

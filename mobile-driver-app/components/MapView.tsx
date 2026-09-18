@@ -119,7 +119,7 @@ const WebTacticalMap: React.FC<MapViewProps> = ({
                 recoveryAssignment.status !== 'DELIVERED' &&
                 recoveryAssignment.status !== 'PENDING';
 
-              const strokeColor = isRecoveryLeg ? '#f59e0b' : '#38bdf8';
+              const strokeColor = isRecoveryLeg ? '#B45309' : '#1E293B';
 
               return (
                 <View
@@ -129,14 +129,14 @@ const WebTacticalMap: React.FC<MapViewProps> = ({
                     left: `${p1.x}%`,
                     top: `${p1.y}%`,
                     width: `${length}%`,
-                    height: 3.5,
+                    height: 4,
                     backgroundColor: strokeColor,
                     transformOrigin: '0% 50%',
                     transform: [{ rotate: `${angle}deg` }],
                     borderRadius: 2,
                     shadowColor: strokeColor,
-                    shadowOpacity: 0.8,
-                    shadowRadius: 4,
+                    shadowOpacity: 0.15,
+                    shadowRadius: 2,
                   }}
                 />
               );
@@ -154,23 +154,24 @@ const WebTacticalMap: React.FC<MapViewProps> = ({
                   position: 'absolute',
                   left: `${mCoord.x}%`,
                   top: `${mCoord.y}%`,
-                  marginLeft: -16,
-                  marginTop: -16,
-                  width: 32,
-                  height: 32,
-                  borderRadius: 16,
-                  backgroundColor: '#0284c7',
+                  marginLeft: -15,
+                  marginTop: -15,
+                  width: 30,
+                  height: 30,
+                  borderRadius: 9999,
+                  backgroundColor: '#111827',
                   borderWidth: 2,
-                  borderColor: '#ffffff',
+                  borderColor: '#FFFFFF',
                   alignItems: 'center',
                   justifyContent: 'center',
                   zIndex: 40,
-                  shadowColor: '#0284c7',
-                  shadowOpacity: 0.8,
-                  shadowRadius: 6,
+                  shadowColor: '#000000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.15,
+                  shadowRadius: 4,
                 }}
               >
-                <CornerUpRight size={18} color="#ffffff" />
+                <CornerUpRight size={16} color="#FFFFFF" />
               </View>
             );
           })()
@@ -222,14 +223,14 @@ const WebTacticalMap: React.FC<MapViewProps> = ({
         </View>
       </View>
 
-      {/* Tactical Map Controls */}
+      {/* Floating Civic Map Controls */}
       <View style={styles.floatingControls}>
         <TouchableOpacity
           style={[styles.controlBtn, isNavigatorMode && styles.navigatorBtnActive]}
           onPress={onToggleNavigatorMode}
           accessibilityLabel="Toggle Navigator Follow Mode"
         >
-          <Compass size={18} color={isNavigatorMode ? '#10b981' : '#94a3b8'} />
+          <Compass size={18} color={isNavigatorMode ? '#111827' : '#6B7280'} />
         </TouchableOpacity>
 
         {onToggleVoiceMute && (
@@ -239,9 +240,9 @@ const WebTacticalMap: React.FC<MapViewProps> = ({
             accessibilityLabel="Toggle Voice Guidance"
           >
             {isVoiceMuted ? (
-              <VolumeX size={18} color="#f87171" />
+              <VolumeX size={18} color="#B91C1C" />
             ) : (
-              <Volume2 size={18} color="#10b981" />
+              <Volume2 size={18} color="#111827" />
             )}
           </TouchableOpacity>
         )}
@@ -251,7 +252,7 @@ const WebTacticalMap: React.FC<MapViewProps> = ({
           onPress={() => setZoom((z) => Math.min(2.5, z + 0.25))}
           accessibilityLabel="Zoom In"
         >
-          <Plus size={18} color="#f8fafc" />
+          <Plus size={18} color="#111827" />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -259,7 +260,7 @@ const WebTacticalMap: React.FC<MapViewProps> = ({
           onPress={() => setZoom((z) => Math.max(0.75, z - 0.25))}
           accessibilityLabel="Zoom Out"
         >
-          <Minus size={18} color="#f8fafc" />
+          <Minus size={18} color="#111827" />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -267,7 +268,7 @@ const WebTacticalMap: React.FC<MapViewProps> = ({
           onPress={handleRecenter}
           accessibilityLabel="Re-center on Driver"
         >
-          <Crosshair size={18} color="#38bdf8" />
+          <Crosshair size={18} color="#111827" />
         </TouchableOpacity>
       </View>
 
@@ -288,7 +289,6 @@ export const MapView: React.FC<MapViewProps> = (props) => {
   }
 
   // On Native iOS / Android:
-  // Dynamically load react-native-maps to avoid bundler issues in non-native runtimes
   const NativeMaps = require('react-native-maps');
   const RNMapView = NativeMaps.default;
   const { Marker, Polyline } = NativeMaps;
@@ -334,7 +334,7 @@ export const MapView: React.FC<MapViewProps> = (props) => {
           latitudeDelta: 1.8,
           longitudeDelta: 1.8,
         }}
-        customMapStyle={DARK_TACTICAL_MAP_STYLE}
+        customMapStyle={LIGHT_CIVIC_MAP_STYLE}
         showsCompass={false}
         showsUserLocation={false}
       >
@@ -346,8 +346,8 @@ export const MapView: React.FC<MapViewProps> = (props) => {
               props.recoveryAssignment &&
               props.recoveryAssignment.status !== 'DELIVERED' &&
               props.recoveryAssignment.status !== 'PENDING'
-                ? '#f59e0b'
-                : '#38bdf8'
+                ? '#B45309'
+                : '#1E293B'
             }
             strokeWidth={4}
           />
@@ -380,20 +380,20 @@ export const MapView: React.FC<MapViewProps> = (props) => {
           >
             <View
               style={{
-                width: 32,
-                height: 32,
-                borderRadius: 16,
-                backgroundColor: '#0284c7',
+                width: 30,
+                height: 30,
+                borderRadius: 9999,
+                backgroundColor: '#111827',
                 borderWidth: 2,
-                borderColor: '#ffffff',
+                borderColor: '#FFFFFF',
                 alignItems: 'center',
                 justifyContent: 'center',
-                shadowColor: '#0284c7',
-                shadowOpacity: 0.8,
-                shadowRadius: 6,
+                shadowColor: '#000000',
+                shadowOpacity: 0.15,
+                shadowRadius: 4,
               }}
             >
-              <CornerUpRight size={18} color="#ffffff" />
+              <CornerUpRight size={16} color="#FFFFFF" />
             </View>
           </Marker>
         )}
@@ -413,14 +413,14 @@ export const MapView: React.FC<MapViewProps> = (props) => {
         </Marker>
       </RNMapView>
 
-      {/* Floating Tactical Controls */}
+      {/* Floating Civic Controls */}
       <View style={styles.floatingControls}>
         <TouchableOpacity
           style={[styles.controlBtn, props.isNavigatorMode && styles.navigatorBtnActive]}
           onPress={props.onToggleNavigatorMode}
           accessibilityLabel="Toggle Navigator Follow Mode"
         >
-          <Compass size={18} color={props.isNavigatorMode ? '#10b981' : '#94a3b8'} />
+          <Compass size={18} color={props.isNavigatorMode ? '#111827' : '#6B7280'} />
         </TouchableOpacity>
 
         {props.onToggleVoiceMute && (
@@ -430,9 +430,9 @@ export const MapView: React.FC<MapViewProps> = (props) => {
             accessibilityLabel="Toggle Voice Guidance"
           >
             {props.isVoiceMuted ? (
-              <VolumeX size={18} color="#f87171" />
+              <VolumeX size={18} color="#B91C1C" />
             ) : (
-              <Volume2 size={18} color="#10b981" />
+              <Volume2 size={18} color="#111827" />
             )}
           </TouchableOpacity>
         )}
@@ -451,41 +451,41 @@ export const MapView: React.FC<MapViewProps> = (props) => {
             props.onRecenter?.();
           }}
         >
-          <Crosshair size={18} color="#38bdf8" />
+          <Crosshair size={18} color="#111827" />
         </TouchableOpacity>
       </View>
     </View>
   );
 };
 
-// Tactical dark map styling for Native Google Maps
-const DARK_TACTICAL_MAP_STYLE = [
-  { elementType: 'geometry', stylers: [{ color: '#0f172a' }] },
-  { elementType: 'labels.text.fill', stylers: [{ color: '#94a3b8' }] },
-  { elementType: 'labels.text.stroke', stylers: [{ color: '#0f172a' }] },
-  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#1e293b' }] },
-  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#334155' }] },
-  { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#1e293b' }] },
-  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#020617' }] },
+// Modern Civic Light Map Styling for Google Maps
+const LIGHT_CIVIC_MAP_STYLE = [
+  { elementType: 'geometry', stylers: [{ color: '#F8F9FA' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#4B5563' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#FFFFFF' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#FFFFFF' }] },
+  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#E5E7EB' }] },
+  { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#D1D5DB' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#E0E7FF' }] },
   { featureType: 'poi', stylers: [{ visibility: 'off' }] },
 ];
 
 const styles = StyleSheet.create({
   nativeContainer: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#F8F9FA',
   },
   webContainer: {
     flex: 1,
-    backgroundColor: '#090d16',
+    backgroundColor: '#F8F9FA',
     overflow: 'hidden',
     position: 'relative',
   },
   gridOverlay: {
     ...StyleSheet.absoluteFill,
-    opacity: 0.08,
+    opacity: 0.03,
     borderWidth: 1,
-    borderColor: '#38bdf8',
+    borderColor: '#000000',
   },
   mapLayer: {
     flex: 1,
@@ -501,31 +501,31 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   controlBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(15, 23, 42, 0.90)',
+    width: 38,
+    height: 38,
+    borderRadius: 9999,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.35)',
+    borderColor: '#E5E7EB',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.6,
-    shadowRadius: 4,
-    elevation: 5,
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
   },
   recenterBtn: {
-    borderColor: '#38bdf8',
-    backgroundColor: 'rgba(56, 189, 248, 0.15)',
+    borderColor: '#D1D5DB',
+    backgroundColor: '#FFFFFF',
   },
   navigatorBtnActive: {
-    borderColor: '#10b981',
-    backgroundColor: 'rgba(16, 185, 129, 0.25)',
+    borderColor: '#111827',
+    backgroundColor: '#F3F4F6',
   },
   voiceMutedBtn: {
-    borderColor: '#f87171',
-    backgroundColor: 'rgba(239, 68, 68, 0.25)',
+    borderColor: '#FEE2E2',
+    backgroundColor: '#FEF2F2',
   },
   navigatorPill: {
     position: 'absolute',
@@ -535,33 +535,44 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: 'rgba(15, 23, 42, 0.92)',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 9999,
     borderWidth: 1,
-    borderColor: '#10b981',
+    borderColor: '#E5E7EB',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
   },
   navigatorPillText: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#10b981',
-    letterSpacing: 0.5,
+    fontSize: 10.5,
+    fontWeight: '700',
+    color: '#111827',
+    letterSpacing: 0.3,
   },
   coordsFooter: {
     position: 'absolute',
     left: 16,
     top: 76,
-    backgroundColor: 'rgba(15, 23, 42, 0.85)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 9999,
     borderWidth: 1,
-    borderColor: 'rgba(148, 163, 184, 0.25)',
+    borderColor: '#E5E7EB',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
   },
   coordsText: {
     fontSize: 10,
-    color: '#94a3b8',
+    color: '#6B7280',
+    fontWeight: '600',
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
 });

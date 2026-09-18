@@ -161,7 +161,7 @@ export default function IndexScreen() {
               style={styles.closeBtn}
               onPress={() => setWarehouseModalOpen(false)}
             >
-              <X size={20} color="#94a3b8" />
+              <X size={18} color="#111827" />
             </TouchableOpacity>
           </View>
 
@@ -198,11 +198,11 @@ export default function IndexScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#090d16',
+    backgroundColor: '#F8F9FA',
   },
   modalBg: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#F8F9FA',
   },
   pickerHeader: {
     flexDirection: 'row',
@@ -211,29 +211,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
+    borderBottomColor: '#E5E7EB',
+    backgroundColor: '#FFFFFF',
   },
   pickerCategory: {
-    fontSize: 9.5,
+    fontSize: 10,
     fontWeight: '800',
-    color: '#38bdf8',
-    letterSpacing: 0.8,
+    color: '#6B7280',
+    letterSpacing: 0.6,
   },
   pickerTitle: {
-    fontSize: 18,
-    fontWeight: '900',
-    color: '#ffffff',
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#111827',
+    letterSpacing: -0.2,
   },
   closeBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#1e293b',
+    width: 34,
+    height: 34,
+    borderRadius: 9999,
+    backgroundColor: '#F3F4F6',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
     alignItems: 'center',
     justifyContent: 'center',
   },
   listContent: {
-    padding: 16,
+    padding: 14,
     paddingBottom: 40,
   },
 });

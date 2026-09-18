@@ -33,10 +33,10 @@ export const WarehouseCard: React.FC<WarehouseCardProps> = ({
         <View
           style={[
             styles.iconBox,
-            isRecovery && { backgroundColor: 'rgba(245, 158, 11, 0.15)' },
+            isRecovery && { backgroundColor: '#FFFBEB', borderColor: '#FEF3C7' },
           ]}
         >
-          <Building2 size={20} color={isRecovery ? '#f59e0b' : '#38bdf8'} />
+          <Building2 size={18} color={isRecovery ? '#B45309' : '#111827'} />
         </View>
 
         <View style={styles.textDetails}>
@@ -52,7 +52,7 @@ export const WarehouseCard: React.FC<WarehouseCardProps> = ({
           </View>
 
           <View style={styles.cityRow}>
-            <MapPin size={11} color="#64748b" />
+            <MapPin size={12} color="#6B7280" />
             <Text style={styles.cityText}>{warehouse.city}</Text>
             <Text style={styles.dot}>•</Text>
             <Text style={styles.capacityText}>
@@ -65,7 +65,7 @@ export const WarehouseCard: React.FC<WarehouseCardProps> = ({
       <View style={styles.rightCol}>
         <Text style={styles.distText}>{formatDistance(distanceKm)}</Text>
         <View style={[styles.selectBtn, isSelected && styles.selectedBtn]}>
-          <Navigation size={12} color={isSelected ? '#0f172a' : '#38bdf8'} />
+          <Navigation size={11} color={isSelected ? '#FFFFFF' : '#111827'} />
           <Text style={[styles.selectBtnText, isSelected && styles.selectedBtnText]}>
             {isSelected ? 'ACTIVE' : 'GO'}
           </Text>
@@ -80,19 +80,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#1e293b',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 8,
-    borderWidth: 1.5,
-    borderColor: '#334155',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 5,
+    elevation: 1,
   },
   selectedCard: {
-    borderColor: '#38bdf8',
-    backgroundColor: '#0c4a6e',
+    borderColor: '#111827',
+    borderWidth: 1.5,
   },
   recoveryCard: {
-    borderColor: '#f59e0b',
+    borderColor: '#FDE68A',
+    backgroundColor: '#FFFEFA',
   },
   leftCol: {
     flexDirection: 'row',
@@ -103,11 +109,13 @@ const styles = StyleSheet.create({
   iconBox: {
     width: 38,
     height: 38,
-    borderRadius: 10,
-    backgroundColor: 'rgba(56, 189, 248, 0.12)',
+    borderRadius: 9999,
+    backgroundColor: '#F3F4F6',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 10,
+    marginRight: 12,
   },
   textDetails: {
     flex: 1,
@@ -118,71 +126,78 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   title: {
-    fontSize: 13.5,
+    fontSize: 14,
     fontWeight: '800',
-    color: '#f8fafc',
+    color: '#111827',
     flexShrink: 1,
+    letterSpacing: -0.1,
   },
   recoveryTag: {
-    backgroundColor: 'rgba(245, 158, 11, 0.2)',
-    borderColor: '#f59e0b',
+    backgroundColor: '#FFFBEB',
+    borderColor: '#FEF3C7',
     borderWidth: 1,
-    paddingHorizontal: 5,
-    paddingVertical: 1.5,
-    borderRadius: 4,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 9999,
   },
   recoveryTagText: {
     fontSize: 8.5,
-    fontWeight: '900',
-    color: '#f59e0b',
+    fontWeight: '800',
+    color: '#B45309',
+    letterSpacing: 0.3,
   },
   cityRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 2,
+    marginTop: 3,
   },
   cityText: {
-    fontSize: 11,
-    color: '#94a3b8',
+    fontSize: 12,
+    color: '#6B7280',
     marginLeft: 3,
+    fontWeight: '500',
   },
   dot: {
-    color: '#475569',
-    marginHorizontal: 4,
+    color: '#D1D5DB',
+    marginHorizontal: 5,
   },
   capacityText: {
-    fontSize: 11,
-    color: '#64748b',
+    fontSize: 12,
+    color: '#6B7280',
+    fontWeight: '500',
   },
   rightCol: {
     alignItems: 'flex-end',
-    gap: 4,
+    gap: 6,
   },
   distText: {
-    fontSize: 12,
+    fontSize: 12.5,
     fontWeight: '800',
-    color: '#38bdf8',
+    color: '#111827',
+    letterSpacing: -0.1,
   },
   selectBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
-    backgroundColor: '#0f172a',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
+    gap: 4,
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 11,
+    paddingVertical: 5,
+    borderRadius: 9999,
     borderWidth: 1,
-    borderColor: '#38bdf8',
+    borderColor: '#E5E7EB',
   },
   selectedBtn: {
-    backgroundColor: '#38bdf8',
+    backgroundColor: '#111827',
+    borderColor: '#111827',
   },
   selectBtnText: {
-    fontSize: 10,
+    fontSize: 10.5,
     fontWeight: '800',
-    color: '#38bdf8',
+    color: '#111827',
+    letterSpacing: 0.2,
   },
   selectedBtnText: {
-    color: '#0f172a',
+    color: '#FFFFFF',
   },
 });

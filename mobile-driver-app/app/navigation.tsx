@@ -23,26 +23,26 @@ import { useNavigationContext } from '../context/NavigationContext';
 import { formatDistance, formatETA, formatTimeArrival, formatSpeed } from '../utils/formatting';
 import { ManeuverType } from '../types/navigation';
 
-function getManeuverIcon(type?: ManeuverType) {
+function getManeuverIcon(type?: ManeuverType, color = '#FFFFFF') {
   switch (type) {
     case 'turn-right':
     case 'turn-slight-right':
     case 'turn-sharp-right':
     case 'fork-right':
     case 'ramp-right':
-      return <CornerUpRight size={28} color="#ffffff" />;
+      return <CornerUpRight size={24} color={color} />;
     case 'turn-left':
     case 'turn-slight-left':
     case 'turn-sharp-left':
     case 'fork-left':
     case 'ramp-left':
-      return <CornerUpLeft size={28} color="#ffffff" />;
+      return <CornerUpLeft size={24} color={color} />;
     case 'uturn':
-      return <RotateCcw size={28} color="#ffffff" />;
+      return <RotateCcw size={24} color={color} />;
     case 'roundabout':
-      return <RotateCcw size={28} color="#ffffff" />;
+      return <RotateCcw size={24} color={color} />;
     default:
-      return <ArrowUp size={28} color="#ffffff" />;
+      return <ArrowUp size={24} color={color} />;
   }
 }
 
@@ -88,8 +88,8 @@ export default function NavigationScreen() {
       {/* 1. Rerouting Alert Banner */}
       {isRerouting && (
         <View style={styles.reroutingCard}>
-          <RefreshCw size={16} color="#f59e0b" />
-          <Text style={styles.reroutingTitle}>OFF-ROUTE · RECALCULATING OPTIMAL ROUTE...</Text>
+          <RefreshCw size={15} color="#B45309" />
+          <Text style={styles.reroutingTitle}>OFF-ROUTE · RECALCULATING ROUTE...</Text>
         </View>
       )}
 
@@ -98,6 +98,7 @@ export default function NavigationScreen() {
         <View style={styles.turnIconBox}>
           {getManeuverIcon(guidanceState.currentManeuver?.maneuverType)}
         </View>
+
         <View style={styles.turnTextGroup}>
           <Text style={styles.turnMeters}>{distToTurnText}</Text>
           <Text style={styles.turnInstruction} numberOfLines={2}>
@@ -113,9 +114,9 @@ export default function NavigationScreen() {
           accessibilityLabel="Toggle Voice Guidance"
         >
           {isVoiceMuted ? (
-            <VolumeX size={20} color="#f87171" />
+            <VolumeX size={18} color="#B91C1C" />
           ) : (
-            <Volume2 size={20} color="#ffffff" />
+            <Volume2 size={18} color="#111827" />
           )}
         </TouchableOpacity>
       </View>
@@ -136,7 +137,7 @@ export default function NavigationScreen() {
           style={[
             styles.progressBarFill,
             { width: `${guidanceState.routeProgressPercent}%` },
-            isRecovery && { backgroundColor: '#f59e0b' },
+            isRecovery && { backgroundColor: '#B45309' },
           ]}
         />
       </View>
@@ -144,19 +145,19 @@ export default function NavigationScreen() {
       {/* 5. Tactical Heads-Up Telemetry Gauges */}
       <View style={styles.gaugesRow}>
         <View style={styles.gaugeCard}>
-          <Gauge size={16} color="#38bdf8" />
+          <Gauge size={16} color="#111827" />
           <Text style={styles.gaugeLabel}>SPEED</Text>
           <Text style={styles.gaugeValue}>{formatSpeed(speed)}</Text>
         </View>
 
         <View style={styles.gaugeCard}>
-          <Navigation size={16} color="#10b981" />
+          <Navigation size={16} color="#15803D" />
           <Text style={styles.gaugeLabel}>REMAINING</Text>
           <Text style={styles.gaugeValue}>{formatDistance(remainingDist)}</Text>
         </View>
 
         <View style={styles.gaugeCard}>
-          <Clock size={16} color="#f59e0b" />
+          <Clock size={16} color="#B45309" />
           <Text style={styles.gaugeLabel}>ETA</Text>
           <Text style={styles.gaugeValue}>{formatETA(remainingMin)}</Text>
         </View>
@@ -164,9 +165,11 @@ export default function NavigationScreen() {
 
       {/* 6. Destination Facility Bar */}
       <View style={styles.destinationBar}>
-        <Flag size={18} color="#10b981" />
+        <View style={styles.destIconBox}>
+          <Flag size={16} color="#15803D" />
+        </View>
         <View style={{ flex: 1 }}>
-          <Text style={styles.destLabel}>TARGET FACILITY</Text>
+          <Text style={styles.destLabel}>TARGET HUB</Text>
           <Text style={styles.destName}>{destinationWarehouse?.name || 'No Destination'}</Text>
         </View>
         <Text style={styles.destArrival}>{formatTimeArrival(remainingMin)}</Text>
@@ -174,13 +177,13 @@ export default function NavigationScreen() {
 
       {/* 7. Upcoming Maneuvers List */}
       <View style={styles.maneuversHeader}>
-        <Text style={styles.maneuversTitle}>ALL ROUTE MANEUVERS</Text>
+        <Text style={styles.maneuversTitle}>ROUTE MANEUVERS</Text>
         <TouchableOpacity onPress={() => recalculateRoute()}>
           <Text style={styles.recalculateLink}>Recalculate</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.maneuverList} contentContainerStyle={{ paddingBottom: 20 }}>
+      <ScrollView style={styles.maneuverList} contentContainerStyle={{ paddingBottom: 16 }}>
         {activeRoute?.maneuvers.map((m, idx) => {
           const isCurrent = idx === guidanceState.currentStepIndex;
           return (
@@ -199,7 +202,7 @@ export default function NavigationScreen() {
                 </Text>
                 <Text style={styles.stepDistance}>{formatDistance(m.distanceMeters / 1000)}</Text>
               </View>
-              <ArrowUpRight size={16} color={isCurrent ? '#38bdf8' : '#64748b'} />
+              <ArrowUpRight size={16} color={isCurrent ? '#111827' : '#9CA3AF'} />
             </View>
           );
         })}
@@ -211,8 +214,8 @@ export default function NavigationScreen() {
         onPress={launchExternalNavigation}
         activeOpacity={0.85}
       >
-        <Navigation size={18} color="#0f172a" fill="#0f172a" />
-        <Text style={styles.gmapsLaunchText}>OPEN IN GOOGLE MAPS APP</Text>
+        <Navigation size={15} color="#111827" />
+        <Text style={styles.gmapsLaunchText}>OPEN IN GOOGLE MAPS</Text>
       </TouchableOpacity>
 
       {/* 9. Bottom Controls Bar */}
@@ -221,38 +224,38 @@ export default function NavigationScreen() {
           <TouchableOpacity
             style={styles.simStartBtn}
             onPress={startSimulation}
-            activeOpacity={0.8}
+            activeOpacity={0.85}
           >
-            <Play size={16} color="#ffffff" fill="#ffffff" />
-            <Text style={styles.btnText}>SIMULATE TRAVEL</Text>
+            <Play size={14} color="#FFFFFF" fill="#FFFFFF" />
+            <Text style={styles.btnText}>SIMULATE</Text>
           </TouchableOpacity>
         ) : isSimPaused ? (
           <TouchableOpacity
             style={styles.simResumeBtn}
             onPress={resumeSimulation}
-            activeOpacity={0.8}
+            activeOpacity={0.85}
           >
-            <Play size={16} color="#ffffff" fill="#ffffff" />
+            <Play size={14} color="#FFFFFF" fill="#FFFFFF" />
             <Text style={styles.btnText}>RESUME</Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
             style={styles.simPauseBtn}
             onPress={pauseSimulation}
-            activeOpacity={0.8}
+            activeOpacity={0.85}
           >
-            <Pause size={16} color="#ffffff" fill="#ffffff" />
-            <Text style={styles.btnText}>PAUSE SIM</Text>
+            <Pause size={14} color="#B45309" fill="#B45309" />
+            <Text style={styles.pauseBtnText}>PAUSE</Text>
           </TouchableOpacity>
         )}
 
         <TouchableOpacity
           style={styles.exitBtn}
           onPress={stopNavigation}
-          activeOpacity={0.8}
+          activeOpacity={0.85}
         >
-          <XSquare size={16} color="#ffffff" />
-          <Text style={styles.btnText}>EXIT</Text>
+          <XSquare size={14} color="#B91C1C" />
+          <Text style={styles.exitBtnText}>EXIT</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -262,49 +265,51 @@ export default function NavigationScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#090d16',
-    padding: 14,
+    backgroundColor: '#F8F9FA',
+    padding: 16,
   },
   reroutingCard: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    backgroundColor: 'rgba(245, 158, 11, 0.18)',
+    backgroundColor: '#FFFBEB',
     borderWidth: 1,
-    borderColor: '#f59e0b',
-    borderRadius: 12,
+    borderColor: '#FEF3C7',
+    borderRadius: 9999,
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 8,
     marginBottom: 10,
   },
   reroutingTitle: {
-    color: '#fbbf24',
-    fontSize: 11.5,
-    fontWeight: '800',
+    color: '#B45309',
+    fontSize: 11,
+    fontWeight: '700',
     letterSpacing: 0.5,
   },
   turnBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0284c7',
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
     padding: 16,
-    marginTop: 6,
     marginBottom: 8,
-    shadowColor: '#0284c7',
-    shadowOpacity: 0.4,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
     shadowRadius: 8,
-    elevation: 6,
+    elevation: 2,
   },
   turnBannerRecovery: {
-    backgroundColor: '#d97706',
-    shadowColor: '#d97706',
+    borderLeftWidth: 4,
+    borderLeftColor: '#B45309',
   },
   turnIconBox: {
-    width: 48,
-    height: 48,
+    width: 44,
+    height: 44,
     borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: '#111827',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
@@ -313,134 +318,157 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   turnMeters: {
-    color: '#ffffff',
+    color: '#6B7280',
     fontSize: 12,
-    fontWeight: '800',
-    opacity: 0.9,
-    letterSpacing: 0.5,
+    fontWeight: '700',
+    letterSpacing: 0.4,
   },
   turnInstruction: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '900',
+    color: '#111827',
+    fontSize: 15,
+    fontWeight: '700',
+    marginTop: 2,
   },
   voiceHeaderBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#F3F4F6',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 8,
   },
   voiceHeaderBtnMuted: {
-    backgroundColor: 'rgba(239, 68, 68, 0.3)',
-    borderWidth: 1,
-    borderColor: '#f87171',
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FEE2E2',
   },
   nextStepBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1e293b',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 9999,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     gap: 8,
     marginBottom: 10,
   },
   nextStepPrefix: {
     fontSize: 10,
-    fontWeight: '900',
-    color: '#38bdf8',
+    fontWeight: '700',
+    color: '#6B7280',
     letterSpacing: 0.8,
   },
   nextStepText: {
     flex: 1,
-    fontSize: 11.5,
-    color: '#cbd5e1',
+    fontSize: 12,
+    color: '#111827',
     fontWeight: '600',
   },
   progressBarContainer: {
     height: 4,
-    backgroundColor: '#1e293b',
+    backgroundColor: '#E5E7EB',
     borderRadius: 2,
     overflow: 'hidden',
     marginBottom: 12,
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#38bdf8',
+    backgroundColor: '#111827',
     borderRadius: 2,
   },
   gaugesRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 10,
     marginBottom: 12,
   },
   gaugeCard: {
     flex: 1,
-    backgroundColor: '#0f172a',
-    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#1e293b',
-    padding: 10,
+    borderColor: '#E5E7EB',
+    padding: 12,
     alignItems: 'center',
     gap: 4,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
   },
   gaugeLabel: {
     fontSize: 9,
-    fontWeight: '800',
-    color: '#94a3b8',
+    fontWeight: '700',
+    color: '#6B7280',
     letterSpacing: 0.6,
   },
   gaugeValue: {
-    fontSize: 15,
-    fontWeight: '900',
-    color: '#f8fafc',
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#111827',
   },
   destinationBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0f172a',
-    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#E5E7EB',
     padding: 12,
     gap: 10,
-    marginBottom: 14,
+    marginBottom: 12,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  destIconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F0FDF4',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   destLabel: {
     fontSize: 9,
-    fontWeight: '800',
-    color: '#64748b',
+    fontWeight: '700',
+    color: '#6B7280',
     letterSpacing: 0.6,
   },
   destName: {
     fontSize: 13,
-    fontWeight: '800',
-    color: '#f8fafc',
+    fontWeight: '700',
+    color: '#111827',
+    marginTop: 1,
   },
   destArrival: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#10b981',
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#111827',
   },
   maneuversHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
+    paddingHorizontal: 2,
   },
   maneuversTitle: {
-    fontSize: 10.5,
-    fontWeight: '800',
-    color: '#94a3b8',
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#6B7280',
     letterSpacing: 0.8,
   },
   recalculateLink: {
     fontSize: 11,
-    fontWeight: '800',
-    color: '#38bdf8',
+    fontWeight: '600',
+    color: '#111827',
   },
   maneuverList: {
     flex: 1,
@@ -448,52 +476,57 @@ const styles = StyleSheet.create({
   maneuverItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0f172a',
-    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#E5E7EB',
     padding: 12,
     marginBottom: 8,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 3,
+    elevation: 1,
   },
   maneuverItemCurrent: {
-    borderColor: '#38bdf8',
-    backgroundColor: 'rgba(56, 189, 248, 0.08)',
+    borderColor: '#111827',
+    backgroundColor: '#F9FAFB',
   },
   stepCircle: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#1e293b',
+    backgroundColor: '#F3F4F6',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
   },
   stepCircleCurrent: {
-    backgroundColor: '#0284c7',
+    backgroundColor: '#111827',
   },
   stepNum: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#38bdf8',
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#6B7280',
   },
   stepNumCurrent: {
-    color: '#ffffff',
+    color: '#FFFFFF',
   },
   stepDetails: {
     flex: 1,
   },
   stepInstruction: {
     fontSize: 12.5,
-    fontWeight: '700',
-    color: '#f8fafc',
+    fontWeight: '500',
+    color: '#4B5563',
   },
   stepInstructionCurrent: {
-    color: '#38bdf8',
-    fontWeight: '800',
+    color: '#111827',
+    fontWeight: '700',
   },
   stepDistance: {
     fontSize: 11,
-    color: '#64748b',
+    color: '#9CA3AF',
     marginTop: 2,
   },
   footerControls: {
@@ -504,19 +537,26 @@ const styles = StyleSheet.create({
   simStartBtn: {
     flex: 2,
     flexDirection: 'row',
-    backgroundColor: '#0284c7',
+    backgroundColor: '#111827',
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: 9999,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
   },
   simPauseBtn: {
     flex: 2,
     flexDirection: 'row',
-    backgroundColor: '#d97706',
+    backgroundColor: '#FFFBEB',
+    borderWidth: 1,
+    borderColor: '#FEF3C7',
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: 9999,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
@@ -524,9 +564,9 @@ const styles = StyleSheet.create({
   simResumeBtn: {
     flex: 2,
     flexDirection: 'row',
-    backgroundColor: '#10b981',
+    backgroundColor: '#111827',
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: 9999,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
@@ -534,37 +574,54 @@ const styles = StyleSheet.create({
   exitBtn: {
     flex: 1,
     flexDirection: 'row',
-    backgroundColor: '#dc2626',
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FEE2E2',
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: 9999,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
   },
   btnText: {
-    color: '#ffffff',
+    color: '#FFFFFF',
     fontSize: 12,
-    fontWeight: '800',
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  pauseBtnText: {
+    color: '#B45309',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  exitBtnText: {
+    color: '#B91C1C',
+    fontSize: 12,
+    fontWeight: '700',
     letterSpacing: 0.5,
   },
   gmapsLaunchFullBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#38bdf8',
-    paddingVertical: 13,
-    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    paddingVertical: 11,
+    borderRadius: 9999,
     gap: 8,
     marginTop: 8,
-    shadowColor: '#38bdf8',
-    shadowOpacity: 0.4,
-    shadowRadius: 6,
-    elevation: 4,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
   },
   gmapsLaunchText: {
-    color: '#0f172a',
-    fontSize: 13,
-    fontWeight: '900',
-    letterSpacing: 0.8,
+    color: '#111827',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
 });

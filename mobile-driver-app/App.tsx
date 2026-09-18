@@ -4,6 +4,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Map, Navigation as NavIcon, ShieldAlert, Building2, Settings as SettingsIcon } from 'lucide-react-native';
 import { NavigationProvider, useNavigationContext } from './context/NavigationContext';
+import { COLORS } from './config/theme';
 
 import IndexScreen from './app/index';
 import NavigationScreen from './app/navigation';
@@ -25,7 +26,7 @@ function MainAppShell() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
 
       {/* Screen Content Container */}
       <View style={styles.contentContainer}>
@@ -36,14 +37,14 @@ function MainAppShell() {
         {activeTab === 'settings' && <SettingsScreen />}
       </View>
 
-      {/* Tactical Bottom Navigation Tab Bar */}
+      {/* Civic-Tech Bottom Navigation Tab Bar */}
       <View style={styles.tabBar}>
         <TouchableOpacity
           style={[styles.tabItem, activeTab === 'cockpit' && styles.tabItemActive]}
           onPress={() => setActiveTab('cockpit')}
-          activeOpacity={0.7}
+          activeOpacity={0.8}
         >
-          <Map size={18} color={activeTab === 'cockpit' ? '#38bdf8' : '#64748b'} />
+          <Map size={16} color={activeTab === 'cockpit' ? '#FFFFFF' : '#6B7280'} />
           <Text style={[styles.tabLabel, activeTab === 'cockpit' && styles.tabLabelActive]}>
             Cockpit
           </Text>
@@ -52,34 +53,38 @@ function MainAppShell() {
         <TouchableOpacity
           style={[styles.tabItem, activeTab === 'navigation' && styles.tabItemActive]}
           onPress={() => setActiveTab('navigation')}
-          activeOpacity={0.7}
+          activeOpacity={0.8}
         >
-          <NavIcon size={18} color={activeTab === 'navigation' ? '#38bdf8' : '#64748b'} />
+          <NavIcon size={16} color={activeTab === 'navigation' ? '#FFFFFF' : '#6B7280'} />
           <Text style={[styles.tabLabel, activeTab === 'navigation' && styles.tabLabelActive]}>
             Navigation
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.tabItem, activeTab === 'recovery' && styles.tabItemActive]}
+          style={[
+            styles.tabItem,
+            activeTab === 'recovery' && styles.tabItemActive,
+            isRecoveryActive && activeTab !== 'recovery' && styles.tabItemRecoveryAlert,
+          ]}
           onPress={() => setActiveTab('recovery')}
-          activeOpacity={0.7}
+          activeOpacity={0.8}
         >
           <ShieldAlert
-            size={18}
+            size={16}
             color={
               activeTab === 'recovery'
-                ? '#f59e0b'
+                ? '#FFFFFF'
                 : isRecoveryActive
-                ? '#f59e0b'
-                : '#64748b'
+                ? '#B91C1C'
+                : '#6B7280'
             }
           />
           <Text
             style={[
               styles.tabLabel,
-              activeTab === 'recovery' && styles.tabLabelRecovery,
-              isRecoveryActive && !activeTab && { color: '#f59e0b' },
+              activeTab === 'recovery' && styles.tabLabelActive,
+              isRecoveryActive && activeTab !== 'recovery' && { color: '#B91C1C' },
             ]}
           >
             Recovery
@@ -90,9 +95,9 @@ function MainAppShell() {
         <TouchableOpacity
           style={[styles.tabItem, activeTab === 'warehouses' && styles.tabItemActive]}
           onPress={() => setActiveTab('warehouses')}
-          activeOpacity={0.7}
+          activeOpacity={0.8}
         >
-          <Building2 size={18} color={activeTab === 'warehouses' ? '#38bdf8' : '#64748b'} />
+          <Building2 size={16} color={activeTab === 'warehouses' ? '#FFFFFF' : '#6B7280'} />
           <Text style={[styles.tabLabel, activeTab === 'warehouses' && styles.tabLabelActive]}>
             Hubs
           </Text>
@@ -101,9 +106,9 @@ function MainAppShell() {
         <TouchableOpacity
           style={[styles.tabItem, activeTab === 'settings' && styles.tabItemActive]}
           onPress={() => setActiveTab('settings')}
-          activeOpacity={0.7}
+          activeOpacity={0.8}
         >
-          <SettingsIcon size={18} color={activeTab === 'settings' ? '#38bdf8' : '#64748b'} />
+          <SettingsIcon size={16} color={activeTab === 'settings' ? '#FFFFFF' : '#6B7280'} />
           <Text style={[styles.tabLabel, activeTab === 'settings' && styles.tabLabelActive]}>
             Settings
           </Text>
@@ -126,53 +131,55 @@ export default function App() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#090d16',
+    backgroundColor: '#F8F9FA',
   },
   contentContainer: {
     flex: 1,
+    backgroundColor: '#F8F9FA',
   },
   tabBar: {
     flexDirection: 'row',
-    height: Platform.OS === 'ios' ? 62 : 56,
-    backgroundColor: '#0f172a',
+    height: Platform.OS === 'ios' ? 64 : 60,
+    backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
-    borderTopColor: '#1e293b',
+    borderTopColor: '#E5E7EB',
     paddingHorizontal: 8,
     alignItems: 'center',
     justifyContent: 'space-around',
   },
   tabItem: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 6,
+    paddingVertical: 7,
     paddingHorizontal: 12,
-    borderRadius: 8,
+    borderRadius: 9999,
     position: 'relative',
+    gap: 6,
   },
   tabItemActive: {
-    backgroundColor: 'rgba(56, 189, 248, 0.08)',
+    backgroundColor: '#111827',
+  },
+  tabItemRecoveryAlert: {
+    backgroundColor: '#FEF2F2',
   },
   tabLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#64748b',
-    marginTop: 3,
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6B7280',
+    letterSpacing: -0.1,
   },
   tabLabelActive: {
-    color: '#38bdf8',
-    fontWeight: '800',
-  },
-  tabLabelRecovery: {
-    color: '#f59e0b',
-    fontWeight: '800',
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
   alertDot: {
     position: 'absolute',
     top: 4,
-    right: 12,
+    right: 6,
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#dc2626',
+    backgroundColor: '#B91C1C',
   },
 });

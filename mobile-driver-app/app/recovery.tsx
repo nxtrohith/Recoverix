@@ -24,13 +24,15 @@ export default function RecoveryScreen() {
     <ScrollView style={styles.container} contentContainerStyle={{ padding: 16 }}>
       {/* 1. Header Banner */}
       <View style={styles.bannerHeader}>
-        <ShieldAlert size={28} color="#f59e0b" />
+        <View style={styles.bannerIconBox}>
+          <ShieldAlert size={22} color="#B45309" />
+        </View>
         <View style={{ flex: 1 }}>
-          <Text style={styles.bannerCategory}>URGENT DISPATCH MISSION</Text>
-          <Text style={styles.bannerTitle}>Shipment Recovery Control</Text>
+          <Text style={styles.bannerCategory}>DISPATCH OVERRIDE</Text>
+          <Text style={styles.bannerTitle}>Shipment Recovery Mission</Text>
         </View>
         <View style={styles.priorityBadge}>
-          <Text style={styles.priorityText}>HIGH</Text>
+          <Text style={styles.priorityText}>HIGH PRIORITY</Text>
         </View>
       </View>
 
@@ -63,9 +65,11 @@ export default function RecoveryScreen() {
 
         <View style={styles.specRow}>
           <Text style={styles.specLabel}>Status</Text>
-          <Text style={[styles.statusText, isLeg2 && { color: '#10b981' }]}>
-            {mode}
-          </Text>
+          <View style={[styles.statusBadge, isLeg2 ? styles.statusBadgeGreen : styles.statusBadgeAmber]}>
+            <Text style={[styles.statusText, isLeg2 ? styles.statusTextGreen : styles.statusTextAmber]}>
+              {mode}
+            </Text>
+          </View>
         </View>
       </View>
 
@@ -75,15 +79,15 @@ export default function RecoveryScreen() {
       <View style={styles.timelineCard}>
         {/* Step 1 */}
         <View style={styles.timelineStep}>
-          <View style={[styles.stepIcon, (isLeg1 || isAtRecovery || isLeg2 || isDelivered) && styles.stepDone]}>
-            <Truck size={14} color="#ffffff" />
+          <View style={[styles.stepIcon, (isLeg1 || isAtRecovery || isLeg2 || isDelivered) ? styles.stepDone : styles.stepInactive]}>
+            <Truck size={15} color={(isLeg1 || isAtRecovery || isLeg2 || isDelivered) ? "#FFFFFF" : "#6B7280"} />
           </View>
           <View style={styles.stepInfo}>
             <Text style={styles.stepTitle}>Leg 1: Transit to Recovery Hub</Text>
             <Text style={styles.stepLoc}>
               {recoveryWarehouse?.name || 'Hyderabad North Hub (Medchal)'}
             </Text>
-            <Text style={styles.stepStatus}>
+            <Text style={[styles.stepStatus, (isLeg1 || isAtRecovery) ? styles.stepStatusAmber : (isLeg2 || isDelivered) ? styles.stepStatusGreen : styles.stepStatusMuted]}>
               {isLeg1 ? '● EN ROUTE NOW' : isAtRecovery ? '✓ ARRIVED AT HUB' : isLeg2 || isDelivered ? '✓ COMPLETED' : 'PENDING'}
             </Text>
           </View>
@@ -93,13 +97,13 @@ export default function RecoveryScreen() {
 
         {/* Step 2 */}
         <View style={styles.timelineStep}>
-          <View style={[styles.stepIcon, (isAtRecovery || isLeg2 || isDelivered) && styles.stepDone]}>
-            <Package size={14} color="#ffffff" />
+          <View style={[styles.stepIcon, (isAtRecovery || isLeg2 || isDelivered) ? styles.stepDone : styles.stepInactive]}>
+            <Package size={15} color={(isAtRecovery || isLeg2 || isDelivered) ? "#FFFFFF" : "#6B7280"} />
           </View>
           <View style={styles.stepInfo}>
             <Text style={styles.stepTitle}>Cargo Loading & Inspection</Text>
             <Text style={styles.stepLoc}>Transfer 500 units into TRK-218 cargo container</Text>
-            <Text style={styles.stepStatus}>
+            <Text style={[styles.stepStatus, isAtRecovery ? styles.stepStatusAmber : (isLeg2 || isDelivered) ? styles.stepStatusGreen : styles.stepStatusMuted]}>
               {isAtRecovery ? '● READY FOR PICKUP CONFIRMATION' : isLeg2 || isDelivered ? '✓ LOADED & SEALED' : 'AWAITING ARRIVAL'}
             </Text>
           </View>
@@ -109,15 +113,15 @@ export default function RecoveryScreen() {
 
         {/* Step 3 */}
         <View style={styles.timelineStep}>
-          <View style={[styles.stepIcon, isDelivered && styles.stepDone]}>
-            <CheckCircle2 size={14} color="#ffffff" />
+          <View style={[styles.stepIcon, isDelivered ? styles.stepDone : styles.stepInactive]}>
+            <CheckCircle2 size={15} color={isDelivered ? "#FFFFFF" : "#6B7280"} />
           </View>
           <View style={styles.stepInfo}>
             <Text style={styles.stepTitle}>Leg 2: Final Destination Delivery</Text>
             <Text style={styles.stepLoc}>
               {destinationWarehouse?.name || 'Warangal Regional Depot'}
             </Text>
-            <Text style={styles.stepStatus}>
+            <Text style={[styles.stepStatus, isLeg2 ? styles.stepStatusAmber : isDelivered ? styles.stepStatusGreen : styles.stepStatusMuted]}>
               {isLeg2 ? '● EN ROUTE TO FINAL DESTINATION' : isDelivered ? '✓ DELIVERED & SIGNED OFF' : 'PENDING PICKUP'}
             </Text>
           </View>
@@ -132,8 +136,8 @@ export default function RecoveryScreen() {
             onPress={triggerRecoveryAlert}
             activeOpacity={0.85}
           >
-            <ShieldAlert size={18} color="#ffffff" />
-            <Text style={styles.actionBtnText}>DISPATCH RECOVERY EVENT</Text>
+            <ShieldAlert size={18} color="#FFFFFF" />
+            <Text style={styles.triggerBtnText}>TRIGGER RECOVERY ALERT</Text>
           </TouchableOpacity>
         ) : isLeg1 ? (
           <TouchableOpacity
@@ -141,7 +145,7 @@ export default function RecoveryScreen() {
             onPress={confirmPickup}
             activeOpacity={0.85}
           >
-            <Package size={18} color="#ffffff" />
+            <Package size={18} color="#FFFFFF" />
             <Text style={styles.actionBtnText}>SIMULATE ARRIVAL & PICKUP</Text>
           </TouchableOpacity>
         ) : isAtRecovery ? (
@@ -150,7 +154,7 @@ export default function RecoveryScreen() {
             onPress={confirmPickup}
             activeOpacity={0.85}
           >
-            <Package size={18} color="#ffffff" />
+            <Package size={18} color="#FFFFFF" />
             <Text style={styles.actionBtnText}>CONFIRM CARGO PICKUP</Text>
           </TouchableOpacity>
         ) : isLeg2 ? (
@@ -159,8 +163,8 @@ export default function RecoveryScreen() {
             onPress={finishDelivery}
             activeOpacity={0.85}
           >
-            <CheckCircle2 size={18} color="#ffffff" />
-            <Text style={styles.actionBtnText}>COMPLETE FINAL DELIVERY</Text>
+            <CheckCircle2 size={18} color="#FFFFFF" />
+            <Text style={styles.finishBtnText}>COMPLETE FINAL DELIVERY</Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
@@ -168,8 +172,8 @@ export default function RecoveryScreen() {
             onPress={triggerRecoveryAlert}
             activeOpacity={0.85}
           >
-            <RotateCcw size={18} color="#ffffff" />
-            <Text style={styles.actionBtnText}>START NEW RECOVERY SIMULATION</Text>
+            <RotateCcw size={18} color="#111827" />
+            <Text style={styles.resetBtnText}>START NEW RECOVERY SIMULATION</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -180,100 +184,151 @@ export default function RecoveryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#090d16',
+    backgroundColor: '#F8F9FA',
   },
   bannerHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0f172a',
-    borderRadius: 14,
-    borderWidth: 1.5,
-    borderColor: '#f59e0b',
-    padding: 14,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    padding: 16,
     gap: 12,
     marginBottom: 14,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  bannerIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#FFFBEB',
+    borderWidth: 1,
+    borderColor: '#FEF3C7',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   bannerCategory: {
-    fontSize: 9,
-    fontWeight: '800',
-    color: '#f59e0b',
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#B45309',
     letterSpacing: 0.8,
   },
   bannerTitle: {
-    fontSize: 16,
-    fontWeight: '900',
-    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#111827',
+    marginTop: 2,
   },
   priorityBadge: {
-    backgroundColor: '#dc2626',
-    paddingHorizontal: 8,
+    backgroundColor: '#FEF2F2',
+    paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: 9999,
+    borderWidth: 1,
+    borderColor: '#FEE2E2',
   },
   priorityText: {
-    color: '#ffffff',
+    color: '#B91C1C',
     fontSize: 10,
-    fontWeight: '900',
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   specCard: {
-    backgroundColor: '#0f172a',
-    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#1e293b',
-    padding: 14,
-    marginBottom: 18,
+    borderColor: '#E5E7EB',
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 1,
   },
   specRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 6,
+    paddingVertical: 8,
   },
   specLabel: {
     fontSize: 12,
-    color: '#94a3b8',
-    fontWeight: '600',
+    color: '#6B7280',
+    fontWeight: '500',
   },
   specValue: {
-    fontSize: 12.5,
-    color: '#f8fafc',
-    fontWeight: '700',
+    fontSize: 13,
+    color: '#111827',
+    fontWeight: '600',
   },
   specValueHighlight: {
-    fontSize: 14,
-    color: '#38bdf8',
-    fontWeight: '800',
+    fontSize: 13,
+    color: '#111827',
+    fontWeight: '700',
   },
   specValueReason: {
-    fontSize: 11.5,
-    color: '#fbbf24',
+    fontSize: 12,
+    color: '#B45309',
+    fontWeight: '500',
     maxWidth: '60%',
     textAlign: 'right',
   },
+  statusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 9999,
+  },
+  statusBadgeGreen: {
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1,
+    borderColor: '#DCFCE7',
+  },
+  statusBadgeAmber: {
+    backgroundColor: '#FFFBEB',
+    borderWidth: 1,
+    borderColor: '#FEF3C7',
+  },
   statusText: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#f59e0b',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  statusTextGreen: {
+    color: '#15803D',
+  },
+  statusTextAmber: {
+    color: '#B45309',
   },
   divider: {
     height: 1,
-    backgroundColor: '#1e293b',
-    marginVertical: 4,
+    backgroundColor: '#F3F4F6',
   },
   sectionTitle: {
-    fontSize: 10.5,
-    fontWeight: '800',
-    color: '#94a3b8',
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#6B7280',
     letterSpacing: 0.8,
     marginBottom: 10,
+    marginLeft: 4,
   },
   timelineCard: {
-    backgroundColor: '#0f172a',
-    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#E5E7EB',
     padding: 16,
-    marginBottom: 18,
+    marginBottom: 16,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 1,
   },
   timelineStep: {
     flexDirection: 'row',
@@ -283,84 +338,132 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#334155',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
+  stepInactive: {
+    backgroundColor: '#F3F4F6',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
   stepDone: {
-    backgroundColor: '#0284c7',
+    backgroundColor: '#111827',
   },
   stepInfo: {
     flex: 1,
   },
   stepTitle: {
     fontSize: 13,
-    fontWeight: '800',
-    color: '#f8fafc',
+    fontWeight: '700',
+    color: '#111827',
   },
   stepLoc: {
-    fontSize: 11.5,
-    color: '#94a3b8',
+    fontSize: 12,
+    color: '#4B5563',
     marginTop: 2,
   },
   stepStatus: {
     fontSize: 10,
-    fontWeight: '800',
-    color: '#38bdf8',
+    fontWeight: '700',
     marginTop: 3,
+    letterSpacing: 0.4,
+  },
+  stepStatusGreen: {
+    color: '#15803D',
+  },
+  stepStatusAmber: {
+    color: '#B45309',
+  },
+  stepStatusMuted: {
+    color: '#9CA3AF',
   },
   stepLine: {
     width: 2,
     height: 24,
-    backgroundColor: '#334155',
+    backgroundColor: '#E5E7EB',
     marginLeft: 15,
-    marginVertical: 4,
+    marginVertical: 2,
   },
   actionsContainer: {
     gap: 10,
-    marginBottom: 20,
+    marginBottom: 24,
   },
   triggerBtn: {
     flexDirection: 'row',
-    backgroundColor: '#dc2626',
+    backgroundColor: '#111827',
+    borderRadius: 9999,
     paddingVertical: 14,
-    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  triggerBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   confirmArrivalBtn: {
     flexDirection: 'row',
-    backgroundColor: '#f59e0b',
+    backgroundColor: '#111827',
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: 9999,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  actionBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   finishBtn: {
     flexDirection: 'row',
-    backgroundColor: '#10b981',
+    backgroundColor: '#15803D',
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: 9999,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  finishBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   resetBtn: {
     flexDirection: 'row',
-    backgroundColor: '#0284c7',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: 9999,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
   },
-  actionBtnText: {
-    color: '#ffffff',
+  resetBtnText: {
+    color: '#111827',
     fontSize: 13,
-    fontWeight: '900',
-    letterSpacing: 0.6,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
 });

@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Truck, ShieldAlert, Radio, List } from 'lucide-react-native';
 import { DriverProfile } from '../types/navigation';
+import { COLORS } from '../config/theme';
 
 interface NavigationHeaderProps {
   driver: DriverProfile;
@@ -25,7 +26,7 @@ export const NavigationHeader: React.FC<NavigationHeaderProps> = ({
       {/* Driver & Truck Badge */}
       <View style={styles.driverInfo}>
         <View style={styles.truckIconBox}>
-          <Truck size={18} color="#38bdf8" />
+          <Truck size={16} color={COLORS.textPrimary} />
         </View>
         <View>
           <Text style={styles.truckId}>{driver.truckId}</Text>
@@ -41,8 +42,8 @@ export const NavigationHeader: React.FC<NavigationHeaderProps> = ({
           onPress={onToggleSimulation}
           activeOpacity={0.7}
         >
-          <Radio size={12} color={isSimulating ? '#f59e0b' : '#10b981'} />
-          <Text style={[styles.badgeText, { color: isSimulating ? '#f59e0b' : '#10b981' }]}>
+          <Radio size={12} color={isSimulating ? COLORS.warning : COLORS.success} />
+          <Text style={[styles.badgeText, { color: isSimulating ? COLORS.warning : COLORS.success }]}>
             {isSimulating ? 'SIM' : 'GPS'}
           </Text>
         </TouchableOpacity>
@@ -54,7 +55,7 @@ export const NavigationHeader: React.FC<NavigationHeaderProps> = ({
           activeOpacity={0.7}
           accessibilityLabel="Warehouses"
         >
-          <List size={16} color="#94a3b8" />
+          <List size={16} color={COLORS.textPrimary} />
         </TouchableOpacity>
 
         {/* Urgent Recovery Trigger Button */}
@@ -63,8 +64,10 @@ export const NavigationHeader: React.FC<NavigationHeaderProps> = ({
           onPress={onTriggerRecovery}
           activeOpacity={0.8}
         >
-          <ShieldAlert size={14} color="#ffffff" />
-          <Text style={styles.recoveryBtnText}>RECOVERY</Text>
+          <ShieldAlert size={14} color={hasActiveRecovery ? '#FFFFFF' : COLORS.error} />
+          <Text style={[styles.recoveryBtnText, hasActiveRecovery && styles.recoveryActiveBtnText]}>
+            RECOVERY
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -74,24 +77,24 @@ export const NavigationHeader: React.FC<NavigationHeaderProps> = ({
 const styles = StyleSheet.create({
   headerContainer: {
     position: 'absolute',
-    top: 12,
-    left: 14,
-    right: 14,
+    top: 14,
+    left: 16,
+    right: 16,
     zIndex: 100,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: 'rgba(15, 23, 42, 0.94)',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.28)',
-    borderRadius: 14,
-    paddingHorizontal: 12,
+    borderColor: '#E5E7EB',
+    borderRadius: 16,
+    paddingHorizontal: 14,
     paddingVertical: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.6,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
     shadowRadius: 8,
-    elevation: 8,
+    elevation: 3,
   },
   driverInfo: {
     flexDirection: 'row',
@@ -99,22 +102,25 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   truckIconBox: {
-    width: 34,
-    height: 34,
-    borderRadius: 8,
-    backgroundColor: '#0c4a6e',
+    width: 32,
+    height: 32,
+    borderRadius: 9999,
+    backgroundColor: '#F3F4F6',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   truckId: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '800',
-    color: '#f8fafc',
-    letterSpacing: 0.6,
+    color: '#111827',
+    letterSpacing: -0.1,
   },
   driverName: {
     fontSize: 11,
-    color: '#94a3b8',
+    color: '#6B7280',
+    fontWeight: '500',
   },
   actionGroup: {
     flexDirection: 'row',
@@ -125,55 +131,56 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 9999,
     borderWidth: 1,
   },
   gpsBadge: {
-    backgroundColor: 'rgba(16, 185, 129, 0.12)',
-    borderColor: '#10b981',
+    backgroundColor: '#F0FDF4',
+    borderColor: '#DCFCE7',
   },
   simBadge: {
-    backgroundColor: 'rgba(245, 158, 11, 0.12)',
-    borderColor: '#f59e0b',
+    backgroundColor: '#FFFBEB',
+    borderColor: '#FEF3C7',
   },
   badgeText: {
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.5,
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.2,
   },
   iconBtn: {
     width: 32,
     height: 32,
-    borderRadius: 8,
-    backgroundColor: '#1e293b',
+    borderRadius: 9999,
+    backgroundColor: '#F3F4F6',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#E5E7EB',
   },
   recoveryTriggerBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: '#dc2626',
-    paddingHorizontal: 10,
+    backgroundColor: '#FEF2F2',
+    paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 8,
-    shadowColor: '#dc2626',
-    shadowOpacity: 0.5,
-    shadowRadius: 4,
-    elevation: 4,
+    borderRadius: 9999,
+    borderWidth: 1,
+    borderColor: '#FEE2E2',
   },
   recoveryActiveBtn: {
-    backgroundColor: '#d97706',
-    shadowColor: '#d97706',
+    backgroundColor: '#B91C1C',
+    borderColor: '#B91C1C',
   },
   recoveryBtnText: {
-    color: '#ffffff',
+    color: '#B91C1C',
     fontSize: 10.5,
-    fontWeight: '800',
-    letterSpacing: 0.6,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  recoveryActiveBtnText: {
+    color: '#FFFFFF',
   },
 });
