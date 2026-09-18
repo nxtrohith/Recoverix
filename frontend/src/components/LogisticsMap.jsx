@@ -44,6 +44,7 @@ export default function LogisticsMap({
   selectedShipment,
   selectedVehicle,
   recoveryAnalysis,
+  activeIncident,
   focusNodeId,
 }) {
   const nodeById = useMemo(() => {
@@ -65,13 +66,20 @@ export default function LogisticsMap({
       .filter(Boolean);
   }, [graph, nodeById]);
 
-  const recoveryPath = recoveryAnalysis?.selectedRecovery?.path || [];
+  // Prefer assigned incident path (persisted) over ephemeral analysis selection
+  const recoveryPath =
+    (activeIncident?.status === 'ASSIGNED' && activeIncident?.recoveryPath?.length
+      ? activeIncident.recoveryPath
+      : null) ||
+    recoveryAnalysis?.selectedRecovery?.path ||
+    [];
   const recoveryLatLngs = useMemo(() => {
     return recoveryPath
       .map((id) => nodeLatLng(nodeById.get(id)))
       .filter(Boolean);
   }, [recoveryPath, nodeById]);
 
+  const shipmentOrigin = nodeLatLng(nodeById.get(selectedShipment?.originNode));
   const shipmentCurrent = nodeLatLng(
     nodeById.get(selectedShipment?.currentNode),
   );
@@ -79,10 +87,28 @@ export default function LogisticsMap({
     nodeById.get(selectedShipment?.destinationNode),
   );
 
-  const recoveryVehicleId = recoveryAnalysis?.selectedRecovery?.vehicleId;
+  const incidentHub = nodeLatLng(nodeById.get(activeIncident?.hubName));
+
+  const recoveryVehicleId =
+    activeIncident?.recoveryVehicleId ||
+    recoveryAnalysis?.selectedRecovery?.vehicleId;
+  const affectedVehicleId = activeIncident?.vehicleId;
   const recoveryVehicle =
     vehicles.find((v) => v.id === recoveryVehicleId) ||
     (selectedVehicle?.id === recoveryVehicleId ? selectedVehicle : null);
+
+  const plannedCorridor = useMemo(() => {
+    const pts = [];
+    if (shipmentOrigin) pts.push(shipmentOrigin);
+    if (shipmentCurrent) pts.push(shipmentCurrent);
+    if (shipmentDest) pts.push(shipmentDest);
+    return pts;
+  }, [shipmentOrigin, shipmentCurrent, shipmentDest]);
+
+  const hasIncident =
+    Boolean(activeIncident) &&
+    activeIncident.status &&
+    activeIncident.status !== 'RESOLVED';
 
   const fitPositions = useMemo(() => {
     const pts = [];
@@ -90,8 +116,10 @@ export default function LogisticsMap({
       const p = nodeLatLng(nodeById.get(focusNodeId));
       if (p) pts.push(p);
     }
+    if (shipmentOrigin) pts.push(shipmentOrigin);
     if (shipmentCurrent) pts.push(shipmentCurrent);
     if (shipmentDest) pts.push(shipmentDest);
+    if (incidentHub) pts.push(incidentHub);
     pts.push(...recoveryLatLngs);
     if (selectedVehicle?.currentNode) {
       const p = nodeLatLng(nodeById.get(selectedVehicle.currentNode));
@@ -107,8 +135,10 @@ export default function LogisticsMap({
   }, [
     focusNodeId,
     nodeById,
+    shipmentOrigin,
     shipmentCurrent,
     shipmentDest,
+    incidentHub,
     recoveryLatLngs,
     selectedVehicle,
     graph,
@@ -151,6 +181,7 @@ export default function LogisticsMap({
         <span><i className="swatch ship" /> shipment</span>
         <span><i className="swatch dest" /> destination</span>
         <span><i className="swatch recovery" /> recovery path</span>
+        {hasIncident ? <span><i className="swatch incident" /> incident hub</span> : null}
       </div>
       <div className="map-canvas">
         <MapContainer
@@ -173,25 +204,40 @@ export default function LogisticsMap({
             />
           ))}
 
+          {/* Planned corridor: Origin → Current → Destination (pre-recovery) */}
+          {!recoveryLatLngs.length && plannedCorridor.length >= 2 ? (
+            <Polyline
+              positions={plannedCorridor}
+              pathOptions={{
+                color: hasIncident ? '#be123c' : '#64748b',
+                weight: hasIncident ? 4 : 3,
+                opacity: 0.85,
+                dashArray: hasIncident ? '8 6' : undefined,
+              }}
+            />
+          ) : null}
+
           {(graph.nodes || []).map((n) => {
             const pos = nodeLatLng(n);
             if (!pos) return null;
+            const onRecovery = recoveryPath.includes(n.id);
             return (
               <CircleMarker
                 key={n.id}
                 center={pos}
-                radius={5}
+                radius={onRecovery ? 7 : 5}
                 pathOptions={{
-                  color: '#1e293b',
-                  fillColor: '#64748b',
+                  color: onRecovery ? '#c2410c' : '#1e293b',
+                  fillColor: onRecovery ? '#fb923c' : '#64748b',
                   fillOpacity: 0.85,
-                  weight: 1,
+                  weight: onRecovery ? 2 : 1,
                 }}
               >
                 <Popup>
                   <strong>{n.name || n.id}</strong>
                   <br />
                   {n.type} · {n.district}
+                  {onRecovery ? ' · recovery hub' : ''}
                 </Popup>
               </CircleMarker>
             );
@@ -201,15 +247,24 @@ export default function LogisticsMap({
             const pos = nodeLatLng(nodeById.get(v.currentNode));
             if (!pos) return null;
             const isRecovery = recoveryVehicleId && v.id === recoveryVehicleId;
+            const isAffected = affectedVehicleId && v.id === affectedVehicleId;
             const isSelected = selectedVehicle?.id === v.id;
             return (
               <CircleMarker
                 key={`v-${v.id}`}
                 center={pos}
-                radius={isRecovery || isSelected ? 9 : 6}
+                radius={isRecovery || isAffected || isSelected ? 9 : 6}
                 pathOptions={{
-                  color: isRecovery ? '#b45309' : '#0369a1',
-                  fillColor: isRecovery ? '#f59e0b' : '#38bdf8',
+                  color: isRecovery
+                    ? '#b45309'
+                    : isAffected
+                      ? '#9f1239'
+                      : '#0369a1',
+                  fillColor: isRecovery
+                    ? '#f59e0b'
+                    : isAffected
+                      ? '#fb7185'
+                      : '#38bdf8',
                   fillOpacity: 0.95,
                   weight: 2,
                 }}
@@ -219,24 +274,44 @@ export default function LogisticsMap({
                   <br />
                   {v.status}
                   {isRecovery ? ' · RECOVERY VEHICLE' : ''}
+                  {isAffected && !isRecovery ? ' · AFFECTED VEHICLE' : ''}
                 </Popup>
               </CircleMarker>
             );
           })}
 
-          {shipmentCurrent ? (
+          {shipmentOrigin && !hasIncident ? (
             <CircleMarker
-              center={shipmentCurrent}
-              radius={10}
+              center={shipmentOrigin}
+              radius={8}
               pathOptions={{
-                color: '#9f1239',
-                fillColor: '#e11d48',
+                color: '#334155',
+                fillColor: '#94a3b8',
                 fillOpacity: 1,
                 weight: 2,
               }}
             >
               <Popup>
-                Shipment current
+                Origin
+                <br />
+                {selectedShipment?.origin || selectedShipment?.originNode}
+              </Popup>
+            </CircleMarker>
+          ) : null}
+
+          {shipmentCurrent ? (
+            <CircleMarker
+              center={shipmentCurrent}
+              radius={hasIncident ? 12 : 10}
+              pathOptions={{
+                color: '#9f1239',
+                fillColor: '#e11d48',
+                fillOpacity: 1,
+                weight: hasIncident ? 3 : 2,
+              }}
+            >
+              <Popup>
+                {hasIncident ? 'Incident hub / shipment current' : 'Shipment current'}
                 <br />
                 {selectedShipment?.trackingNumber || selectedShipment?.id}
               </Popup>
@@ -314,3 +389,4 @@ export default function LogisticsMap({
     </section>
   );
 }
+

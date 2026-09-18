@@ -64,6 +64,16 @@ export {
 } from './ShipmentEvent.js';
 
 export {
+  Incident,
+  INCIDENT_TYPES,
+  INCIDENT_STATUSES,
+  type IIncident,
+  type IncidentDocument,
+  type IncidentType,
+  type IncidentStatus,
+} from './Incident.js';
+
+export {
   capacitySchema,
   coordinatesSchema,
   recoveryScoresSchema,

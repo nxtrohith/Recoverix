@@ -54,6 +54,11 @@
       "dependsOn": ["models.Shipment", "models.Location", "models.Route", "models.Vehicle"]
     },
     {
+      "id": "models.Incident",
+      "path": "src/models/Incident.ts",
+      "dependsOn": ["models.Shipment", "models.Vehicle", "models.Location", "models.RecoveryCase"]
+    },
+    {
       "id": "models.index",
       "path": "src/models/index.ts",
       "dependsOn": [
@@ -64,6 +69,7 @@
         "models.RecoveryCase",
         "models.RecoveryOption",
         "models.ShipmentEvent",
+        "models.Incident",
         "models.shared"
       ]
     },
@@ -80,6 +86,16 @@
     {
       "id": "services.recoveryProxy",
       "path": "src/services/recoveryProxy.js",
+      "dependsOn": []
+    },
+    {
+      "id": "graph.incident_service",
+      "path": "graph/incident_service.py",
+      "dependsOn": ["graph.recovery_orchestrator", "graph.services.driver_communication"]
+    },
+    {
+      "id": "graph.services.driver_communication",
+      "path": "graph/services/driver_communication.py",
       "dependsOn": []
     },
     {

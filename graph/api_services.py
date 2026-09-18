@@ -38,6 +38,12 @@ from graph.api_models import (
     VehicleListResponse,
 )
 from graph.graph_cache import cache_status, get_db, get_graph
+from graph.incident_service import (
+    _lifecycle_status,
+    get_active_incident_for_shipment,
+    get_latest_incident_for_shipment,
+    serialize_incident,
+)
 from graph.shipment_state import MISPLACED_STATUSES, DELAYED_STATUSES
 
 
@@ -90,7 +96,8 @@ def _load_routes_map(db: Database, ids: list[Any]) -> dict[str, dict[str, Any]]:
     """Return a dict keyed by str(ObjectId) → route document (minimal fields)."""
     oids = [o for o in (_to_oid(i) for i in ids) if o is not None]
     if not oids:
-        return {}
+        return {}t
+        
     docs = db["routes"].find({"_id": {"$in": oids}}, {"destination": 1})
     return {str(doc["_id"]): doc for doc in docs}
 
@@ -479,6 +486,32 @@ def get_shipment_detail(db: Database, shipment_id: str) -> ShipmentDetailRespons
     is_delayed = status in DELAYED_STATUSES
     needs_recovery = is_misplaced or is_delayed
 
+    active_incident = get_active_incident_for_shipment(db, ship_oid)
+    incident_doc = active_incident
+    # Include latest resolved incident only while shipment is still recovered
+    if incident_doc is None and status == "recovered":
+        incident_doc = get_latest_incident_for_shipment(db, ship_oid)
+
+    incident_payload = None
+    if incident_doc is not None:
+        incident_payload = serialize_incident(db, incident_doc)
+        incident_payload["lifecycleStatus"] = _lifecycle_status(status, incident_doc)
+
+    lifecycle = _lifecycle_status(status, active_incident or (
+        incident_doc if status == "recovered" else None
+    ))
+    if lifecycle in ("MISPLACED", "RECOVERY_ANALYSIS", "RECOVERY_ASSIGNED"):
+        needs_recovery = True
+
+    assigned_vehicle_id = doc.get("assignedVehicle")
+    assigned_vehicle_number = None
+    if assigned_vehicle_id is not None:
+        vdoc = db["vehicles"].find_one(
+            {"_id": _to_oid(assigned_vehicle_id)}, {"vehicleNumber": 1}
+        )
+        if vdoc:
+            assigned_vehicle_number = vdoc.get("vehicleNumber")
+
     return ShipmentDetailResponse(
         id=str(ship_oid),
         trackingNumber=doc.get("trackingNumber", ""),
@@ -502,4 +535,8 @@ def get_shipment_detail(db: Database, shipment_id: str) -> ShipmentDetailRespons
         events=events,
         createdAt=_iso(doc.get("createdAt")),
         updatedAt=_iso(doc.get("updatedAt")),
+        lifecycleStatus=lifecycle,
+        assignedVehicleId=str(assigned_vehicle_id) if assigned_vehicle_id else None,
+        assignedVehicleNumber=assigned_vehicle_number,
+        activeIncident=incident_payload,
     )

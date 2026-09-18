@@ -23,6 +23,7 @@ Seven Mongoose collections under `src/models/`:
 | `RecoveryCase` | Misplaced-shipment recovery case |
 | `RecoveryOption` | Ranked piggyback strategy candidates (core decision schema) |
 | `ShipmentEvent` | Shipment tracking history |
+| `Incident` | Live demo incident record (simulate → assign → resolve) |
 
 Shared subdocuments live in `src/models/shared.ts`: `capacity`, `coordinates`, `recoveryScores`.
 
@@ -126,12 +127,20 @@ to FastAPI transparently.
 | `GET` | `/api/vehicles` | All vehicles with capacity, load, location, and route info |
 | `GET` | `/api/vehicles/:vehicleId` | Single vehicle detail + NetworkX shortest path to destination |
 | `GET` | `/api/shipments` | Lightweight shipment list for admin dashboard |
-| `GET` | `/api/shipments/:shipmentId` | Full shipment detail + recent tracking events |
+| `GET` | `/api/shipments/:shipmentId` | Full shipment detail + recent tracking events + active incident |
 | `GET` | `/api/recovery/:shipmentId` | Full recovery analysis JSON |
+| `POST` | `/api/recovery/:shipmentId/calculate` | Same pipeline (explicit calculate verb) |
+| `POST` | `/api/recovery/:shipmentId/assign` | Assign a recovery candidate + driver notification |
+| `POST` | `/api/recovery/:shipmentId/resolve` | Mark recovered / resolve incident |
 | `POST` | `/api/recovery/analyze/:shipmentId` | Same as GET (explicit analyze) |
 | `POST` | `/api/recovery/graph/refresh` | Rebuild in-memory NetworkX graph from MongoDB |
+| `POST` | `/api/incidents/simulate` | Simulate MISPLACED_SHIPMENT on an existing shipment |
+| `GET` | `/api/incidents/active` | Active incidents for dashboard alerts |
+| `GET` | `/api/incidents/by-shipment/:shipmentId` | Latest incident for a shipment |
 
 Recovery response `status` values: `RECOVERY_PLAN_AVAILABLE` | `NO_FEASIBLE_RECOVERY`.
+
+Incident lifecycle (computed + persisted): `NORMAL` → `MISPLACED` → `RECOVERY_ANALYSIS` → `RECOVERY_ASSIGNED` → `RECOVERED`.
 
 ### API module layout
 
@@ -140,6 +149,8 @@ Recovery response `status` values: `RECOVERY_PLAN_AVAILABLE` | `NO_FEASIBLE_RECO
 | `graph/api_models.py` | Pydantic response models (strict types, JSON-safe) |
 | `graph/api_services.py` | Service layer — MongoDB batch queries + data assembly |
 | `graph/api_server.py` | FastAPI routes + CORS + error handlers |
+| `graph/incident_service.py` | Simulate / assign / resolve incident workflow (MongoDB) |
+| `graph/services/driver_communication.py` | Driver notification integration point (log stub) |
 
 **CORS:** Controlled by the `CORS_ORIGINS` env var (comma-separated). Defaults to
 `localhost:3000/3001/5173/5174`. Set `CORS_ORIGINS=*` for permissive hackathon deployment.
@@ -153,11 +164,11 @@ Functional admin dashboard (intentionally basic UI):
 
 | Path | Role |
 | --- | --- |
-| `frontend/src/api/client.js` | Centralized FastAPI client (`getHealth`, `getGraph`, `getHubs`, `getVehicles`, `getShipments`, `getShipment`, `getVehicle`, `getRecoveryAnalysis`) |
-| `frontend/src/App.jsx` | Dashboard state + recovery workflow |
-| `frontend/src/components/*` | Header, MetricsBar, SearchPanel, LogisticsMap (Leaflet), ShipmentPanel, VehiclePanel, RecoveryCandidates, RecoveryPlan |
+| `frontend/src/api/client.js` | Centralized FastAPI client (health, graph, hubs, vehicles, shipments, recovery, incidents) |
+| `frontend/src/App.jsx` | Dashboard state + incident → recovery → resolve workflow |
+| `frontend/src/components/*` | Header, MetricsBar, SearchPanel, LogisticsMap, ShipmentPanel, VehiclePanel, IncidentAlert, RecoveryCandidates, RecoveryPlan |
 
-Map data comes only from `GET /api/graph` (node lat/lon + edges). Recovery path highlighting uses `selectedRecovery.path` from `GET /api/recovery/:id` — no client-side routing/scoring.
+Map data comes only from `GET /api/graph` (node lat/lon + edges). Recovery path highlighting uses assigned incident `recoveryPath` or `selectedRecovery.path` from analysis — no client-side routing/scoring.
 
 ## Out of scope (for now)
 

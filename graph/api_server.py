@@ -13,8 +13,14 @@ Endpoints
   GET  /api/shipments
   GET  /api/shipments/{shipment_id}
   GET  /api/recovery/{shipment_id}
+  POST /api/recovery/{shipment_id}/calculate
+  POST /api/recovery/{shipment_id}/assign
+  POST /api/recovery/{shipment_id}/resolve
   POST /api/recovery/analyze/{shipment_id}
   POST /api/recovery/graph/refresh
+  POST /api/incidents/simulate
+  GET  /api/incidents/active
+  GET  /api/incidents/by-shipment/{shipment_id}
 
 Layer:
   FastAPI routes
@@ -39,6 +45,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from graph.api_models import (
+    AssignRecoveryRequest,
     ErrorDetail,
     ErrorResponse,
     GraphResponse,
@@ -47,6 +54,7 @@ from graph.api_models import (
     HubListResponse,
     ShipmentDetailResponse,
     ShipmentListResponse,
+    SimulateIncidentRequest,
     VehicleDetailResponse,
     VehicleListResponse,
 )
@@ -60,6 +68,12 @@ from graph.api_services import (
     get_vehicle_detail,
 )
 from graph.graph_cache import cache_status, get_db, get_graph, refresh_graph
+from graph.incident_service import (
+    assign_recovery,
+    list_active_incidents,
+    resolve_recovery,
+    simulate_misplaced_incident,
+)
 from graph.recovery_orchestrator import (
     RecoveryError,
     analyze_shipment_recovery,
@@ -372,7 +386,92 @@ def get_recovery(shipment_id: str) -> dict[str, Any]:
     Returns the shipment, all candidates with scores, the selected recovery
     plan, estimated distance / time / cost, and a human-readable explanation.
     """
-    return analyze_shipment_recovery(shipment_id)
+    result = analyze_shipment_recovery(shipment_id)
+    _stamp_incident_analysis(shipment_id, result.get("status"))
+    return result
+
+
+@app.post(
+    "/api/recovery/{shipment_id}/calculate",
+    summary="Calculate recovery options for a shipment",
+    tags=["recovery"],
+)
+def post_calculate_recovery(shipment_id: str) -> dict[str, Any]:
+    """Explicit calculate verb — same pipeline as GET /api/recovery/{id}."""
+    result = analyze_shipment_recovery(shipment_id)
+    _stamp_incident_analysis(shipment_id, result.get("status"))
+    return result
+
+
+def _stamp_incident_analysis(shipment_id: str, analysis_status: str | None) -> None:
+    """Persist analysis status onto the active incident for lifecycle display."""
+    if not analysis_status:
+        return
+    try:
+        from graph.incident_service import (
+            _find_shipment,
+            get_active_incident_for_shipment,
+        )
+
+        db = get_db()
+        shipment = _find_shipment(db, shipment_id)
+        if shipment is None:
+            return
+        incident = get_active_incident_for_shipment(db, shipment["_id"])
+        if incident is None:
+            return
+        from datetime import datetime, timezone
+
+        now = datetime.now(tz=timezone.utc)
+        db["incidents"].update_one(
+            {"_id": incident["_id"]},
+            {"$set": {"analysisStatus": analysis_status, "updatedAt": now}},
+        )
+        if analysis_status == "RECOVERY_PLAN_AVAILABLE" and incident.get("recoveryCase"):
+            db["recoverycases"].update_one(
+                {"_id": incident["recoveryCase"]},
+                {"$set": {"status": "options_generated", "updatedAt": now}},
+            )
+    except Exception:
+        # Non-fatal — analysis response is still returned
+        pass
+
+
+
+@app.post(
+    "/api/recovery/{shipment_id}/assign",
+    summary="Assign a recovery option to a shipment",
+    tags=["recovery"],
+)
+def post_assign_recovery(
+    shipment_id: str,
+    body: AssignRecoveryRequest | None = None,
+) -> dict[str, Any]:
+    """
+    Validate and assign a recovery candidate, update incident/shipment state,
+    and trigger the driver communication integration point.
+    """
+    payload = body or AssignRecoveryRequest()
+    db = get_db()
+    return assign_recovery(
+        db,
+        shipment_id,
+        candidate_id=payload.candidateId,
+        vehicle_id=payload.vehicleId,
+        path=payload.path,
+        pickup_case=payload.pickupCase,
+    )
+
+
+@app.post(
+    "/api/recovery/{shipment_id}/resolve",
+    summary="Mark shipment recovery as completed",
+    tags=["recovery"],
+)
+def post_resolve_recovery(shipment_id: str) -> dict[str, Any]:
+    """Set shipment → recovered and incident → RESOLVED."""
+    db = get_db()
+    return resolve_recovery(db, shipment_id)
 
 
 @app.post(
@@ -415,6 +514,70 @@ def post_refresh_graph() -> Any:
 
 
 # ---------------------------------------------------------------------------
+# Incidents
+# ---------------------------------------------------------------------------
+
+
+@app.post(
+    "/api/incidents/simulate",
+    summary="Simulate a misplaced-shipment incident",
+    tags=["incidents"],
+)
+def post_simulate_incident(body: SimulateIncidentRequest) -> dict[str, Any]:
+    """
+    Mark an existing shipment as misplaced, record an incident, and trigger
+    the recovery engine. Does not create fake shipment records.
+    """
+    db = get_db()
+    return simulate_misplaced_incident(
+        db,
+        body.shipment_id,
+        auto_analyze=body.auto_analyze,
+    )
+
+
+@app.get(
+    "/api/incidents/active",
+    summary="List active (unresolved) incidents",
+    tags=["incidents"],
+)
+def get_active_incidents() -> dict[str, Any]:
+    """Return open / recovery-required / assigned incidents for the dashboard."""
+    db = get_db()
+    return list_active_incidents(db)
+
+
+@app.get(
+    "/api/incidents/by-shipment/{shipment_id}",
+    summary="Get latest incident for a shipment",
+    tags=["incidents"],
+)
+def get_incident_by_shipment(shipment_id: str) -> dict[str, Any]:
+    from graph.incident_service import (
+        _find_shipment,
+        _lifecycle_status,
+        get_latest_incident_for_shipment,
+        serialize_incident,
+    )
+
+    db = get_db()
+    shipment = _find_shipment(db, shipment_id)
+    if shipment is None:
+        raise HTTPException(status_code=404, detail=f"Shipment not found: {shipment_id}")
+    incident = get_latest_incident_for_shipment(db, shipment["_id"])
+    if incident is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No incident for shipment: {shipment_id}",
+        )
+    payload = serialize_incident(db, incident)
+    payload["lifecycleStatus"] = _lifecycle_status(
+        shipment.get("status", ""), incident
+    )
+    return {"incident": payload}
+
+
+# ---------------------------------------------------------------------------
 # Server entry point
 # ---------------------------------------------------------------------------
 
@@ -429,6 +592,11 @@ def serve(host: str = "127.0.0.1", port: int = 5055) -> None:
     print("  GET  /api/shipments", flush=True)
     print("  GET  /api/shipments/{shipment_id}", flush=True)
     print("  GET  /api/recovery/{shipment_id}", flush=True)
+    print("  POST /api/recovery/{shipment_id}/calculate", flush=True)
+    print("  POST /api/recovery/{shipment_id}/assign", flush=True)
+    print("  POST /api/recovery/{shipment_id}/resolve", flush=True)
+    print("  POST /api/incidents/simulate", flush=True)
+    print("  GET  /api/incidents/active", flush=True)
     print("  POST /api/recovery/analyze/{shipment_id}", flush=True)
     print("  POST /api/recovery/graph/refresh", flush=True)
     print("  docs /docs", flush=True)

@@ -7,12 +7,43 @@ function Field({ label, value }) {
   );
 }
 
+const LIFECYCLE_STEPS = [
+  'NORMAL',
+  'MISPLACED',
+  'RECOVERY_ANALYSIS',
+  'RECOVERY_ASSIGNED',
+  'RECOVERED',
+];
+
+function LifecycleBar({ current }) {
+  const active = current || 'NORMAL';
+  const idx = LIFECYCLE_STEPS.indexOf(active);
+  return (
+    <div className="lifecycle-bar" aria-label={`Lifecycle status ${active}`}>
+      {LIFECYCLE_STEPS.map((step, i) => (
+        <span
+          key={step}
+          className={`lifecycle-step ${i === idx ? 'lifecycle-active' : ''} ${
+            i < idx ? 'lifecycle-done' : ''
+          }`}
+        >
+          {step.replace(/_/g, ' ')}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 export default function ShipmentPanel({
   shipment,
   loading,
   error,
   onAnalyze,
   analyzing,
+  onSimulateIncident,
+  simulating,
+  onMarkRecovered,
+  resolving,
 }) {
   if (loading) {
     return (
@@ -42,28 +73,52 @@ export default function ShipmentPanel({
   }
 
   const latestEvent = shipment.events?.[0];
+  const lifecycle = shipment.lifecycleStatus || 'NORMAL';
   const flags = [];
   if (shipment.needsRecovery) flags.push('NEEDS RECOVERY');
-  if (String(shipment.status || '').toLowerCase().includes('misplaced')) {
-    flags.push('MISPLACED');
-  }
-  if (String(shipment.status || '').toLowerCase().includes('delay')) {
-    flags.push('DELAYED');
-  }
+  if (lifecycle !== 'NORMAL') flags.push(lifecycle.replace(/_/g, ' '));
+
+  const canSimulate =
+    lifecycle === 'NORMAL' || lifecycle === 'RECOVERED' || !shipment.needsRecovery;
+  const canResolve = lifecycle === 'RECOVERY_ASSIGNED';
 
   return (
     <section className="panel shipment-panel">
       <div className="panel-header-row">
         <h2>Shipment</h2>
-        <button
-          type="button"
-          className="primary"
-          onClick={onAnalyze}
-          disabled={analyzing}
-        >
-          {analyzing ? 'Analyzing…' : 'Analyze Recovery'}
-        </button>
+        <div className="panel-actions">
+          {canSimulate ? (
+            <button
+              type="button"
+              className="danger"
+              onClick={onSimulateIncident}
+              disabled={simulating}
+            >
+              {simulating ? 'Simulating…' : 'Simulate Incident'}
+            </button>
+          ) : null}
+          <button
+            type="button"
+            className="primary"
+            onClick={onAnalyze}
+            disabled={analyzing}
+          >
+            {analyzing ? 'Analyzing…' : 'Analyze Recovery'}
+          </button>
+          {canResolve ? (
+            <button
+              type="button"
+              className="primary"
+              onClick={onMarkRecovered}
+              disabled={resolving}
+            >
+              {resolving ? 'Completing…' : 'Mark Recovered'}
+            </button>
+          ) : null}
+        </div>
       </div>
+
+      <LifecycleBar current={lifecycle} />
 
       {flags.length > 0 ? (
         <div className="status-flags">
@@ -79,10 +134,12 @@ export default function ShipmentPanel({
         <Field label="ID" value={shipment.id} />
         <Field label="Tracking" value={shipment.trackingNumber} />
         <Field label="Status" value={shipment.status} />
+        <Field label="Lifecycle" value={lifecycle} />
         <Field label="Current location" value={shipment.currentLocation} />
         <Field label="Current node" value={shipment.currentNode} />
         <Field label="Destination" value={shipment.destination} />
         <Field label="Destination node" value={shipment.destinationNode} />
+        <Field label="Assigned vehicle" value={shipment.assignedVehicleNumber} />
         <Field label="Priority" value={shipment.priority} />
         <Field label="Deadline" value={shipment.deadline} />
         <Field label="Weight" value={shipment.weight} />
