@@ -9,6 +9,10 @@
     "db:cleanup": "node scripts/cleanup_database.js",
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
+    "frontend": "npm --prefix frontend run dev",
+    "frontend:build": "npm --prefix frontend run build",
+    "recovery:demo": "uv run python scripts/demo_orchestrator.py",
+    "recovery:api": "uv run python -m graph.api_server --host 127.0.0.1 --port 5055",
     "typecheck": "tsc --noEmit",
     "build": "tsc"
   },

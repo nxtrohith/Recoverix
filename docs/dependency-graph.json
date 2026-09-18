@@ -70,7 +70,27 @@
     {
       "id": "app",
       "path": "src/index.js",
-      "dependsOn": ["db"]
+      "dependsOn": ["db", "routes.recovery"]
+    },
+    {
+      "id": "routes.recovery",
+      "path": "src/routes/recovery.js",
+      "dependsOn": ["services.recoveryProxy"]
+    },
+    {
+      "id": "services.recoveryProxy",
+      "path": "src/services/recoveryProxy.js",
+      "dependsOn": []
+    },
+    {
+      "id": "frontend.api",
+      "path": "frontend/src/api/client.js",
+      "dependsOn": []
+    },
+    {
+      "id": "frontend.app",
+      "path": "frontend/src/App.jsx",
+      "dependsOn": ["frontend.api"]
     }
   ]
 }

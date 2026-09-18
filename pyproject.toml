@@ -11,6 +11,8 @@ dependencies = [
     "pandas",
     "pyvis",
     "geopy",
+    "fastapi",
+    "uvicorn[standard]",
 ]
 
 [build-system]
