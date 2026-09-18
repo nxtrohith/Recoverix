@@ -1,81 +1,127 @@
+import { GitBranch, MapPin, Network, Package, Truck } from 'lucide-react'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { KpiCard } from '@/components/ops/KpiCard'
+
+function formatValue(value, loading) {
+  if (loading) return null
+  if (value == null) return '—'
+  return Number(value).toLocaleString('en-IN')
+}
+
+function pad2(n) {
+  if (n == null || Number.isNaN(n)) return '—'
+  return String(n).padStart(2, '0')
+}
+
 export default function MetricsBar({
   hubsCount,
   nodesCount,
   edgesCount,
   vehiclesCount,
   shipmentsCount,
+  inTransitCount,
+  deliveredCount,
+  exceptionCount,
+  misplacedCount,
   loading,
   error,
 }) {
-  const items = [
-    {
-      label: 'Hubs',
-      value: hubsCount,
-      icon: '📍',
-      sub: 'Operational locations',
-    },
-    {
-      label: 'Graph Nodes',
-      value: nodesCount,
-      icon: '🔵',
-      sub: 'Telangana network',
-    },
-    {
-      label: 'Graph Edges',
-      value: edgesCount,
-      icon: '↔️',
-      sub: 'Directed legs',
-    },
-    {
-      label: 'Vehicles',
-      value: vehiclesCount,
-      icon: '🚛',
-      sub: 'Active fleet',
-    },
-    {
-      label: 'Shipments',
-      value: shipmentsCount,
-      icon: '📦',
-      sub: 'Tracked packages',
-    },
-  ];
+  const hasShipmentBreakdown =
+    inTransitCount != null ||
+    deliveredCount != null ||
+    exceptionCount != null ||
+    misplacedCount != null
 
   return (
-    <section aria-label="Network metrics">
+    <section aria-label="Operational metrics" className="flex flex-col gap-3">
       {error ? (
-        <p className="error-text" style={{ marginBottom: 8 }}>
-          ⚠️ {error}
-        </p>
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       ) : null}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(5, 1fr)',
-          gap: 12,
-        }}
-      >
-        {items.map((item) => (
-          <div key={item.label} className="metric-card">
-            <div style={{ fontSize: '1.1rem', lineHeight: 1, marginBottom: 4 }}>
-              {item.icon}
-            </div>
-            <div className="metric-value">
-              {loading ? (
-                <span
-                  className="skeleton"
-                  style={{ display: 'inline-block', width: 40, height: 28 }}
-                />
-              ) : item.value == null ? (
-                '—'
-              ) : (
-                item.value
-              )}
-            </div>
-            <div className="metric-label">{item.label}</div>
-            <div className="metric-sub">{item.sub}</div>
-          </div>
-        ))}
+
+      {hasShipmentBreakdown ? (
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+          <KpiCard
+            featured
+            tone="accent"
+            label="Total shipments"
+            value={formatValue(shipmentsCount, loading)}
+            sub="Tracked packages"
+            loading={loading}
+            icon={<Package className="size-5" strokeWidth={2.2} />}
+          />
+          <KpiCard
+            label="In transit"
+            value={loading ? null : pad2(inTransitCount ?? 0)}
+            sub="Moving now"
+            loading={loading}
+            tone="default"
+          />
+          <KpiCard
+            label="Delivered"
+            value={loading ? null : pad2(deliveredCount ?? 0)}
+            sub="Closed loops"
+            loading={loading}
+            tone="ok"
+          />
+          <KpiCard
+            label="Exceptions"
+            value={loading ? null : pad2(exceptionCount ?? 0)}
+            sub="Needs attention"
+            loading={loading}
+            tone="warn"
+          />
+          <KpiCard
+            label="Misplaced"
+            value={loading ? null : pad2(misplacedCount ?? 0)}
+            sub="Recovery queue"
+            loading={loading}
+            tone="critical"
+            className={misplacedCount > 0 ? 'shadow-shadow' : undefined}
+          />
+        </div>
+      ) : null}
+
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-5">
+        <KpiCard
+          label="Hubs"
+          value={formatValue(hubsCount, loading)}
+          sub="Operational locations"
+          loading={loading}
+          icon={<MapPin className="size-4" />}
+        />
+        <KpiCard
+          label="Nodes"
+          value={formatValue(nodesCount, loading)}
+          sub="Telangana network"
+          loading={loading}
+          icon={<Network className="size-4" />}
+        />
+        <KpiCard
+          label="Edges"
+          value={formatValue(edgesCount, loading)}
+          sub="Directed legs"
+          loading={loading}
+          icon={<GitBranch className="size-4" />}
+        />
+        <KpiCard
+          label="Fleet"
+          value={formatValue(vehiclesCount, loading)}
+          sub="Active vehicles"
+          loading={loading}
+          icon={<Truck className="size-4" />}
+        />
+        {!hasShipmentBreakdown ? (
+          <KpiCard
+            label="Shipments"
+            value={formatValue(shipmentsCount, loading)}
+            sub="Tracked packages"
+            loading={loading}
+            icon={<Package className="size-4" />}
+          />
+        ) : null}
       </div>
     </section>
-  );
+  )
 }

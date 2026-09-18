@@ -1,6 +1,290 @@
-/* Reset + global */
-html,
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Code", monospace;
+
+  --color-main: var(--main);
+  --color-background: var(--background);
+  --color-secondary-background: var(--secondary-background);
+  --color-foreground: var(--foreground);
+  --color-main-foreground: var(--main-foreground);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+  --color-overlay: var(--overlay);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-chart-active-dot: var(--chart-active-dot);
+
+  /* Semantic surface / text roles (refine globally later) */
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  /* Status system */
+  --color-status-active: var(--status-active);
+  --color-status-transit: var(--status-transit);
+  --color-status-delivered: var(--status-delivered);
+  --color-status-delayed: var(--status-delayed);
+  --color-status-misplaced: var(--status-misplaced);
+  --color-status-recovering: var(--status-recovering);
+  --color-status-recovered: var(--status-recovered);
+  --color-status-critical: var(--status-critical);
+
+  --spacing-boxShadowX: 4px;
+  --spacing-boxShadowY: 4px;
+  --spacing-reverseBoxShadowX: -4px;
+  --spacing-reverseBoxShadowY: -4px;
+  --radius-base: 5px;
+  --font-weight-base: 500;
+  --font-weight-heading: 700;
+  --shadow-shadow: var(--shadow);
+  --animate-marquee: marquee 5s linear infinite;
+  --animate-marquee2: marquee2 5s linear infinite;
+
+  @keyframes marquee {
+    0% {
+      transform: translateX(0%);
+    }
+    100% {
+      transform: translateX(-100%);
+    }
+  }
+  @keyframes marquee2 {
+    0% {
+      transform: translateX(100%);
+    }
+    100% {
+      transform: translateX(0%);
+    }
+  }
+}
+
+:root {
+  /* NeoBrutalism blue palette (installed) */
+  --background: hsl(214, 95%, 93%);
+  --secondary-background: oklch(100% 0 0);
+  --main: hsl(217, 100%, 66%);
+  --ring: oklch(0% 0 0);
+  --foreground: oklch(0% 0 0);
+  --main-foreground: oklch(0% 0 0);
+  --border: oklch(0% 0 0);
+  --overlay: oklch(0% 0 0 / 0.8);
+  --shadow: 4px 4px 0px 0px var(--border);
+  --chart-1: #5294ff;
+  --chart-2: #ff4d50;
+  --chart-3: #facc00;
+  --chart-4: #05e17a;
+  --chart-5: #7a83ff;
+  --chart-active-dot: #000;
+
+  /* Semantic roles mapped to palette — refine later without touching components */
+  --surface: var(--secondary-background);
+  --surface-raised: color-mix(in srgb, var(--secondary-background) 92%, var(--main));
+  --muted: color-mix(in srgb, var(--foreground) 12%, var(--background));
+  --muted-foreground: color-mix(in srgb, var(--foreground) 55%, transparent);
+  --accent: var(--main);
+  --accent-foreground: var(--main-foreground);
+
+  --status-active: var(--chart-1);
+  --status-transit: var(--chart-5);
+  --status-delivered: var(--chart-4);
+  --status-delayed: var(--chart-3);
+  --status-misplaced: var(--chart-2);
+  --status-recovering: var(--chart-1);
+  --status-recovered: var(--chart-4);
+  --status-critical: #111111;
+
+  /* Legacy bridges used by remaining map/CSS modules */
+  --bg: var(--background);
+  --panel: var(--secondary-background);
+  --text: var(--foreground);
+  --text-secondary: var(--muted-foreground);
+  --ok: var(--status-delivered);
+  --ok-bg: color-mix(in srgb, var(--status-delivered) 18%, white);
+  --warn: var(--status-delayed);
+  --warn-bg: color-mix(in srgb, var(--status-delayed) 22%, white);
+  --bad: var(--status-misplaced);
+  --bad-bg: color-mix(in srgb, var(--status-misplaced) 18%, white);
+  --info: var(--status-transit);
+  --info-bg: color-mix(in srgb, var(--status-transit) 18%, white);
+  --radius: var(--radius-base);
+  --radius-sm: 3px;
+  --sidebar-w: 248px;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-weight: var(--font-weight-base);
+    color: var(--foreground);
+    background-color: var(--background);
+    background-image:
+      radial-gradient(ellipse 80% 50% at 0% 0%, color-mix(in srgb, var(--main) 28%, transparent), transparent 55%),
+      radial-gradient(ellipse 60% 40% at 100% 0%, color-mix(in srgb, var(--chart-5) 16%, transparent), transparent 50%),
+      linear-gradient(180deg, color-mix(in srgb, var(--background) 88%, white), var(--background));
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-heading);
+    font-weight: var(--font-weight-heading);
+    text-wrap: balance;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  button {
+    font-family: inherit;
+  }
+
+  code,
+  .mono,
+  .tabular {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* NeoBrutalism scrollbar tokens */
 body,
-#root {
+.scrollbar {
+  --sb-track-color: #ffffff;
+  --sb-thumb-color: #000000;
+}
+
+.scrollbar::-webkit-scrollbar {
+  width: 16px;
+}
+
+.scrollbar::-webkit-scrollbar-track {
+  background: var(--sb-track-color);
+}
+
+.scrollbar::-webkit-scrollbar-thumb {
+  background: var(--sb-thumb-color);
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  .scrollbar {
+    scrollbar-color: var(--sb-thumb-color) var(--sb-track-color);
+  }
+}
+
+/* Subtle grain — breaks flat digital look without cartoon noise */
+.app-grain::before {
+  content: "";
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Map workspace (Leaflet) — keep functional styles in CSS */
+.map-workspace {
+  position: relative;
+  overflow: hidden;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-base);
+  background: var(--secondary-background);
+  box-shadow: var(--shadow);
+}
+
+.map-workspace .map-canvas {
+  height: min(62vh, 640px);
+  min-height: 360px;
+  width: 100%;
+  background: #dbe7f5;
+}
+
+.map-workspace .leaflet-container {
   height: 100%;
+  width: 100%;
+  font-family: var(--font-sans);
+  background: #dbe7f5;
+}
+
+.map-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid var(--border);
+  border-radius: 2px;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
+.map-swatch.hub {
+  background: #0f172a;
+}
+.map-swatch.edge {
+  background: #94a3b8;
+}
+.map-swatch.vehicle {
+  background: var(--chart-1);
+}
+.map-swatch.ship {
+  background: var(--chart-3);
+}
+.map-swatch.dest {
+  background: var(--chart-4);
+}
+.map-swatch.expected-route {
+  background: #64748b;
+}
+.map-swatch.pickup {
+  background: var(--chart-2);
+}
+.map-swatch.recovery {
+  background: #7c3aed;
+}
+.map-swatch.vehicle-route {
+  background: #0ea5e9;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
