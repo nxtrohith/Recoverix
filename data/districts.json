@@ -1,0 +1,299 @@
+[
+  {
+    "districtId": "DIST-01",
+    "name": "Adilabad",
+    "headquarters": "Adilabad",
+    "state": "Telangana",
+    "country": "India",
+    "latitude": 19.6641,
+    "longitude": 78.532
+  },
+  {
+    "districtId": "DIST-02",
+    "name": "Bhadradri Kothagudem",
+    "headquarters": "Kothagudem",
+    "state": "Telangana",
+    "country": "India",
+    "latitude": 17.5511,
+    "longitude": 80.6178
+  },
+  {
+    "districtId": "DIST-03",
+    "name": "Hanumakonda",
+    "headquarters": "Hanamkonda",
+    "state": "Telangana",
+    "country": "India",
+    "latitude": 18.0,
+    "longitude": 79.58
+  },
+  {
+    "districtId": "DIST-04",
+    "name": "Hyderabad",
+    "headquarters": "Hyderabad",
+    "state": "Telangana",
+    "country": "India",
+    "latitude": 17.3841,
+    "longitude": 78.4564
+  },
+  {
+    "districtId": "DIST-05",
+    "name": "Jagtial",
+    "headquarters": "Jagtial",
+    "state": "Telangana",
+    "country": "India",
+    "latitude": 18.7947,
+    "longitude": 78.9166
+  },
+  {
+    "districtId": "DIST-06",
+    "name": "Jangaon",
+    "headquarters": "Jangaon",
+    "state": "Telangana",
+    "country": "India",
+    "latitude": 17.726,
+    "longitude": 79.1524
+  },
+  {
+    "districtId": "DIST-07",
+    "name": "Jayashankar Bhupalpally",
+    "headquarters": "Bhupalpally",
+    "state": "Telangana",
+    "country": "India",
+    "latitude": 18.1968,
+    "longitude": 79.9398
+  },
+  {
+    "districtId": "DIST-08",
+    "name": "Jogulamba Gadwal",
+    "headquarters": "Gadwal",
+    "state": "Telangana",
+    "country": "India",
+    "latitude": 16.234,
+    "longitude": 77.8056
+  },
+  {
+    "districtId": "DIST-09",
+    "name": "Kamareddy",
+    "headquarters": "Kamareddy",
+    "state": "Telangana",
+    "country": "India",
+    "latitude": 18.3257,
+    "longitude": 78.3342
+  },
+  {
+    "districtId": "DIST-10",
+    "name": "Karimnagar",
+    "headquarters": "Karimnagar",
+    "state": "Telangana",
+    "country": "India",
+    "latitude": 18.3384,
+    "longitude": 79.2294
+  },
+  {
+    "districtId": "DIST-11",
+    "name": "Khammam",
+    "headquarters": "Khammam",
+    "state": "Telangana",
+    "country": "India",
+    "latitude": 17.5,
+    "longitude": 80.3333
+  },
+  {
+    "districtId": "DIST-12",
+    "name": "Kumuram Bheem Asifabad",
+    "headquarters": "Asifabad",
+    "state": "Telangana",
+    "country": "India",
+    "latitude": 19.3585,
+    "longitude": 79.2841
+  },
+  {
+    "districtId": "DIST-13",
+    "name": "Mahabubabad",
+    "headquarters": "Mahabubabad",
+    "state": "Telangana",
+    "country": "India",
+    "latitude": 17.6004,
+    "longitude": 80.0054
+  },
+  {
+    "districtId": "DIST-14",
+    "name": "Mahabubnagar",
+    "headquarters": "Mahabubnagar",
+    "state": "Telangana",
+    "country": "India",
+    "latitude": 16.7475,
+    "longitude": 77.9908
+  },
+  {
+    "districtId": "DIST-15",
+    "name": "Mancherial",
+    "headquarters": "Mancherial",
+    "state": "Telangana",
+    "country": "India",
+    "latitude": 19.0736,
+    "longitude": 79.4897
+  },
+  {
+    "districtId": "DIST-16",
+    "name": "Medak",
+    "headquarters": "Medak",
+    "state": "Telangana",
+    "country": "India",
+    "latitude": 18.0453,
+    "longitude": 78.2608
+  },
+  {
+    "districtId": "DIST-17",
+    "name": "Medchal-Malkajgiri",
+    "headquarters": "Medchal",
+    "state": "Telangana",
+    "country": "India",
+    "latitude": 17.6297,
+    "longitude": 78.4814
+  },
+  {
+    "districtId": "DIST-18",
+    "name": "Mulugu",
+    "headquarters": "Mulugu",
+    "state": "Telangana",
+    "country": "India",
+    "latitude": 18.191,
+    "longitude": 79.943
+  },
+  {
+    "districtId": "DIST-19",
+    "name": "Nagarkurnool",
+    "headquarters": "Nagarkurnool",
+    "state": "Telangana",
+    "country": "India",
+    "latitude": 16.4821,
+    "longitude": 78.3247
+  },
+  {
+    "districtId": "DIST-20",
+    "name": "Nalgonda",
+    "headquarters": "Nalgonda",
+    "state": "Telangana",
+    "country": "India",
+    "latitude": 17.0544,
+    "longitude": 79.2671
+  },
+  {
+    "districtId": "DIST-21",
+    "name": "Narayanpet",
+    "headquarters": "Narayanpet",
+    "state": "Telangana",
+    "country": "India",
+    "latitude": 16.7479,
+    "longitude": 77.4955
+  },
+  {
+    "districtId": "DIST-22",
+    "name": "Nirmal",
+    "headquarters": "Nirmal",
+    "state": "Telangana",
+    "country": "India",
+    "latitude": 19.096,
+    "longitude": 78.3436
+  },
+  {
+    "districtId": "DIST-23",
+    "name": "Nizamabad",
+    "headquarters": "Nizamabad",
+    "state": "Telangana",
+    "country": "India",
+    "latitude": 18.6738,
+    "longitude": 78.094
+  },
+  {
+    "districtId": "DIST-24",
+    "name": "Peddapalli",
+    "headquarters": "Peddapalli",
+    "state": "Telangana",
+    "country": "India",
+    "latitude": 18.6163,
+    "longitude": 79.3825
+  },
+  {
+    "districtId": "DIST-25",
+    "name": "Rajanna Sircilla",
+    "headquarters": "Sircilla",
+    "state": "Telangana",
+    "country": "India",
+    "latitude": 18.3887,
+    "longitude": 78.811
+  },
+  {
+    "districtId": "DIST-26",
+    "name": "Rangareddy",
+    "headquarters": "Shamshabad",
+    "state": "Telangana",
+    "country": "India",
+    "latitude": 17.251,
+    "longitude": 78.429
+  },
+  {
+    "districtId": "DIST-27",
+    "name": "Sangareddy",
+    "headquarters": "Sangareddy",
+    "state": "Telangana",
+    "country": "India",
+    "latitude": 17.6244,
+    "longitude": 78.0823
+  },
+  {
+    "districtId": "DIST-28",
+    "name": "Siddipet",
+    "headquarters": "Siddipet",
+    "state": "Telangana",
+    "country": "India",
+    "latitude": 18.1019,
+    "longitude": 78.852
+  },
+  {
+    "districtId": "DIST-29",
+    "name": "Suryapet",
+    "headquarters": "Suryapet",
+    "state": "Telangana",
+    "country": "India",
+    "latitude": 17.1405,
+    "longitude": 79.623
+  },
+  {
+    "districtId": "DIST-30",
+    "name": "Vikarabad",
+    "headquarters": "Vikarabad",
+    "state": "Telangana",
+    "country": "India",
+    "latitude": 17.3381,
+    "longitude": 77.9044
+  },
+  {
+    "districtId": "DIST-31",
+    "name": "Wanaparthy",
+    "headquarters": "Wanaparthy",
+    "state": "Telangana",
+    "country": "India",
+    "latitude": 16.3674,
+    "longitude": 78.0689
+  },
+  {
+    "districtId": "DIST-32",
+    "name": "Warangal",
+    "headquarters": "Warangal",
+    "state": "Telangana",
+    "country": "India",
+    "latitude": 17.9784,
+    "longitude": 79.5941
+  },
+  {
+    "districtId": "DIST-33",
+    "name": "Yadadri Bhuvanagiri",
+    "headquarters": "Bhuvanagiri",
+    "state": "Telangana",
+    "country": "India",
+    "latitude": 17.5154,
+    "longitude": 78.8856
+  }
+]
