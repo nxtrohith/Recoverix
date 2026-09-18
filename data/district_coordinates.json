@@ -1,0 +1,233 @@
+[
+  {
+    "district": "Adilabad",
+    "headquarters": "Adilabad",
+    "latitude": 19.6641,
+    "longitude": 78.532,
+    "coordinate_type": "district headquarters / hub town"
+  },
+  {
+    "district": "Bhadradri Kothagudem",
+    "headquarters": "Kothagudem",
+    "latitude": 17.5511,
+    "longitude": 80.6178,
+    "coordinate_type": "district headquarters / hub town"
+  },
+  {
+    "district": "Hanumakonda",
+    "headquarters": "Hanamkonda",
+    "latitude": 18.0,
+    "longitude": 79.58,
+    "coordinate_type": "district headquarters / hub town"
+  },
+  {
+    "district": "Hyderabad",
+    "headquarters": "Hyderabad",
+    "latitude": 17.3841,
+    "longitude": 78.4564,
+    "coordinate_type": "district headquarters / hub town"
+  },
+  {
+    "district": "Jagtial",
+    "headquarters": "Jagtial",
+    "latitude": 18.7947,
+    "longitude": 78.9166,
+    "coordinate_type": "district headquarters / hub town"
+  },
+  {
+    "district": "Jangaon",
+    "headquarters": "Jangaon",
+    "latitude": 17.726,
+    "longitude": 79.1524,
+    "coordinate_type": "district headquarters / hub town"
+  },
+  {
+    "district": "Jayashankar Bhupalpally",
+    "headquarters": "Bhupalpally",
+    "latitude": 18.1968,
+    "longitude": 79.9398,
+    "coordinate_type": "district headquarters / hub town"
+  },
+  {
+    "district": "Jogulamba Gadwal",
+    "headquarters": "Gadwal",
+    "latitude": 16.234,
+    "longitude": 77.8056,
+    "coordinate_type": "district headquarters / hub town"
+  },
+  {
+    "district": "Kamareddy",
+    "headquarters": "Kamareddy",
+    "latitude": 18.3257,
+    "longitude": 78.3342,
+    "coordinate_type": "district headquarters / hub town"
+  },
+  {
+    "district": "Karimnagar",
+    "headquarters": "Karimnagar",
+    "latitude": 18.3384,
+    "longitude": 79.2294,
+    "coordinate_type": "district headquarters / hub town"
+  },
+  {
+    "district": "Khammam",
+    "headquarters": "Khammam",
+    "latitude": 17.5,
+    "longitude": 80.3333,
+    "coordinate_type": "district headquarters / hub town"
+  },
+  {
+    "district": "Kumuram Bheem Asifabad",
+    "headquarters": "Asifabad",
+    "latitude": 19.3585,
+    "longitude": 79.2841,
+    "coordinate_type": "district headquarters / hub town"
+  },
+  {
+    "district": "Mahabubabad",
+    "headquarters": "Mahabubabad",
+    "latitude": 17.6004,
+    "longitude": 80.0054,
+    "coordinate_type": "district headquarters / hub town"
+  },
+  {
+    "district": "Mahabubnagar",
+    "headquarters": "Mahabubnagar",
+    "latitude": 16.7475,
+    "longitude": 77.9908,
+    "coordinate_type": "district headquarters / hub town"
+  },
+  {
+    "district": "Mancherial",
+    "headquarters": "Mancherial",
+    "latitude": 19.0736,
+    "longitude": 79.4897,
+    "coordinate_type": "district headquarters / hub town"
+  },
+  {
+    "district": "Medak",
+    "headquarters": "Medak",
+    "latitude": 18.0453,
+    "longitude": 78.2608,
+    "coordinate_type": "district headquarters / hub town"
+  },
+  {
+    "district": "Medchal-Malkajgiri",
+    "headquarters": "Medchal",
+    "latitude": 17.6297,
+    "longitude": 78.4814,
+    "coordinate_type": "district headquarters / hub town"
+  },
+  {
+    "district": "Mulugu",
+    "headquarters": "Mulugu",
+    "latitude": 18.191,
+    "longitude": 79.943,
+    "coordinate_type": "district headquarters / hub town"
+  },
+  {
+    "district": "Nagarkurnool",
+    "headquarters": "Nagarkurnool",
+    "latitude": 16.4821,
+    "longitude": 78.3247,
+    "coordinate_type": "district headquarters / hub town"
+  },
+  {
+    "district": "Nalgonda",
+    "headquarters": "Nalgonda",
+    "latitude": 17.0544,
+    "longitude": 79.2671,
+    "coordinate_type": "district headquarters / hub town"
+  },
+  {
+    "district": "Narayanpet",
+    "headquarters": "Narayanpet",
+    "latitude": 16.7479,
+    "longitude": 77.4955,
+    "coordinate_type": "district headquarters / hub town"
+  },
+  {
+    "district": "Nirmal",
+    "headquarters": "Nirmal",
+    "latitude": 19.096,
+    "longitude": 78.3436,
+    "coordinate_type": "district headquarters / hub town"
+  },
+  {
+    "district": "Nizamabad",
+    "headquarters": "Nizamabad",
+    "latitude": 18.6738,
+    "longitude": 78.094,
+    "coordinate_type": "district headquarters / hub town"
+  },
+  {
+    "district": "Peddapalli",
+    "headquarters": "Peddapalli",
+    "latitude": 18.6163,
+    "longitude": 79.3825,
+    "coordinate_type": "district headquarters / hub town"
+  },
+  {
+    "district": "Rajanna Sircilla",
+    "headquarters": "Sircilla",
+    "latitude": 18.3887,
+    "longitude": 78.811,
+    "coordinate_type": "district headquarters / hub town"
+  },
+  {
+    "district": "Rangareddy",
+    "headquarters": "Shamshabad",
+    "latitude": 17.251,
+    "longitude": 78.429,
+    "coordinate_type": "district headquarters / hub town"
+  },
+  {
+    "district": "Sangareddy",
+    "headquarters": "Sangareddy",
+    "latitude": 17.6244,
+    "longitude": 78.0823,
+    "coordinate_type": "district headquarters / hub town"
+  },
+  {
+    "district": "Siddipet",
+    "headquarters": "Siddipet",
+    "latitude": 18.1019,
+    "longitude": 78.852,
+    "coordinate_type": "district headquarters / hub town"
+  },
+  {
+    "district": "Suryapet",
+    "headquarters": "Suryapet",
+    "latitude": 17.1405,
+    "longitude": 79.623,
+    "coordinate_type": "district headquarters / hub town"
+  },
+  {
+    "district": "Vikarabad",
+    "headquarters": "Vikarabad",
+    "latitude": 17.3381,
+    "longitude": 77.9044,
+    "coordinate_type": "district headquarters / hub town"
+  },
+  {
+    "district": "Wanaparthy",
+    "headquarters": "Wanaparthy",
+    "latitude": 16.3674,
+    "longitude": 78.0689,
+    "coordinate_type": "district headquarters / hub town"
+  },
+  {
+    "district": "Warangal",
+    "headquarters": "Warangal",
+    "latitude": 17.9784,
+    "longitude": 79.5941,
+    "coordinate_type": "district headquarters / hub town"
+  },
+  {
+    "district": "Yadadri Bhuvanagiri",
+    "headquarters": "Bhuvanagiri",
+    "latitude": 17.5154,
+    "longitude": 78.8856,
+    "coordinate_type": "district headquarters / hub town"
+  }
+]
