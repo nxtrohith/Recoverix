@@ -77,6 +77,13 @@ async function bootstrap() {
     // Render 3D network
     graphRenderer.renderGraph(graphData);
 
+    // Refine hill placement avoiding all 91 hub positions
+    const hubCoords: Array<{ x: number; z: number }> = [];
+    for (const pos of graphRenderer.getAllNodePositions().values()) {
+      hubCoords.push({ x: pos.x, z: pos.z });
+    }
+    vizScene.populateHillsAvoidingHubs(hubCoords);
+
     // Feed SimPy events
     animController.loadEvents(simEvents);
 
@@ -133,27 +140,34 @@ async function bootstrap() {
 function appendEventToLog(event: SimEvent): void {
   if (!eventLogContainer) return;
 
-  const item = document.createElement('div');
-  item.className = `event-item event-${event.type.toLowerCase()}`;
+  // Map event types to earthy status classes and academic labels
+  const typeMap: Record<string, { cls: string; label: string }> = {
+    TRUCK_DEPARTURE:   { cls: '',                 label: 'DEPARTURE' },
+    TRUCK_ARRIVAL:     { cls: 'status-idle',      label: 'ARRIVAL' },
+    DELAY:             { cls: 'status-delayed',   label: 'DELAY' },
+    SHIPMENT_DELIVERY: { cls: 'status-delivered', label: 'DELIVERED' },
+    ERROR:             { cls: 'status-error',     label: 'ERROR' },
+  };
+  const meta = typeMap[event.type] ?? { cls: '', label: event.type };
 
-  let badgeColor = '#38bdf8';
-  if (event.type === 'TRUCK_DEPARTURE') badgeColor = '#0284c7';
-  if (event.type === 'TRUCK_ARRIVAL') badgeColor = '#10b981';
-  if (event.type === 'DELAY') badgeColor = '#f59e0b';
-  if (event.type === 'SHIPMENT_DELIVERY') badgeColor = '#a855f7';
+  const item = document.createElement('div');
+  item.className = `event-item ${meta.cls}`;
+
+  const routeHtml = (event.from && event.to)
+    ? `<div class="event-route">${event.from.split('_')[0]} → ${event.to.split('_')[0]}</div>`
+    : '';
+  const reasonHtml = event.reason
+    ? `<div class="event-warning">⚠ ${event.reason}</div>`
+    : '';
 
   item.innerHTML = `
-    <div class="event-header">
-      <span class="event-time">${event.time.toFixed(1)}m</span>
-      <span class="event-badge" style="background:${badgeColor}22; color:${badgeColor}; border-color:${badgeColor}55;">
-        ${event.type}
-      </span>
-      <span class="event-truck">${event.truck_id}</span>
+    <div class="event-time-row">
+      <span class="event-time">${event.time.toFixed(1)} min</span>
+      <span class="event-type">${meta.label}</span>
     </div>
-    <div class="event-body">
-      ${event.from ? `<span>${event.from.split('_')[0]} → ${event.to?.split('_')[0]}</span>` : ''}
-      ${event.reason ? `<span class="event-reason">⚠️ ${event.reason} (${event.duration}m)</span>` : ''}
-    </div>
+    <div class="event-truck-id">${event.truck_id}</div>
+    ${routeHtml}
+    ${reasonHtml}
   `;
 
   eventLogContainer.insertBefore(item, eventLogContainer.firstChild);
@@ -200,10 +214,10 @@ function setupRaycasting(vizScene: VisualizationScene, graphRenderer: GraphRende
       hubTooltip.style.top = `${event.clientY + 14}px`;
       hubTooltip.innerHTML = `
         <div class="tooltip-title">${hoveredNode.hub_name}</div>
-        <div class="tooltip-detail"><span>City:</span> ${hoveredNode.city || 'N/A'}</div>
-        <div class="tooltip-detail"><span>Facility:</span> ${hoveredNode.facility_code || 'N/A'}</div>
-        <div class="tooltip-detail"><span>Type:</span> ${hoveredNode.hub_type || 'Hub'}</div>
-        <div class="tooltip-detail"><span>Coordinates:</span> ${hoveredNode.latitude?.toFixed(4)}, ${hoveredNode.longitude?.toFixed(4)}</div>
+        <div class="tooltip-row"><span class="tooltip-key">City</span><span class="tooltip-val">${hoveredNode.city || 'N/A'}</span></div>
+        <div class="tooltip-row"><span class="tooltip-key">Facility</span><span class="tooltip-val">${hoveredNode.facility_code || 'N/A'}</span></div>
+        <div class="tooltip-row"><span class="tooltip-key">Type</span><span class="tooltip-val">${hoveredNode.hub_type || 'Hub'}</span></div>
+        <div class="tooltip-row"><span class="tooltip-key">Coords</span><span class="tooltip-val">${hoveredNode.latitude?.toFixed(4)}, ${hoveredNode.longitude?.toFixed(4)}</span></div>
       `;
     } else if (hubTooltip) {
       hubTooltip.style.display = 'none';

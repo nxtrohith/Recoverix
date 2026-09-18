@@ -203,17 +203,23 @@ export class SimulationAnimationController implements SimulationController {
 
     // Compute truck states at currentSimulationTime
     let activeTruckCount = 0;
+    const activeEdges = new Set<string>();
 
     for (const truckId of this.allTruckIds) {
       const state = this.computeTruckState(truckId, this.currentSimulationTime);
       if (state) {
         this.truckRenderer.updateTruck(state);
-        if (state.status === 'MOVING' || state.status === 'DELAYED') {
+        if (state.status === 'MOVING' && state.currentNode && state.targetNode) {
+          activeEdges.add(`${state.currentNode}->${state.targetNode}`);
+          activeEdges.add(`${state.targetNode}->${state.currentNode}`);
+          activeTruckCount++;
+        } else if (state.status === 'DELAYED') {
           activeTruckCount++;
         }
       }
     }
 
+    this.graphRenderer.setActiveEdges(activeEdges);
     this.onActiveTrucksChange?.(activeTruckCount);
   }
 
@@ -243,13 +249,17 @@ export class SimulationAnimationController implements SimulationController {
         if (!fromPos || !toPos) continue;
 
         const duration = Math.max(0.001, move.arrivalTime - move.departureTime);
-        const progress = (time - move.departureTime) / duration;
+        const progress = Math.max(0, Math.min(1, (time - move.departureTime) / duration));
 
-        // Linear interpolation between nodes
+        // Exact horizontal position along the edge trackline
         const x = THREE.MathUtils.lerp(fromPos.x, toPos.x, progress);
         const z = THREE.MathUtils.lerp(fromPos.z, toPos.z, progress);
-        // Slight hop/bounce arc during transit
-        const y = Math.sin(progress * Math.PI) * 0.8;
+
+        // Exact road vertical elevation matching QuadraticBezierCurve3
+        const dist = fromPos.distanceTo(toPos);
+        const midY = 0.14 + Math.min(dist * 0.008, 0.45);
+        const t = progress;
+        const roadY = (1 - t) * (1 - t) * 0.12 + 2 * (1 - t) * t * midY + t * t * 0.12;
 
         // Angle facing direction of travel
         const angle = Math.atan2(toPos.x - fromPos.x, toPos.z - fromPos.z);
@@ -260,7 +270,7 @@ export class SimulationAnimationController implements SimulationController {
           status: 'MOVING',
           currentNode: move.fromNode,
           targetNode: move.toNode,
-          position: { x, y, z },
+          position: { x, y: roadY, z },
           progress,
           rotationY: angle,
         };
