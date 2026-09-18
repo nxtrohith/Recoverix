@@ -1,6 +1,6 @@
 import IncidentMetadata from './IncidentMetadata';
 import LocationDivergence from './LocationDivergence';
-import RecoveryActions from './RecoveryActions';
+import RecoveryActions from './RecoveryActions.jsx';
 import RecoveryTimeline from './RecoveryTimeline';
 import RouteSummary from './RouteSummary';
 import ShipmentSummary from './ShipmentSummary';
@@ -42,6 +42,8 @@ export default function RecoveryIncidentView({
   recoveryAnalysis = null,
   vehicles = [],
   driverNotification = null,
+  driverCall = null,
+  retryingCall = false,
   shipmentLoading = false,
   shipmentError = null,
   incidentLoading = false,
@@ -59,8 +61,10 @@ export default function RecoveryIncidentView({
   onConfirmPickup,
   onResolve,
   onRetryAction,
+  onRetryCall,
   onClearActionError,
 }) {
+
   // ShipmentPanel owns generic search/load failures; only surface them here
   // when we already have recovery context.
   const hasRecoveryContext = Boolean(
@@ -191,6 +195,8 @@ export default function RecoveryIncidentView({
         recoveryAnalysis={recoveryAnalysis}
         vehicles={vehicles}
         driverNotification={driverNotification}
+        driverCall={driverCall}
+        retryingCall={retryingCall}
         analyzing={analyzing || recoveryLoading}
         assigning={assigning}
         confirmingPickup={confirmingPickup}
@@ -202,8 +208,10 @@ export default function RecoveryIncidentView({
         onConfirmPickup={onConfirmPickup}
         onResolve={onResolve}
         onRetry={onRetryAction}
+        onRetryCall={onRetryCall}
         onClearError={onClearActionError}
       />
+
 
       {incidentLoading ? (
         <div className="recovery-section">

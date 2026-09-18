@@ -223,3 +223,40 @@ export function resolveRecovery(shipmentId, _payload = {}) {
     method: 'POST',
   });
 }
+
+/**
+ * Explicitly trigger or retry an outbound Sarvam phone call to the driver.
+ * @param {string} shipmentId
+ * @param {{ phone?: string }} [payload]
+ */
+export function retryDriverCall(shipmentId, payload = {}) {
+  return request(`/api/recovery/${encodeURIComponent(shipmentId)}/retry-call`, {
+    method: 'POST',
+    body: JSON.stringify({
+      phone: payload.phone || null,
+    }),
+  });
+}
+
+/**
+ * Fetch current driver call status from the backend.
+ * @param {string} shipmentId
+ */
+export function getDriverCallStatus(shipmentId) {
+  return request(`/api/recovery/${encodeURIComponent(shipmentId)}/call-status`);
+}
+
+/**
+ * Test endpoint for immediate real-time Sarvam Telugu driver call testing.
+ * @param {{ phone: string, shipment_id?: string, shipmentId?: string }} payload
+ */
+export function testSarvamCall(payload) {
+  return request('/api/sarvam/test-call', {
+    method: 'POST',
+    body: JSON.stringify({
+      phone: payload.phone,
+      shipment_id: payload.shipment_id || payload.shipmentId || 'SHP-TEST-001',
+    }),
+  });
+}
+

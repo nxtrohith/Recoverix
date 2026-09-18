@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
@@ -45,6 +46,86 @@ ALLOWED_LANGUAGES = frozenset(
         "Assamese",
     }
 )
+
+
+def normalize_phone_number(phone: str) -> str:
+    """
+    Normalize phone number to E.164 format.
+    E.g. '+91 77806 45727', '7780645727', '07780645727' -> '+917780645727'
+    """
+    if not phone:
+        raise ValueError("Phone number cannot be empty")
+
+    cleaned = re.sub(r"[\s\-\(\)\.]", "", str(phone).strip())
+    if not cleaned:
+        raise ValueError("Phone number contains no digits")
+
+    if cleaned.startswith("+"):
+        digits = cleaned[1:]
+        if not digits.isdigit() or len(digits) < 10 or len(digits) > 15:
+            raise ValueError(f"Invalid international phone number: {phone}")
+        return cleaned
+
+    if cleaned.startswith("00"):
+        digits = cleaned[2:]
+        if not digits.isdigit() or len(digits) < 10:
+            raise ValueError(f"Invalid international phone number: {phone}")
+        return f"+{digits}"
+
+    # 10 digit Indian number without country code
+    if len(cleaned) == 10 and cleaned.isdigit():
+        return f"+91{cleaned}"
+
+    # 11 digit Indian number starting with 0
+    if len(cleaned) == 11 and cleaned.startswith("0") and cleaned[1:].isdigit():
+        return f"+91{cleaned[1:]}"
+
+    # 12 digit Indian number starting with 91
+    if len(cleaned) == 12 and cleaned.startswith("91") and cleaned.isdigit():
+        return f"+{cleaned}"
+
+    # General fallback if 10-15 digits
+    if cleaned.isdigit() and 10 <= len(cleaned) <= 15:
+        return f"+{cleaned}"
+
+    raise ValueError(f"Cannot normalize phone number to E.164: {phone}")
+
+
+def mask_phone(phone: str) -> str:
+    """Mask phone number for safe logging (e.g. +91778****727)."""
+    clean = str(phone).strip()
+    if len(clean) > 7:
+        return clean[:5] + "****" + clean[-3:]
+    return clean
+
+
+def build_telugu_recovery_message(
+    *,
+    shipment_id: str,
+    pickup_hub: str,
+    destination_hub: str,
+    driver_name: str | None = None,
+) -> str:
+    """
+    Build natural Telugu voice opening line for recovery call.
+    Dynamically includes shipment ID, pickup hub, and final destination.
+    """
+    greeting = f"నమస్కారం {driver_name} గారు." if driver_name else "నమస్కారం."
+    return (
+        f"{greeting} మీకు ఒక ముఖ్యమైన రికవరీ అసైన్మెంట్ ఉంది. "
+        f"షిప్మెంట్ {shipment_id} తప్పు హబ్లో ఉన్నట్లు గుర్తించబడింది. "
+        f"మీరు {pickup_hub} కి వెళ్లి ఆ షిప్మెంట్ను తీసుకుని {destination_hub} కి తరలించాలి. "
+        f"దయచేసి ఈ అసైన్మెంట్ను నిర్ధారించండి."
+    )
+
+
+def build_telugu_test_message(shipment_id: str = "SHP-TEST-001") -> str:
+    """Build short Telugu voice opening line for test call endpoint."""
+    return (
+        f"నమస్కారం. ఇది సర్వం వాయిస్ ఏజెంట్ టెస్ట్ కాల్. "
+        f"షిప్మెంట్ {shipment_id} రికవరీ సిస్టమ్ పరీక్ష విజయవంతంగా ప్రారంభించబడింది. "
+        f"ధన్యవాదాలు."
+    )
 
 
 @dataclass
@@ -109,9 +190,8 @@ def load_sarvam_outbound_config() -> SarvamOutboundConfig:
     except ValueError:
         app_version = 1
 
-    language = _env("SARVAM_DEFAULT_LANGUAGE", "English") or "English"
+    language = _env("SARVAM_DEFAULT_LANGUAGE", "Telugu") or "Telugu"
     if language not in ALLOWED_LANGUAGES:
-        # Accept common aliases like "en" / "hi-IN"
         aliases = {
             "en": "English",
             "en-in": "English",
@@ -126,7 +206,7 @@ def load_sarvam_outbound_config() -> SarvamOutboundConfig:
             "ta-in": "Tamil",
             "tamil": "Tamil",
         }
-        language = aliases.get(language.lower(), "English")
+        language = aliases.get(language.lower(), "Telugu")
 
     return SarvamOutboundConfig(
         api_key=_env("SARVAM_API_KEY"),
@@ -151,18 +231,26 @@ def place_instant_outbound_call(
 ) -> SarvamCallResult:
     """
     Place a Sarvam Instant Outbound call.
-
-    Returns ok=False (does not raise) when config/phone is missing or the API errors,
-    so recovery workflow can continue with a log fallback.
+    Returns SarvamCallResult (does not raise).
     """
     config = load_sarvam_outbound_config()
-    phone = (user_phone_number or "").strip()
-    if not phone:
+    raw_phone = (user_phone_number or "").strip()
+    if not raw_phone:
         return SarvamCallResult(
             ok=False,
             attempt_id=None,
-            detail="No driver phone number (set vehicle.phone or SARVAM_DEMO_DRIVER_PHONE)",
+            detail="No driver phone number provided",
         )
+
+    try:
+        phone = normalize_phone_number(raw_phone)
+    except ValueError as err:
+        return SarvamCallResult(
+            ok=False,
+            attempt_id=None,
+            detail=f"Invalid phone number format: {err}",
+        )
+
     if not config.ready:
         missing = ", ".join(config.missing)
         return SarvamCallResult(
@@ -220,7 +308,13 @@ def place_instant_outbound_call(
                 data = json.loads(raw_text)
             except json.JSONDecodeError:
                 data = {"raw": raw_text}
-            attempt_id = data.get("attempt_id") if isinstance(data, dict) else None
+            attempt_id = (
+                data.get("attempt_id")
+                or data.get("call_id")
+                or data.get("id")
+                if isinstance(data, dict)
+                else None
+            )
             return SarvamCallResult(
                 ok=True,
                 attempt_id=str(attempt_id) if attempt_id else None,
@@ -241,10 +335,161 @@ def place_instant_outbound_call(
             detail=f"Sarvam outbound HTTP {err.code}: {err_body[:300]}",
             status_code=err.code,
         )
-    except Exception as err:  # noqa: BLE001 — keep recovery flow alive
+    except Exception as err:
         logger.warning("sarvam_outbound failed: %s", err)
         return SarvamCallResult(
             ok=False,
             attempt_id=None,
             detail=f"Sarvam outbound error: {err}",
         )
+
+
+def call_driver(
+    *,
+    driver_phone: str,
+    shipment_id: str,
+    pickup_hub: str,
+    destination_hub: str,
+    driver_name: str | None = None,
+    language: str = "Telugu",
+    is_test: bool = False,
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """
+    Clean service function to place an outbound phone call to a driver via Sarvam.
+
+    Responsibilities:
+      - Normalizes phone number to E.164.
+      - Validates that the number is usable.
+      - Builds recovery call context dynamically in Telugu (or test message).
+      - Triggers Sarvam Voice Agent outbound calling.
+      - Logs progress safely with masked phone number and no exposed credentials.
+      - Returns structured status:
+        { "success": bool, "call_id": str | None, "status": str, "error": str | None, "phone": str, "message": str }
+    """
+    raw_phone = (driver_phone or "").strip()
+    logger.info("[SARVAM] call requested: shipment_id=%s, raw_phone=%s", shipment_id, mask_phone(raw_phone))
+
+    try:
+        norm_phone = normalize_phone_number(raw_phone)
+    except ValueError as val_err:
+        err_msg = f"Invalid driver phone number: {val_err}"
+        logger.warning("[SARVAM] call failed: %s", err_msg)
+        return {
+            "success": False,
+            "call_id": None,
+            "status": "failed",
+            "error": err_msg,
+            "phone": raw_phone,
+            "message": "",
+            "detail": err_msg,
+        }
+
+    logger.info("[SARVAM] driver phone resolved: %s", mask_phone(norm_phone))
+
+    if is_test:
+        bot_message = build_telugu_test_message(shipment_id=shipment_id)
+    else:
+        bot_message = build_telugu_recovery_message(
+            shipment_id=shipment_id,
+            pickup_hub=pickup_hub,
+            destination_hub=destination_hub,
+            driver_name=driver_name,
+        )
+
+    call_meta = {
+        "shipmentId": str(shipment_id),
+        "pickupHub": str(pickup_hub),
+        "destinationHub": str(destination_hub),
+        "driverName": str(driver_name or ""),
+        "isTest": str(is_test),
+        **(metadata or {}),
+    }
+
+    result = place_instant_outbound_call(
+        user_phone_number=norm_phone,
+        initial_bot_message=bot_message,
+        language=language,
+        agent_variables=None,
+        metadata=call_meta,
+    )
+
+    if result.ok:
+        logger.info(
+            "[SARVAM] outbound call initiated: call_id=%s, phone=%s",
+            result.attempt_id,
+            mask_phone(norm_phone),
+        )
+        return {
+            "success": True,
+            "call_id": result.attempt_id,
+            "status": "initiated",
+            "error": None,
+            "phone": norm_phone,
+            "message": bot_message,
+            "detail": result.detail,
+            "raw": result.raw,
+        }
+
+    logger.warning(
+        "[SARVAM] call failed: %s (phone=%s)",
+        result.detail,
+        mask_phone(norm_phone),
+    )
+    return {
+        "success": False,
+        "call_id": None,
+        "status": "failed",
+        "error": result.detail,
+        "phone": norm_phone,
+        "message": bot_message,
+        "detail": result.detail,
+    }
+
+
+def get_outbound_call_status(call_id: str) -> dict[str, Any]:
+    """Query Sarvam outbound attempt status by call/attempt ID."""
+    if not call_id:
+        return {"ok": False, "status": "unknown", "error": "No call ID provided"}
+
+    config = load_sarvam_outbound_config()
+    if not config.ready:
+        return {"ok": False, "status": "unknown", "error": "Sarvam not configured"}
+
+    url = (
+        f"{SARVAM_OUTBOUND_BASE}/v1/orgs/{config.org_id}"
+        f"/workspaces/{config.workspace_id}/outbounds/{call_id}"
+    )
+    req = urllib.request.Request(
+        url,
+        method="GET",
+        headers={
+            "Accept": "application/json",
+            "X-API-Key": config.api_key,
+        },
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=10.0) as resp:
+            data = json.loads(resp.read().decode("utf-8") or "{}")
+            call_status = data.get("status") or data.get("state") or "in_progress"
+            return {
+                "ok": True,
+                "call_id": call_id,
+                "status": str(call_status).lower(),
+                "data": data,
+            }
+    except urllib.error.HTTPError as err:
+        return {
+            "ok": False,
+            "call_id": call_id,
+            "status": "unknown",
+            "error": f"HTTP {err.code}: {err.reason}",
+        }
+    except Exception as err:
+        return {
+            "ok": False,
+            "call_id": call_id,
+            "status": "unknown",
+            "error": str(err),
+        }
+

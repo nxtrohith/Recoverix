@@ -41,6 +41,8 @@ export default function RecoveryActions({
   recoveryAnalysis = null,
   vehicles = [],
   driverNotification = null,
+  driverCall = null,
+  retryingCall = false,
   analyzing = false,
   assigning = false,
   confirmingPickup = false,
@@ -52,9 +54,11 @@ export default function RecoveryActions({
   onConfirmPickup,
   onResolve,
   onRetry,
+  onRetryCall,
   onClearError,
 }) {
   const [confirmKind, setConfirmKind] = useState(null);
+
 
   if (!shipment && !incident) return null;
 
@@ -139,6 +143,58 @@ export default function RecoveryActions({
       display === 'RECOVERED' ||
       display === 'RESOLVED');
 
+  const effectiveCallStatus = (() => {
+    if (driverCall?.status) {
+      const s = String(driverCall.status).toLowerCase();
+      if (s === 'in_progress' || s === 'connected' || s === 'answered') return 'answered';
+      if (s === 'confirmed' || incident?.pickupConfirmedAt) return 'confirmed';
+      if (s === 'declined' || s === 'rejected') return 'declined';
+      if (s === 'failed' || driverCall.error) return 'failed';
+      if (s === 'initiated' || s === 'ringing') return 'calling';
+      if (s === 'not_triggered') return 'not_triggered';
+      return s;
+    }
+    if (incident?.driverCallStatus) {
+      const s = String(incident.driverCallStatus).toLowerCase();
+      if (s === 'in_progress' || s === 'connected' || s === 'answered') return 'answered';
+      if (s === 'confirmed' || incident?.pickupConfirmedAt) return 'confirmed';
+      if (s === 'declined' || s === 'rejected') return 'declined';
+      if (s === 'failed' || incident.driverCallError) return 'failed';
+      if (s === 'initiated' || s === 'ringing') return 'calling';
+      if (s === 'not_triggered') return 'not_triggered';
+      return s;
+    }
+    if (driverNotification) {
+      if (incident?.pickupConfirmedAt) return 'confirmed';
+      if (driverNotification.delivered) return 'calling';
+      return 'failed';
+    }
+    if (
+      incident?.status === 'ASSIGNED' ||
+      incident?.status === 'PICKUP_CONFIRMED' ||
+      display === 'ASSIGNED' ||
+      display === 'PICKUP_CONFIRMED'
+    ) {
+      return 'not_triggered';
+    }
+    return null;
+  })();
+
+  const callPhone =
+    driverCall?.phone ||
+    incident?.driverCallPhone ||
+    driverNotification?.phone ||
+    null;
+  const callError =
+    driverCall?.error ||
+    incident?.driverCallError ||
+    (driverNotification && !driverNotification.delivered ? driverNotification.detail : null);
+  const callId =
+    driverCall?.call_id ||
+    incident?.driverCallAttemptId ||
+    driverNotification?.attemptId ||
+    null;
+
   return (
     <div className="recovery-section recovery-actions" aria-label="Recovery actions">
       <h3>Recovery Actions</h3>
@@ -153,20 +209,150 @@ export default function RecoveryActions({
         </div>
       ) : null}
 
-      {!isComplete && display === 'ASSIGNED' ? (
+      {!isComplete && (display === 'ASSIGNED' || incident?.status === 'ASSIGNED') ? (
         <p className="muted">
           Driver assigned: <strong>{vehicleLabel}</strong>
         </p>
       ) : null}
 
-      {driverContacted ? (
-        <p className="ok-text" role="status">
-          ✓ Driver contacted
-          {driverNotification?.channel
-            ? ` (${driverNotification.channel}, simulated)`
-            : ' (simulated)'}
-        </p>
+      {/* Sarvam Outbound Voice Call Status Card */}
+      {!isComplete && effectiveCallStatus ? (
+        <div
+          className="recovery-call-status-card"
+          role="region"
+          aria-label="Driver voice call status"
+          style={{
+            margin: '12px 0',
+            padding: '12px 14px',
+            borderRadius: '8px',
+            border: '1px solid var(--border, #e0e0e0)',
+            background: 'var(--card-bg, #ffffff)',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: '6px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '1.1rem' }}>
+                {effectiveCallStatus === 'calling' && '📞'}
+                {effectiveCallStatus === 'answered' && '🟢'}
+                {effectiveCallStatus === 'confirmed' && '✅'}
+                {effectiveCallStatus === 'declined' && '❌'}
+                {effectiveCallStatus === 'failed' && '⚠️'}
+                {effectiveCallStatus === 'not_triggered' && '⚪'}
+              </span>
+              <strong style={{ fontSize: '0.9rem', color: 'var(--text)' }}>
+                {effectiveCallStatus === 'calling' && 'Calling driver...'}
+                {effectiveCallStatus === 'answered' && 'Driver answered'}
+                {effectiveCallStatus === 'confirmed' && 'Driver confirmed'}
+                {effectiveCallStatus === 'declined' && 'Driver declined'}
+                {effectiveCallStatus === 'failed' && 'Call failed'}
+                {effectiveCallStatus === 'not_triggered' && 'Call not triggered'}
+              </strong>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span
+                style={{
+                  fontSize: '0.72rem',
+                  fontWeight: 600,
+                  padding: '2px 8px',
+                  borderRadius: '12px',
+                  background: '#e8f5e9',
+                  color: '#2e7d32',
+                  border: '1px solid #c8e6c9',
+                }}
+              >
+                Telugu Voice Agent
+              </span>
+              {onRetryCall &&
+              (effectiveCallStatus === 'failed' ||
+                effectiveCallStatus === 'declined' ||
+                effectiveCallStatus === 'not_triggered' ||
+                effectiveCallStatus === 'calling') ? (
+                <button
+                  type="button"
+                  onClick={() => onRetryCall()}
+                  disabled={retryingCall}
+                  style={{
+                    fontSize: '0.75rem',
+                    padding: '3px 10px',
+                    borderRadius: '6px',
+                    cursor: retryingCall ? 'not-allowed' : 'pointer',
+                    background: 'var(--accent, #1976d2)',
+                    color: '#fff',
+                    border: 'none',
+                  }}
+                >
+                  {retryingCall
+                    ? 'Calling…'
+                    : effectiveCallStatus === 'not_triggered'
+                      ? '📞 Call Driver'
+                      : '🔄 Retry Call'}
+                </button>
+              ) : null}
+            </div>
+          </div>
+
+          <div
+            style={{
+              fontSize: '0.78rem',
+              color: 'var(--muted, #666)',
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '12px',
+              marginTop: '4px',
+            }}
+          >
+            {callPhone ? (
+              <span>
+                Driver Phone: <strong>{callPhone}</strong>
+              </span>
+            ) : null}
+            {callId ? (
+              <span>
+                Attempt ID: <code>{callId.slice(0, 8)}…</code>
+              </span>
+            ) : null}
+          </div>
+
+          {callError ? (
+            <div
+              style={{
+                marginTop: '8px',
+                padding: '6px 10px',
+                borderRadius: '4px',
+                background: '#ffebee',
+                color: '#c62828',
+                fontSize: '0.78rem',
+              }}
+            >
+              <strong>Failure reason:</strong> {callError}
+            </div>
+          ) : null}
+
+          {effectiveCallStatus === 'calling' ? (
+            <p style={{ margin: '6px 0 0', fontSize: '0.76rem', color: 'var(--muted)' }}>
+              Sarvam AI Voice Agent is placing an outbound call in Telugu with dynamic recovery instructions.
+            </p>
+          ) : null}
+          {effectiveCallStatus === 'answered' ? (
+            <p style={{ margin: '6px 0 0', fontSize: '0.76rem', color: '#2e7d32' }}>
+              Driver answered the call and is listening to the Telugu recovery brief.
+            </p>
+          ) : null}
+          {effectiveCallStatus === 'confirmed' ? (
+            <p style={{ margin: '6px 0 0', fontSize: '0.76rem', color: '#2e7d32' }}>
+              Driver confirmed assignment to pick up shipment from {pickupHub}.
+            </p>
+          ) : null}
+        </div>
       ) : null}
+
 
       {actionFeedback && !actionError ? (
         <p className="ok-text" role="status">

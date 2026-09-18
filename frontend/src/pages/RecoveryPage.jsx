@@ -32,6 +32,8 @@ export default function RecoveryPage() {
           recoveryAnalysis={ctx.recoveryAnalysis}
           vehicles={ctx.vehicles}
           driverNotification={ctx.driverNotification}
+          driverCall={ctx.driverCall}
+          retryingCall={ctx.retryingCall}
           shipmentLoading={ctx.shipmentLoading}
           shipmentError={ctx.shipmentError}
           incidentLoading={ctx.incidentsLoading && !ctx.incidentForAlert}
@@ -49,39 +51,57 @@ export default function RecoveryPage() {
           onConfirmPickup={ctx.handleConfirmPickup}
           onResolve={ctx.handleMarkRecovered}
           onRetryAction={ctx.retryLastAction}
+          onRetryCall={ctx.handleRetryDriverCall}
           onClearActionError={ctx.clearActionError}
         />
 
-        {ctx.driverNotification ? (
-          <section className="panel">
-            <div className="panel-header">
+        {ctx.driverCall || ctx.driverNotification ? (
+          <section className="panel" aria-label="Driver voice communication">
+            <div className="panel-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h2 className="panel-title">
-                {ctx.driverNotification.simulated
-                  ? '📞 Driver Contact (Log Fallback)'
-                  : '📞 Driver Called (Sarvam)'}
+                {ctx.driverCall?.channel === 'sarvam_voice' || ctx.driverNotification?.channel === 'sarvam_voice'
+                  ? '📞 Sarvam Outbound Voice Call (Telugu)'
+                  : '📞 Driver Contact Status'}
               </h2>
+              {ctx.handleRetryDriverCall && (ctx.incidentForAlert?.status === 'ASSIGNED' || ctx.incidentForAlert?.status === 'PICKUP_CONFIRMED') ? (
+                <button
+                  type="button"
+                  onClick={() => ctx.handleRetryDriverCall()}
+                  disabled={ctx.retryingCall}
+                  className="primary"
+                  style={{ fontSize: '0.78rem', padding: '4px 10px' }}
+                >
+                  {ctx.retryingCall ? 'Calling…' : '🔄 Retry Call'}
+                </button>
+              ) : null}
             </div>
             <div className="panel-body">
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 10, fontSize: '0.8rem', color: 'var(--muted)' }}>
-                <span>Channel: <strong>{ctx.driverNotification.channel}</strong></span>
-                {ctx.driverNotification.callKind ? (
-                  <span>Kind: <strong>{ctx.driverNotification.callKind}</strong></span>
+                <span>
+                  Status: <strong style={{
+                    color: (ctx.driverCall?.status === 'initiated' || ctx.driverCall?.status === 'connected' || ctx.driverCall?.status === 'in_progress') ? '#2e7d32' : (ctx.driverCall?.status === 'failed' ? '#c62828' : 'inherit')
+                  }}>{ctx.driverCall?.status || (ctx.driverNotification?.delivered ? 'delivered' : 'pending')}</strong>
+                </span>
+                {ctx.driverCall?.phone || ctx.driverNotification?.phone ? (
+                  <span>Phone: <strong>{ctx.driverCall?.phone || ctx.driverNotification?.phone}</strong></span>
                 ) : null}
-                <span>Delivered: <strong>{String(ctx.driverNotification.delivered)}</strong></span>
-                {ctx.driverNotification.language ? (
-                  <span>Lang: <strong>{ctx.driverNotification.language}</strong></span>
+                <span>Language: <strong>{ctx.driverCall?.language || ctx.driverNotification?.language || 'Telugu'}</strong></span>
+                {ctx.driverCall?.call_id ? (
+                  <span>Call ID: <code>{ctx.driverCall.call_id.slice(0, 8)}…</code></span>
                 ) : null}
-                {ctx.driverNotification.simulated ? (
-                  <span className="badge badge-warn">Telephony not configured</span>
+                {ctx.driverCall?.error ? (
+                  <span className="badge badge-bad" style={{ marginLeft: 'auto' }}>
+                    {ctx.driverCall.error}
+                  </span>
                 ) : null}
               </div>
-              {ctx.driverNotification.detail ? (
-                <p className="text-xs muted" style={{ marginBottom: 8 }}>{ctx.driverNotification.detail}</p>
+              {ctx.driverNotification?.message ? (
+                <pre className="driver-message">{ctx.driverNotification.message}</pre>
               ) : null}
-              <pre className="driver-message">{ctx.driverNotification.message}</pre>
             </div>
           </section>
         ) : null}
+
 
         <div className="recovery-grid">
           <RecoveryCandidates

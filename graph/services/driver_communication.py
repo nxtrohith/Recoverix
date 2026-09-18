@@ -27,7 +27,11 @@ from typing import Any, Literal
 
 from dotenv import load_dotenv
 
-from graph.services.sarvam_outbound import place_instant_outbound_call
+from graph.services.sarvam_outbound import (
+    call_driver,
+    normalize_phone_number,
+    place_instant_outbound_call,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -90,19 +94,30 @@ def resolve_driver_phone(
 ) -> str | None:
     """
     Resolve dial number: explicit → vehicle fields → SARVAM_DEMO_DRIVER_PHONE.
-    Never hardcode a production number in source.
+    Normalizes to E.164.
     """
+    target = None
     if explicit_phone and str(explicit_phone).strip():
-        return str(explicit_phone).strip()
-
-    if vehicle_doc:
+        target = str(explicit_phone).strip()
+    elif vehicle_doc:
         for key in ("phone", "driverPhone", "contactPhone", "mobile", "phoneNumber"):
             val = vehicle_doc.get(key)
             if val and str(val).strip():
-                return str(val).strip()
+                target = str(val).strip()
+                break
 
-    demo = _env("SARVAM_DEMO_DRIVER_PHONE")
-    return demo or None
+    if not target:
+        demo = _env("SARVAM_DEMO_DRIVER_PHONE")
+        if demo and str(demo).strip():
+            target = str(demo).strip()
+
+    if target:
+        try:
+            return normalize_phone_number(target)
+        except Exception as e:
+            logger.warning("Failed to normalize phone %s: %s", target, e)
+            return target
+    return None
 
 
 def _script_template(kind: CallKind) -> str:
@@ -143,7 +158,6 @@ def render_driver_script(
     try:
         return template.format(**values)
     except (KeyError, ValueError):
-        # If operator puts bad braces in env script, fall back to defaults.
         fallback = (
             DEFAULT_SCRIPT_LATE_DETECTION
             if kind == "late_detection"
@@ -205,83 +219,83 @@ def send_driver_notification(
     language: str | None = None,
 ) -> DriverNotificationResult:
     """
-    Notify a driver via Sarvam phone call when configured; otherwise log.
-
+    Notify a driver via Sarvam phone call in Telugu when configured; otherwise log.
     Never raises — recovery workflow must continue even if telephony fails.
     """
     sent_at = _now_iso()
     meta = dict(metadata or {})
     dial = resolve_driver_phone(vehicle_doc=vehicle_doc, explicit_phone=phone)
-    lang = (language or _env("SARVAM_DEFAULT_LANGUAGE") or "English").strip()
+    lang = (language or _env("SARVAM_DEFAULT_LANGUAGE") or "Telugu").strip()
 
-    # Prefer Sarvam when we have a phone to dial.
-    # Do not send arbitrary agent_variables — Sarvam agents reject unknown keys (HTTP 422).
-    # Opening line + language overrides carry the recovery context.
     if dial:
-        call = place_instant_outbound_call(
-            user_phone_number=dial,
-            initial_bot_message=message,
+        call_res = call_driver(
+            driver_phone=dial,
+            shipment_id=str(meta.get("shipmentId") or meta.get("tracking") or ""),
+            pickup_hub=str(meta.get("pickupNode") or meta.get("pickupHub") or ""),
+            destination_hub=str(meta.get("destinationNode") or meta.get("destinationHub") or ""),
+            driver_name=str(vehicle_doc.get("driverName") or meta.get("driverName") or "") if vehicle_doc else None,
             language=lang,
-            agent_variables=None,
             metadata={
                 "vehicleId": str(vehicle_id),
                 "callKind": call_kind,
                 **{k: str(v) for k, v in meta.items() if v is not None},
             },
         )
-        if call.ok:
+        if call_res["success"]:
             logger.info(
-                "driver_call kind=%s vehicle=%s attempt_id=%s phone=%s",
+                "[SARVAM] driver_call_success kind=%s vehicle=%s attempt_id=%s phone=%s",
                 call_kind,
                 vehicle_id,
-                call.attempt_id,
+                call_res.get("call_id"),
                 dial,
             )
             return DriverNotificationResult(
                 vehicle_id=str(vehicle_id),
-                message=message,
+                message=call_res.get("message") or message,
                 channel="sarvam_voice",
                 delivered=True,
                 sent_at=sent_at,
-                detail=call.detail,
-                attempt_id=call.attempt_id,
+                detail=call_res.get("detail"),
+                attempt_id=call_res.get("call_id"),
                 call_kind=call_kind,
                 phone=dial,
                 language=lang,
                 simulated=False,
             )
-        # Fall through to log stub with Sarvam error detail
-        logger.warning(
-            "driver_call_failed kind=%s vehicle=%s detail=%s — falling back to log",
-            call_kind,
-            vehicle_id,
-            call.detail,
-        )
-        fallback_detail = call.detail
+        else:
+            logger.warning(
+                "[SARVAM] driver_call_failed kind=%s vehicle=%s error=%s",
+                call_kind,
+                vehicle_id,
+                call_res.get("error"),
+            )
+            return DriverNotificationResult(
+                vehicle_id=str(vehicle_id),
+                message=call_res.get("message") or message,
+                channel="sarvam_voice",
+                delivered=False,
+                sent_at=sent_at,
+                detail=call_res.get("error") or call_res.get("detail"),
+                attempt_id=None,
+                call_kind=call_kind,
+                phone=dial,
+                language=lang,
+                simulated=False,
+            )
     else:
-        fallback_detail = "No driver phone — logged locally (set SARVAM_DEMO_DRIVER_PHONE)"
+        fallback_detail = "No driver phone resolved (set vehicle.phone or SARVAM_DEMO_DRIVER_PHONE)"
+        logger.warning("[SARVAM] call failed: %s (vehicle=%s)", fallback_detail, vehicle_id)
+        return DriverNotificationResult(
+            vehicle_id=str(vehicle_id),
+            message=message,
+            channel="no_phone",
+            delivered=False,
+            sent_at=sent_at,
+            detail=fallback_detail,
+            attempt_id=None,
+            call_kind=call_kind,
+            phone=None,
+            language=lang,
+            simulated=True,
+        )
 
-    logger.info(
-        "driver_notification vehicle_id=%s channel=log kind=%s message=%r meta=%s",
-        vehicle_id,
-        call_kind,
-        message,
-        meta,
-    )
-    print(
-        f"[driver_communication] NOTIFY kind={call_kind} vehicle={vehicle_id}\n{message}",
-        flush=True,
-    )
-    return DriverNotificationResult(
-        vehicle_id=str(vehicle_id),
-        message=message,
-        channel="log",
-        delivered=True,
-        sent_at=sent_at,
-        detail=fallback_detail,
-        attempt_id=None,
-        call_kind=call_kind,
-        phone=dial,
-        language=lang,
-        simulated=True,
-    )
