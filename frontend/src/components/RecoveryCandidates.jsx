@@ -1,37 +1,35 @@
-function fmt(value, digits = 1) {
-  if (value == null || Number.isNaN(Number(value))) return '—';
-  return Number(value).toFixed(digits);
-}
+import { useState } from 'react';
+import CandidateCard from './recovery/CandidateCard';
+import { isCandidateFeasible } from './recovery/candidateUtils';
 
-function strategyLabel(pickupCase) {
-  if (pickupCase === 'at_node' || pickupCase === 'pass_through') return 'Piggyback';
-  if (pickupCase === 'detour') return 'Alternate / Detour';
-  if (pickupCase === 'none') return 'Direct Recovery';
-  return pickupCase || '—';
-}
-
+/**
+ * Recovery candidate comparison panel.
+ * Display / explain only — does not assign recovery or contact drivers.
+ */
 export default function RecoveryCandidates({
   analysis,
   loading,
   error,
-  selectedCandidateId,
-  assignedCandidateId,
-  onSelectRecovery,
-  assigning,
+  vehicles = [],
+  /** Backend-persisted / assigned selected candidate id (authoritative). */
+  selectedCandidateId = null,
+  assignedCandidateId = null,
 }) {
+  const [expandedId, setExpandedId] = useState(null);
+
   if (loading) {
     return (
-      <section className="panel">
-        <h2>Recovery Candidates</h2>
-        <p className="muted">Running recovery analysis…</p>
+      <section className="panel recovery-candidates">
+        <h2>Recovery Vehicles</h2>
+        <p className="muted">Loading recovery candidates…</p>
       </section>
     );
   }
 
   if (error) {
     return (
-      <section className="panel">
-        <h2>Recovery Candidates</h2>
+      <section className="panel recovery-candidates">
+        <h2>Recovery Vehicles</h2>
         <p className="error-text">{error}</p>
       </section>
     );
@@ -39,8 +37,8 @@ export default function RecoveryCandidates({
 
   if (!analysis) {
     return (
-      <section className="panel">
-        <h2>Recovery Candidates</h2>
+      <section className="panel recovery-candidates">
+        <h2>Recovery Vehicles</h2>
         <p className="muted">
           Simulate an incident or click “Analyze Recovery” to load candidates.
         </p>
@@ -50,117 +48,123 @@ export default function RecoveryCandidates({
 
   const candidates = analysis.candidates || [];
   const network = analysis.network || {};
-  const selectedId =
+  const persistedSelectedId =
     assignedCandidateId ||
     selectedCandidateId ||
     analysis.selectedRecovery?.candidateId ||
+    analysis.recoveryPlan?.candidateId ||
     null;
+
+  const feasible = candidates.filter(isCandidateFeasible);
+  const rejected = candidates.filter((c) => !isCandidateFeasible(c));
+  const noFeasible =
+    analysis.status === 'NO_FEASIBLE_RECOVERY' ||
+    (candidates.length > 0 && feasible.length === 0);
 
   if (!candidates.length) {
     return (
-      <section className="panel">
-        <h2>Recovery Candidates</h2>
-        <p className="warn-text">No recovery candidates returned.</p>
-        {analysis.reasons?.length ? (
-          <ul>
-            {analysis.reasons.map((r) => (
-              <li key={r}>{r}</li>
-            ))}
-          </ul>
-        ) : null}
+      <section className="panel recovery-candidates">
+        <h2>Recovery Vehicles</h2>
+        {analysis.status === 'NO_FEASIBLE_RECOVERY' ? (
+          <>
+            <p className="warn-text">
+              <strong>NO FEASIBLE RECOVERY</strong>
+            </p>
+            {analysis.reasons?.length ? (
+              <ul>
+                {analysis.reasons.map((r) => (
+                  <li key={r}>{r}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="muted">No candidates were returned by the API.</p>
+            )}
+          </>
+        ) : (
+          <p className="warn-text">No recovery candidates returned.</p>
+        )}
       </section>
     );
   }
 
+  const toggle = (id) => {
+    setExpandedId((prev) => (prev === id ? null : id));
+  };
+
   return (
     <section className="panel recovery-candidates">
-      <h2>Recovery Options</h2>
-      <p className="muted">
-        Status: <strong>{analysis.status}</strong> · total{' '}
-        {network.candidateCount ?? candidates.length} · feasible{' '}
-        {network.feasibleCount ?? candidates.filter((c) => c.feasible).length}
-      </p>
-
-      <div className="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>State</th>
-              <th>Strategy</th>
-              <th>Vehicle</th>
-              <th>Path</th>
-              <th>Feasible</th>
-              <th>Score</th>
-              <th>Distance</th>
-              <th>Travel Time</th>
-              <th>Cost</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {candidates.map((c) => {
-              const m = c.metrics || {};
-              const isSelected = selectedId && c.candidateId === selectedId;
-              let state = c.feasible ? 'FEASIBLE' : 'INFEASIBLE';
-              if (isSelected && assignedCandidateId) state = 'ASSIGNED';
-              else if (isSelected) state = 'SELECTED';
-              return (
-                <tr
-                  key={c.candidateId}
-                  className={
-                    isSelected
-                      ? 'row-selected'
-                      : c.feasible
-                        ? 'row-feasible'
-                        : 'row-infeasible'
-                  }
-                >
-                  <td>
-                    <span className={`badge badge-${state.toLowerCase()}`}>
-                      {state}
-                    </span>
-                  </td>
-                  <td>{strategyLabel(c.pickupCase)}</td>
-                  <td>
-                    {c.vehicleNumber || c.vehicleId}
-                    <div className="cell-sub">{c.vehicleId}</div>
-                  </td>
-                  <td className="path-cell">
-                    {(c.path || []).join(' → ') || '—'}
-                  </td>
-                  <td>
-                    {c.feasible
-                      ? 'yes'
-                      : `no${c.rejectionReason ? `: ${c.rejectionReason}` : ''}`}
-                  </td>
-                  <td>{c.score == null ? '—' : fmt(c.score, 4)}</td>
-                  <td>{fmt(m.distance)} km</td>
-                  <td>{fmt(m.travelTime)} min</td>
-                  <td>{fmt(m.cost, 2)}</td>
-                  <td>
-                    {c.feasible && onSelectRecovery ? (
-                      <button
-                        type="button"
-                        className="primary"
-                        disabled={assigning || Boolean(assignedCandidateId)}
-                        onClick={() => onSelectRecovery(c)}
-                      >
-                        {assignedCandidateId === c.candidateId
-                          ? 'Assigned'
-                          : assigning
-                            ? 'Assigning…'
-                            : 'Select Recovery'}
-                      </button>
-                    ) : (
-                      '—'
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      <div className="panel-header-row">
+        <h2>Recovery Vehicles</h2>
+        <p className="muted candidate-count-summary">
+          {network.candidateCount ?? candidates.length} total ·{' '}
+          {network.feasibleCount ?? feasible.length} feasible
+          {analysis.status ? (
+            <>
+              {' '}
+              · <strong>{analysis.status}</strong>
+            </>
+          ) : null}
+        </p>
       </div>
+
+      {noFeasible ? (
+        <div className="no-feasible-banner" role="status">
+          <strong>NO FEASIBLE RECOVERY</strong>
+          {analysis.reasons?.length ? (
+            <ul>
+              {analysis.reasons.map((r) => (
+                <li key={r}>{r}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="muted">
+              All returned candidates were rejected by the backend.
+            </p>
+          )}
+        </div>
+      ) : null}
+
+      {feasible.length ? (
+        <div className="candidate-section">
+          <h3>Feasible Candidates</h3>
+          <div className="candidate-card-list">
+            {feasible.map((c) => (
+              <CandidateCard
+                key={c.candidateId}
+                candidate={c}
+                network={network}
+                vehicles={vehicles}
+                isPersistedSelected={
+                  Boolean(
+                    persistedSelectedId && c.candidateId === persistedSelectedId,
+                  )
+                }
+                expanded={expandedId === c.candidateId}
+                onToggleExpand={() => toggle(c.candidateId)}
+              />
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {rejected.length ? (
+        <div className="candidate-section">
+          <h3>Rejected Candidates</h3>
+          <div className="candidate-card-list">
+            {rejected.map((c) => (
+              <CandidateCard
+                key={c.candidateId}
+                candidate={c}
+                network={network}
+                vehicles={vehicles}
+                isPersistedSelected={false}
+                expanded={expandedId === c.candidateId}
+                onToggleExpand={() => toggle(c.candidateId)}
+              />
+            ))}
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

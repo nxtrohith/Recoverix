@@ -188,6 +188,7 @@ Functional admin dashboard (intentionally basic UI). The React app calls the **N
 | `frontend/src/hooks/useRecoveryData.js` | Recovery data layer: loading/error/data, refresh, analyze/assign/pickup/resolve |
 | `frontend/src/App.jsx` | Dashboard shell + wiring for incident → assign → pickup → resolve workflow |
 | `frontend/src/components/*` | Header, MetricsBar, SearchPanel, LogisticsMap, ShipmentPanel, VehiclePanel, IncidentAlert, RecoveryCandidates, RecoveryPlan |
+| `frontend/src/components/recovery/*` | Operator recovery incident view + candidate panel helpers (cards, type badges, score breakdown) — display only |
 
 Map data comes only from `GET /api/graph` (node lat/lon + edges). Recovery path highlighting uses assigned incident `recoveryPath` or `selectedRecovery.path` from analysis — no client-side routing/scoring.
 
