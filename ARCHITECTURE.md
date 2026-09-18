@@ -8,7 +8,7 @@ Hackathon prototype focused on recovering misplaced shipments by evaluating pigg
 - MongoDB via Mongoose
 - TypeScript for schema/type definitions (`src/models`)
 - Python (`uv` + NetworkX + FastAPI/uvicorn) for the logistics graph + recovery API
-- React + Vite frontend (`frontend/`) talking to FastAPI over HTTP (`VITE_API_BASE_URL`)
+- React + Vite frontend (`frontend/`) talking to the Node API gateway over HTTP (`VITE_API_BASE_URL`, default `:3000`; Node proxies `/api/*` to FastAPI `:5055`)
 
 ## Data layer
 
@@ -19,7 +19,7 @@ Seven Mongoose collections under `src/models/`:
 | `Location` | Warehouses, hubs, DCs, origins, destinations |
 | `Vehicle` | Transport assets with capacity and current load |
 | `Route` | Existing routes with embedded `stops[]` (no separate RouteStop collection) |
-| `Shipment` | Packages in transit |
+| `Shipment` | Packages in transit (`currentLocation` = actual hub; `expectedLocation` = cached route-progress hub) |
 | `RecoveryCase` | Misplaced-shipment recovery case |
 | `RecoveryOption` | Ranked piggyback strategy candidates (core decision schema) |
 | `ShipmentEvent` | Shipment tracking history |
@@ -63,6 +63,7 @@ MongoDB (telangana_nodes + telangana_edges)
     → shipment_state / vehicle_state / recovery_context / candidate_generator
     → recovery_scorer (feasibility + weighted scoring + selection)
     → recovery_orchestrator.analyze_shipment_recovery()
+    → recovery_persistence (selected plan → recoverycases / recoveryoptions)
     → Node API proxy  GET /api/recovery/:shipmentId
 ```
 
@@ -74,25 +75,26 @@ MongoDB (telangana_nodes + telangana_edges)
 - **Demo (scoring):** `uv run python scripts/demo_scoring.py [shipment_id_or_tracking_number]`
 - **Demo (orchestrator):** `uv run python scripts/demo_orchestrator.py [shipment_id_or_tracking_number]`
 - **API:** `npm run recovery:api` → FastAPI on `:5055` (or `npm start` → Node on `:3000` proxies to `:5055`)
-- **Frontend:** `npm run frontend` → Vite on `:5173` (uses `frontend/.env` → `VITE_API_BASE_URL`)
+- **Frontend:** `npm run frontend` → Vite on `:5173` (uses `frontend/.env` → `VITE_API_BASE_URL`, default Node `:3000`)
 
 ### Recovery pipeline modules
 
 | Module | Responsibility |
 | --- | --- |
-| `graph/shipment_state.py` | Resolve a Shipment + its Locations into a `ShipmentState` with graph node keys. Determine `is_misplaced` / `is_delayed`. |
-| `graph/vehicle_state.py` | Query active vehicles, resolve their locations, compute available capacity. |
-| `graph/recovery_context.py` | Bridge: assembles `RecoveryContext` from shipment state + vehicle state + graph. Entry point: `get_recovery_context(db, G, identifier)`. |
-| `graph/candidate_generator.py` | Enumerate raw piggyback `RecoveryCandidate` objects (paths, capacity, rough deadline). No scoring. |
-| `graph/recovery_scorer.py` | Feasibility filter + configurable weighted scoring + deterministic explanations + selection. Does not auto-persist. |
+| `graph/shipment_state.py` | Resolve a Shipment into a `ShipmentState`: **actualNode** = last confirming event / `currentLocation`; **expectedNode** = route-progress hub from `assignedRoute` stops + on-route events (persisted `expectedLocation` is a cache only). Misplaced when both known and they differ. Recovery pickup = actualNode. |
+| `graph/vehicle_state.py` | Query active vehicles, resolve locations + **currentRoute hub sequence**, compute available capacity. Driver handle = vehicle number (no separate Driver entity). |
+| `graph/recovery_context.py` | Bridge: assembles `RecoveryContext` from shipment state + vehicle state + graph. Pickup = actual hub. Entry point: `get_recovery_context(db, G, identifier)`. |
+| `graph/candidate_generator.py` | Enumerate raw piggyback `RecoveryCandidate` objects using **existing active routes** for `at_node` / `pass_through` / `detour`. Shortest-path alone is not pass_through. No scoring. |
+| `graph/recovery_scorer.py` | Feasibility filter + configurable weighted scoring + selection. Does not write MongoDB. |
+| `graph/recovery_persistence.py` | Idempotent persist of selected (+ rejected) plans into `recoverycases` / `recoveryoptions`. |
 | `graph/graph_cache.py` | In-memory NetworkX cache; `get_graph()` / `refresh_graph()`. |
-| `graph/recovery_orchestrator.py` | End-to-end coordinator: `analyze_shipment_recovery(shipment_id)`. No algorithms/formulas. |
+| `graph/recovery_orchestrator.py` | End-to-end coordinator: `analyze_shipment_recovery(shipment_id)` → score → persist plan. No algorithms/formulas. |
 | `graph/api_server.py` | FastAPI recovery API (uvicorn; spawned by Node). |
 | `src/routes/recovery.js` | Thin Node controllers that proxy to the Python API. |
 
 **Layer separation:**
 - `GRAPH` — "Can something travel from A to B?" (NetworkX)
-- `OPERATIONAL STATE` — "Where is the shipment/vehicle right now?" (MongoDB)
+- **OPERATIONAL STATE** — "Where is the shipment/vehicle right now (actual), and where should it be (expected)?" (MongoDB)
 - `CANDIDATE GENERATION` — "Could this vehicle/route potentially recover this shipment?"
 - `OPTIMIZATION` — "Which feasible option should be selected?" (`score_recovery_candidates`)
 - `ORCHESTRATION` — "Run the full pipeline for a shipment ID" (`analyze_shipment_recovery`)
@@ -101,10 +103,11 @@ MongoDB (telangana_nodes + telangana_edges)
 ### Scoring notes
 
 - Weights live in `DEFAULT_WEIGHTS` (`time`, `cost`, `capacity`, `deadline`, `priority`, `detour`, `connectivity`) and are easy to retune for demos.
-- Deadline failures are hard-rejected (not merely low-scored).
-- Detour is compared to the vehicle's `currentRoute` distance/duration when present; otherwise marked **unavailable** (never fabricated).
-- Hub connectivity uses degree + degree centrality of the pickup hub.
-- **Persistence:** `recoveryoptions` (Mongoose `RecoveryOption`) already exists, but its `scores` subdocument has `resourceUtilization` instead of `detour`/`connectivity`. The scorer does not write to MongoDB until that mapping is decided. There is no `recovery_candidates` collection (only a sample JSON file under `data/`).
+- Hard constraints (capacity / unreachable / deadline / invalid path) reject before weighted ranking.
+- Detour component uses RouteBaseline when present; otherwise piggyback facts (`at_node` / `pass_through` → no extra km). Missing baseline is never invented.
+- Connectivity is a softened minor tie-breaker (weight 0.05) so it cannot dominate route compatibility.
+- Each scored candidate exposes component scores + a bullet explanation; selection text contrasts why others ranked lower.
+- **Persistence:** After a feasible analysis (`RECOVERY_PLAN_AVAILABLE`), `graph/recovery_persistence.py` upserts the selected plan into `recoveryoptions` and links it from `recoverycases.selectedOption` (+ `incidents.selectedRecoveryOption`). Rejected alternatives are stored lightly for audit. Repeated analyze is idempotent (same candidate fingerprint → same option id). Assignment prefers the persisted selected option over re-scoring. Score fields map scorer `time` → `scores.deliveryTime` and include `detour` / `connectivity`.
 
 ### Location ↔ Graph node bridging
 
@@ -130,8 +133,9 @@ to FastAPI transparently.
 | `GET` | `/api/shipments/:shipmentId` | Full shipment detail + recent tracking events + active incident |
 | `GET` | `/api/recovery/:shipmentId` | Full recovery analysis JSON |
 | `POST` | `/api/recovery/:shipmentId/calculate` | Same pipeline (explicit calculate verb) |
-| `POST` | `/api/recovery/:shipmentId/assign` | Assign a recovery candidate + driver notification |
-| `POST` | `/api/recovery/:shipmentId/resolve` | Mark recovered / resolve incident |
+| `POST` | `/api/recovery/:shipmentId/assign` | Assign a recovery candidate + simulated driver notification |
+| `POST` | `/api/recovery/:shipmentId/pickup` | Simulated driver pickup confirmation (does not resolve incident) |
+| `POST` | `/api/recovery/:shipmentId/resolve` | Resolve incident after pickup (end of demo workflow) |
 | `POST` | `/api/recovery/analyze/:shipmentId` | Same as GET (explicit analyze) |
 | `POST` | `/api/recovery/graph/refresh` | Rebuild in-memory NetworkX graph from MongoDB |
 | `POST` | `/api/incidents/simulate` | Simulate MISPLACED_SHIPMENT on an existing shipment |
@@ -140,7 +144,21 @@ to FastAPI transparently.
 
 Recovery response `status` values: `RECOVERY_PLAN_AVAILABLE` | `NO_FEASIBLE_RECOVERY`.
 
-Incident lifecycle (computed + persisted): `NORMAL` → `MISPLACED` → `RECOVERY_ANALYSIS` → `RECOVERY_ASSIGNED` → `RECOVERED`.
+Incident lifecycle (computed + persisted): `NORMAL` → `MISPLACED` → `RECOVERY_ANALYSIS` → `RECOVERY_ASSIGNED` → `PICKUP_CONFIRMED` → `RECOVERED`.
+
+Demo recovery workflow (simulated — no live driver/GPS/telephony):
+
+```
+Analyze → candidates → score → select best → Persist recovery plan
+  → Assign (uses persisted plan) → Contact driver (log stub)
+  → Driver confirms pickup (POST /pickup) → Shipment recovered
+  → Resolve incident (recoveryoption → completed, recoverycase → resolved)
+```
+
+Recovery response includes `recoveryPlan: { id, status, score, … }` when a plan was persisted (null when `NO_FEASIBLE_RECOVERY`).
+
+Incident DB statuses: `OPEN` / `RECOVERY_REQUIRED` → `ASSIGNED` → `PICKUP_CONFIRMED` → `RESOLVED`.
+Pickup confirmation sets shipment `status=recovered` and writes `recovery_pickup_confirmed`; operator `resolve` closes the incident.
 
 ### API module layout
 
@@ -149,7 +167,8 @@ Incident lifecycle (computed + persisted): `NORMAL` → `MISPLACED` → `RECOVER
 | `graph/api_models.py` | Pydantic response models (strict types, JSON-safe) |
 | `graph/api_services.py` | Service layer — MongoDB batch queries + data assembly |
 | `graph/api_server.py` | FastAPI routes + CORS + error handlers |
-| `graph/incident_service.py` | Simulate / assign / resolve incident workflow (MongoDB) |
+| `graph/incident_service.py` | Simulate / assign / pickup-confirm / resolve incident workflow (MongoDB) |
+| `graph/recovery_persistence.py` | Persist selected recovery plans; assign/resolve status transitions |
 | `graph/services/driver_communication.py` | Driver notification integration point (log stub) |
 
 **CORS:** Controlled by the `CORS_ORIGINS` env var (comma-separated). Defaults to
@@ -160,16 +179,18 @@ and routes in a small number of MongoDB round-trips (not one query per document)
 
 ## Frontend (`frontend/`)
 
-Functional admin dashboard (intentionally basic UI):
+Functional admin dashboard (intentionally basic UI). The React app calls the **Node gateway** (`VITE_API_BASE_URL`, default `http://127.0.0.1:3000`); it must not hardcode the FastAPI `:5055` URL in components.
 
 | Path | Role |
 | --- | --- |
-| `frontend/src/api/client.js` | Centralized FastAPI client (health, graph, hubs, vehicles, shipments, recovery, incidents) |
-| `frontend/src/App.jsx` | Dashboard state + incident → recovery → resolve workflow |
+| `frontend/src/api/client.js` | Centralized Node-gateway client (health, graph, hubs, vehicles, shipments, recovery, incidents) |
+| `frontend/src/types/api.ts` | TypeScript types for API response shapes (mirrors FastAPI / orchestrator JSON) |
+| `frontend/src/hooks/useRecoveryData.js` | Recovery data layer: loading/error/data, refresh, analyze/assign/pickup/resolve |
+| `frontend/src/App.jsx` | Dashboard shell + wiring for incident → assign → pickup → resolve workflow |
 | `frontend/src/components/*` | Header, MetricsBar, SearchPanel, LogisticsMap, ShipmentPanel, VehiclePanel, IncidentAlert, RecoveryCandidates, RecoveryPlan |
 
 Map data comes only from `GET /api/graph` (node lat/lon + edges). Recovery path highlighting uses assigned incident `recoveryPath` or `selectedRecovery.path` from analysis — no client-side routing/scoring.
 
 ## Out of scope (for now)
 
-Auth, seed data, ML/RL optimizers, centrality dashboards, automatic persistence of scored options, and visual polish of the admin UI.
+Auth, seed data, ML/RL optimizers, centrality dashboards, and visual polish of the admin UI.

@@ -11,6 +11,19 @@ export const RECOVERY_OPTION_STATUSES = [
 ] as const;
 export type RecoveryOptionStatus = (typeof RECOVERY_OPTION_STATUSES)[number];
 
+const componentScoresSchema = new Schema(
+  {
+    time: { type: Number, required: false },
+    cost: { type: Number, required: false },
+    capacity: { type: Number, required: false },
+    deadline: { type: Number, required: false },
+    priority: { type: Number, required: false },
+    detour: { type: Number, required: false },
+    connectivity: { type: Number, required: false },
+  },
+  { _id: false },
+);
+
 const recoveryOptionSchema = new Schema(
   {
     recoveryCase: {
@@ -23,25 +36,41 @@ const recoveryOptionSchema = new Schema(
       ref: 'Shipment',
       required: true,
     },
+    // Optional: piggyback may use an existing route, or only a recovery path
     route: {
       type: Schema.Types.ObjectId,
       ref: 'Route',
-      required: true,
+      required: false,
     },
     vehicle: {
       type: Schema.Types.ObjectId,
       ref: 'Vehicle',
       required: true,
     },
+    // Demo incident that produced this analysis (when present)
+    incident: {
+      type: Schema.Types.ObjectId,
+      ref: 'Incident',
+      required: false,
+    },
+    // Scorer identity / classification (not fabricated)
+    candidateId: { type: String, required: false },
+    pickupCase: { type: String, required: false }, // at_node | pass_through | detour
+    recoveryPath: { type: [String], default: [] },
+    pickupNode: { type: String, required: false },
+    destinationNode: { type: String, required: false },
+    // Hackathon: vehicle number is the driver handle
+    driverId: { type: String, required: false },
+
     pickupLocation: {
       type: Schema.Types.ObjectId,
       ref: 'Location',
-      required: true,
+      required: false,
     },
     dropoffLocation: {
       type: Schema.Types.ObjectId,
       ref: 'Location',
-      required: true,
+      required: false,
     },
     transferHubs: [
       {
@@ -50,19 +79,24 @@ const recoveryOptionSchema = new Schema(
       },
     ],
 
-    requiredCapacity: { type: capacitySchema, required: true },
-    availableCapacity: { type: capacitySchema, required: true },
+    requiredCapacity: { type: capacitySchema, required: false },
+    availableCapacity: { type: capacitySchema, required: false },
 
-    estimatedCost: { type: Number, required: true },
-    estimatedDeliveryTime: { type: Date, required: true },
-    distanceKm: { type: Number, required: true },
-    numberOfTransfers: { type: Number, required: true },
-    deadlineBufferMinutes: { type: Number, required: true },
-    resourceUtilizationPercent: { type: Number, required: true },
+    estimatedCost: { type: Number, required: false },
+    // Prefer estimatedTravelTimeMin from the scorer; do not invent a wall-clock ETA
+    estimatedDeliveryTime: { type: Date, required: false },
+    estimatedTravelTimeMin: { type: Number, required: false },
+    distanceKm: { type: Number, required: false },
+    numberOfTransfers: { type: Number, required: false },
+    deadlineBufferMinutes: { type: Number, required: false },
+    resourceUtilizationPercent: { type: Number, required: false },
 
-    scores: { type: recoveryScoresSchema, required: true },
-    totalScore: { type: Number, required: true },
-    rank: { type: Number, required: true },
+    scores: { type: recoveryScoresSchema, required: false },
+    // Scorer component breakdown (time/cost/…/detour/connectivity)
+    componentScores: { type: componentScoresSchema, required: false },
+    explanation: { type: String, required: false },
+    totalScore: { type: Number, required: false },
+    rank: { type: Number, required: false },
 
     isFeasible: { type: Boolean, required: true },
     infeasibilityReasons: { type: [String], default: [] },
@@ -72,7 +106,10 @@ const recoveryOptionSchema = new Schema(
 );
 
 recoveryOptionSchema.index({ recoveryCase: 1, rank: 1 });
+recoveryOptionSchema.index({ recoveryCase: 1, status: 1 });
 recoveryOptionSchema.index({ shipment: 1 });
+recoveryOptionSchema.index({ incident: 1 });
+recoveryOptionSchema.index({ candidateId: 1 });
 recoveryOptionSchema.index({ route: 1 });
 recoveryOptionSchema.index({ totalScore: -1 });
 recoveryOptionSchema.index({ isFeasible: 1, status: 1 });

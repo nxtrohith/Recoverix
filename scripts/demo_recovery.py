@@ -63,8 +63,7 @@ def _mock_shipment(G) -> ShipmentState:
     """
     Build a synthetic misplaced shipment using real graph nodes.
 
-    Picks two nodes that are connected (has at least one edge between them
-    or a short path) so the demo is meaningful.
+    Demonstrates expected ≠ actual: planned next hub vs last-confirmed hub.
     """
     nodes = list(G.nodes())
     if len(nodes) < 2:
@@ -72,23 +71,43 @@ def _mock_shipment(G) -> ShipmentState:
 
     import networkx as nx
 
-    # Try to find a multi-hop route for a more interesting demo.
-    current_node: str = nodes[0]
-    destination_node: str = nodes[-1]
+    # Prefer the demo narrative hubs when present in the graph.
+    hyd = "Hyderabad_Shamshbd_H (Telangana)"
+    expected = "Medchal_MROoffce_D (Telangana)"
+    dest = "Karimnagar_KamnHbRD_I (Telangana)"
+    actual = "Kamareddy_Devenply_I (Telangana)"
 
-    # Prefer nodes where a path actually exists.
-    for src in nodes[:10]:
-        for dst in reversed(nodes[-10:]):
-            if src != dst:
-                try:
-                    path = nx.shortest_path(G, src, dst, weight="avg_distance_km")
-                    if len(path) >= 2:
-                        current_node = src
-                        destination_node = dst
-                        break
-                except (nx.NetworkXNoPath, nx.NodeNotFound):
-                    continue
-            break  # inner break → keep outer going
+    if all(n in G for n in (hyd, expected, dest, actual)):
+        origin_node, expected_node, destination_node, current_node = (
+            hyd,
+            expected,
+            dest,
+            actual,
+        )
+        planned = [hyd, expected, dest]
+    else:
+        current_node = nodes[0]
+        destination_node = nodes[-1]
+        for src in nodes[:10]:
+            for dst in reversed(nodes[-10:]):
+                if src != dst:
+                    try:
+                        path = nx.shortest_path(G, src, dst, weight="avg_distance_km")
+                        if len(path) >= 2:
+                            current_node = src
+                            destination_node = dst
+                            break
+                    except (nx.NetworkXNoPath, nx.NodeNotFound):
+                        continue
+                break
+        origin_node = current_node
+        expected_node = destination_node
+        planned = [origin_node, destination_node]
+        # Force a mismatch for the mock when possible
+        for alt in nodes:
+            if alt not in (origin_node, destination_node) and alt in G:
+                current_node = alt
+                break
 
     return ShipmentState(
         shipment_id="MOCK-SHIPMENT-001",
@@ -101,17 +120,22 @@ def _mock_shipment(G) -> ShipmentState:
         package_count=3,
         fragile=False,
         special_handling=None,
-        origin_name=current_node,
+        origin_name=origin_node,
         destination_name=destination_node,
         current_location_name=current_node,
-        origin_node=current_node,
+        expected_location_name=expected_node,
+        origin_node=origin_node,
         destination_node=destination_node,
         current_node=current_node,
+        actual_node=current_node,
+        expected_node=expected_node,
+        planned_route_nodes=planned,
         latest_event_type="misplaced",
         latest_event_time=datetime.now(tz=timezone.utc),
         is_misplaced=True,
         is_delayed=False,
         needs_recovery=True,
+        expected_from_route=True,
     )
 
 
@@ -178,7 +202,10 @@ def main() -> None:
     print(f"  Weight / Volume  : {shipment.weight} kg / {shipment.volume} m³")
     print(f"  Fragile          : {shipment.fragile}")
     print(f"  Current location : {shipment.current_location_name}")
-    print(f"  Current node     : {shipment.current_node}")
+    print(f"  Actual node      : {shipment.actual_node}")
+    print(f"  Expected node    : {shipment.expected_node}")
+    if shipment.planned_route_nodes:
+        print(f"  Planned route    : {' → '.join(shipment.planned_route_nodes)}")
     print(f"  Destination      : {shipment.destination_name}")
     print(f"  Destination node : {shipment.destination_node}")
     print(f"  Is misplaced     : {shipment.is_misplaced}")

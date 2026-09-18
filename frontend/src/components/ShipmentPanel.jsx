@@ -12,6 +12,7 @@ const LIFECYCLE_STEPS = [
   'MISPLACED',
   'RECOVERY_ANALYSIS',
   'RECOVERY_ASSIGNED',
+  'PICKUP_CONFIRMED',
   'RECOVERED',
 ];
 
@@ -42,6 +43,8 @@ export default function ShipmentPanel({
   analyzing,
   onSimulateIncident,
   simulating,
+  onConfirmPickup,
+  confirmingPickup,
   onMarkRecovered,
   resolving,
 }) {
@@ -80,7 +83,8 @@ export default function ShipmentPanel({
 
   const canSimulate =
     lifecycle === 'NORMAL' || lifecycle === 'RECOVERED' || !shipment.needsRecovery;
-  const canResolve = lifecycle === 'RECOVERY_ASSIGNED';
+  const canConfirmPickup = lifecycle === 'RECOVERY_ASSIGNED';
+  const canResolve = lifecycle === 'PICKUP_CONFIRMED';
 
   return (
     <section className="panel shipment-panel">
@@ -105,6 +109,16 @@ export default function ShipmentPanel({
           >
             {analyzing ? 'Analyzing…' : 'Analyze Recovery'}
           </button>
+          {canConfirmPickup ? (
+            <button
+              type="button"
+              className="primary"
+              onClick={onConfirmPickup}
+              disabled={confirmingPickup}
+            >
+              {confirmingPickup ? 'Confirming…' : 'Confirm Pickup'}
+            </button>
+          ) : null}
           {canResolve ? (
             <button
               type="button"
@@ -112,7 +126,7 @@ export default function ShipmentPanel({
               onClick={onMarkRecovered}
               disabled={resolving}
             >
-              {resolving ? 'Completing…' : 'Mark Recovered'}
+              {resolving ? 'Resolving…' : 'Resolve Incident'}
             </button>
           ) : null}
         </div>
@@ -137,6 +151,19 @@ export default function ShipmentPanel({
         <Field label="Lifecycle" value={lifecycle} />
         <Field label="Current location" value={shipment.currentLocation} />
         <Field label="Current node" value={shipment.currentNode} />
+        <Field
+          label="Expected location"
+          value={shipment.expectedLocation || shipment.expectedNode}
+        />
+        <Field label="Expected node" value={shipment.expectedNode} />
+        <Field
+          label="Actual location"
+          value={shipment.actualLocation || shipment.currentLocation}
+        />
+        <Field
+          label="Actual node"
+          value={shipment.actualNode || shipment.currentNode}
+        />
         <Field label="Destination" value={shipment.destination} />
         <Field label="Destination node" value={shipment.destinationNode} />
         <Field label="Assigned vehicle" value={shipment.assignedVehicleNumber} />

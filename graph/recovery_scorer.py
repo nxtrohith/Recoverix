@@ -40,12 +40,20 @@ DEFAULT_WEIGHTS: dict[str, float] = {
 DEFAULT_COST_PER_KM: float = 28.0
 
 # Priority → how strongly we reward fast / buffered options.
+# Keys cover both schema values (urgent/medium) and legacy aliases.
 PRIORITY_URGENCY: dict[str, float] = {
     "critical": 1.0,
+    "urgent": 1.0,
     "high": 0.85,
+    "medium": 0.55,
     "normal": 0.55,
     "low": 0.35,
 }
+
+# Soften connectivity component so it stays a minor tie-breaker
+# (weight is already 0.05; compress variance toward neutral 0.5).
+_CONNECTIVITY_BLEND: float = 0.4
+
 
 
 # ---------------------------------------------------------------------------
@@ -120,14 +128,16 @@ class ScoredCandidate:
             "pickupCase": self.pickup_case,
             "path": self.path,
             "feasible": self.feasible,
+            "feasibility": self.feasible,
             "rejectionReason": self.rejection_reason,
             "score": self.score,
+            "totalScore": self.score,
             "explanation": self.explanation,
             "factorsHelped": self.factors_helped,
             "factorsHurt": self.factors_hurt,
         }
         if self.breakdown is not None:
-            out["breakdown"] = {
+            component_scores = {
                 "time": round(self.breakdown.time, 4),
                 "cost": round(self.breakdown.cost, 4),
                 "capacity": round(self.breakdown.capacity, 4),
@@ -136,8 +146,11 @@ class ScoredCandidate:
                 "detour": round(self.breakdown.detour, 4),
                 "connectivity": round(self.breakdown.connectivity, 4),
             }
+            out["breakdown"] = component_scores
+            out["componentScores"] = component_scores
         else:
             out["breakdown"] = None
+            out["componentScores"] = None
 
         if self.metrics is not None:
             m = self.metrics
@@ -248,20 +261,29 @@ def _compose_recovery_path(
 
 
 def _deadline_buffer_from_travel(
-    deadline: datetime | None, travel_min: float | None
+    deadline: datetime | None,
+    travel_min: float | None,
+    *,
+    now: datetime | None = None,
 ) -> float | None:
-    """Minutes of slack if delivery starts now and takes travel_min."""
+    """Minutes of slack if delivery starts at ``now`` and takes travel_min."""
     if deadline is None or travel_min is None:
         return None
 
-    est = datetime.now(tz=timezone.utc) + timedelta(minutes=travel_min)
+    origin = now or datetime.now(tz=timezone.utc)
+    if origin.tzinfo is None:
+        origin = origin.replace(tzinfo=timezone.utc)
+    est = origin + timedelta(minutes=travel_min)
     if deadline.tzinfo is None:
         deadline = deadline.replace(tzinfo=timezone.utc)
     return (deadline - est).total_seconds() / 60.0
 
 
 def _deadline_buffer_min(
-    candidate: RecoveryCandidate, travel_min: float | None = None
+    candidate: RecoveryCandidate,
+    travel_min: float | None = None,
+    *,
+    now: datetime | None = None,
 ) -> float | None:
     """
     Deadline buffer in minutes.
@@ -270,7 +292,9 @@ def _deadline_buffer_min(
     do not inherit over-counted pickup+dest totals from candidate generation.
     """
     if travel_min is not None:
-        return _deadline_buffer_from_travel(candidate.shipment_deadline, travel_min)
+        return _deadline_buffer_from_travel(
+            candidate.shipment_deadline, travel_min, now=now
+        )
     if candidate.shipment_deadline is None or candidate.estimated_delivery_at is None:
         return None
     deadline = candidate.shipment_deadline
@@ -313,7 +337,10 @@ def candidate_id_for(candidate: RecoveryCandidate) -> str:
 # ---------------------------------------------------------------------------
 
 def check_feasibility(
-    G: nx.DiGraph, candidate: RecoveryCandidate
+    G: nx.DiGraph,
+    candidate: RecoveryCandidate,
+    *,
+    now: datetime | None = None,
 ) -> tuple[bool, str | None, list[str], float | None]:
     """
     Hard filters.  Rejected candidates are not scored.
@@ -351,8 +378,7 @@ def check_feasibility(
     travel_min = _path_weight(G, recovery_path, "avg_time_min")
 
     # Deadline: cannot meet → reject (not merely low score).
-    # Prefer path-based travel time over candidate.deadline_feasible.
-    buffer = _deadline_buffer_min(candidate, travel_min)
+    buffer = _deadline_buffer_min(candidate, travel_min, now=now)
     if buffer is not None and buffer < 0:
         return False, "Cannot meet shipment deadline", recovery_path, travel_min
     if buffer is None and candidate.deadline_feasible is False:
@@ -372,6 +398,8 @@ def _compute_metrics(
     cost_per_km: float,
     recovery_path: list[str] | None = None,
     travel_min: float | None = None,
+    *,
+    now: datetime | None = None,
 ) -> CandidateMetrics:
     path = recovery_path or _compose_recovery_path(G, candidate)
     dist = _path_weight(G, path, "avg_distance_km")
@@ -405,7 +433,7 @@ def _compute_metrics(
         cost=cost,
         available_capacity_weight=candidate.available_weight,
         available_capacity_volume=candidate.available_volume,
-        deadline_buffer_min=_deadline_buffer_min(candidate, travel_min),
+        deadline_buffer_min=_deadline_buffer_min(candidate, travel_min, now=now),
         detour_distance_km=detour_km,
         detour_time_min=detour_min,
         detour_available=detour_available,
@@ -413,6 +441,10 @@ def _compute_metrics(
         connectivity_centrality=centrality,
         recovery_path=path,
     )
+
+
+# Treat near-equal raw values as ties so tiny clock/FP noise cannot invert ranks.
+_NORM_TIE_EPS: float = 1e-6
 
 
 def _norm_higher_better(values: list[float | None], idx: int) -> float:
@@ -424,7 +456,7 @@ def _norm_higher_better(values: list[float | None], idx: int) -> float:
     v = values[idx]
     if v is None:
         return 0.5
-    if hi == lo:
+    if hi - lo <= _NORM_TIE_EPS:
         return 1.0
     return (v - lo) / (hi - lo)
 
@@ -438,7 +470,7 @@ def _norm_lower_better(values: list[float | None], idx: int) -> float:
     v = values[idx]
     if v is None:
         return 0.5
-    if hi == lo:
+    if hi - lo <= _NORM_TIE_EPS:
         return 1.0
     return (hi - v) / (hi - lo)
 
@@ -463,6 +495,56 @@ def _priority_component(
     return urgency * quality + (1.0 - urgency) * 0.55
 
 
+def _additional_movement_km(
+    candidate: RecoveryCandidate, metrics: CandidateMetrics
+) -> float | None:
+    """
+    Extra km beyond an existing compatible movement.
+
+    Prefer RouteBaseline-derived detour when available (never invent a
+    baseline). Otherwise use candidate piggyback facts:
+
+      at_node / pass_through → 0 additional km
+      detour                 → candidate.detour_distance_km / pickup leg
+
+    Returns None only when no honest signal exists → neutral component.
+    """
+    if metrics.detour_available and metrics.detour_distance_km is not None:
+        return float(metrics.detour_distance_km)
+
+    if candidate.pickup_case in ("at_node", "pass_through"):
+        return float(candidate.detour_distance_km or 0.0)
+
+    if candidate.detour_distance_km is not None:
+        return float(candidate.detour_distance_km)
+    if candidate.vehicle_to_pickup_km is not None:
+        return float(candidate.vehicle_to_pickup_km)
+    return None
+
+
+def _capacity_headroom_ratio(candidate: RecoveryCandidate) -> float:
+    """Higher residual capacity relative to shipment need is better."""
+    need_w = max(candidate.shipment_weight, 1e-9)
+    need_v = max(candidate.shipment_volume, 1e-9)
+    return 0.7 * (candidate.available_weight / need_w) + 0.3 * (
+        candidate.available_volume / need_v
+    )
+
+
+def _usable_capacity_pct(candidate: RecoveryCandidate) -> float | None:
+    """Residual capacity remaining after loading this shipment (weight)."""
+    free = max(0.0, candidate.available_weight)
+    if free <= 0:
+        return None
+    after = max(0.0, free - candidate.shipment_weight)
+    return 100.0 * after / free
+
+
+def _soften_connectivity(raw: float) -> float:
+    """Pull connectivity toward 0.5 so it cannot dominate route compatibility."""
+    return 0.5 + _CONNECTIVITY_BLEND * (raw - 0.5)
+
+
 def _score_feasible_set(
     candidates: list[RecoveryCandidate],
     metrics_list: list[CandidateMetrics],
@@ -472,23 +554,11 @@ def _score_feasible_set(
     times = [m.travel_time_min for m in metrics_list]
     costs = [m.cost for m in metrics_list]
     buffers = [m.deadline_buffer_min for m in metrics_list]
-    # Capacity headroom ratio (weight-focused, volume as tie-breaker blend)
-    cap_ratios: list[float | None] = []
-    for c in candidates:
-        need_w = max(c.shipment_weight, 1e-9)
-        need_v = max(c.shipment_volume, 1e-9)
-        ratio = 0.7 * (c.available_weight / need_w) + 0.3 * (
-            c.available_volume / need_v
-        )
-        cap_ratios.append(ratio)
-
-    detours: list[float | None] = []
-    for m in metrics_list:
-        if m.detour_available and m.detour_distance_km is not None:
-            detours.append(m.detour_distance_km)
-        else:
-            detours.append(None)
-
+    cap_ratios = [_capacity_headroom_ratio(c) for c in candidates]
+    extras = [
+        _additional_movement_km(c, m)
+        for c, m in zip(candidates, metrics_list)
+    ]
     connectivities = [m.connectivity_centrality for m in metrics_list]
 
     results = []
@@ -496,17 +566,23 @@ def _score_feasible_set(
         time_s = _norm_lower_better(times, i)
         cost_s = _norm_lower_better(costs, i)
         cap_s = _norm_higher_better(cap_ratios, i)
-        # Missing deadline → neutral 0.5 (feasibility already passed)
+
         if buffers[i] is None:
             deadline_s = 0.5
         else:
             deadline_s = _norm_higher_better(buffers, i)
-        # Missing detour baseline → neutral (do not invent)
-        if detours[i] is None:
+
+        # Missing additional-movement signal → neutral (do not invent baseline)
+        if extras[i] is None:
             detour_s = 0.5
         else:
-            detour_s = _norm_lower_better(detours, i)
-        conn_s = _norm_higher_better(connectivities, i)
+            detour_s = _norm_lower_better(extras, i)
+
+        if connectivities[i] is None:
+            conn_s = 0.5
+        else:
+            conn_s = _soften_connectivity(_norm_higher_better(connectivities, i))
+
         priority_s = _priority_component(c, time_s, deadline_s)
 
         breakdown = ScoreBreakdown(
@@ -538,7 +614,6 @@ def _score_feasible_set(
             "detour": detour_s,
             "connectivity": conn_s,
         }
-        # Helped / hurt relative to mid-point, weighted by importance.
         helped = sorted(
             [k for k, v in components.items() if v >= 0.65],
             key=lambda k: -components[k] * weights[k],
@@ -555,9 +630,20 @@ def _fmt_min(v: float | None) -> str:
     if v is None:
         return "unknown time"
     h, m = divmod(int(round(v)), 60)
-    if h:
+    if h and m:
         return f"{h}h {m}m"
+    if h:
+        return f"{h}h"
     return f"{m}m"
+
+
+def _fmt_buffer_hours(buffer_min: float | None) -> str | None:
+    if buffer_min is None:
+        return None
+    hours = buffer_min / 60.0
+    if abs(hours) >= 1:
+        return f"{hours:.1f}h"
+    return f"{int(round(buffer_min))}m"
 
 
 def _build_explanation(
@@ -566,60 +652,136 @@ def _build_explanation(
     breakdown: ScoreBreakdown,
     helped: list[str],
     hurt: list[str],
+    *,
+    score: float | None = None,
 ) -> str:
-    """Deterministic plain-language explanation from score components."""
-    parts: list[str] = []
+    """
+    Deterministic explanation answering why this vehicle is a strong
+    (or weaker) piggyback recovery option.
+    """
     vlabel = candidate.vehicle_number or candidate.vehicle_id
+    lines: list[str] = [vlabel]
+    if score is not None:
+        lines.append(f"Score: {score:.2f}")
+    lines.append("")
 
-    parts.append(
-        f"Vehicle {vlabel} ({candidate.pickup_case.replace('_', ' ')}) "
-        f"provides {metrics.available_capacity_weight:.0f} kg / "
-        f"{metrics.available_capacity_volume:.1f} m³ available capacity"
-    )
-
-    if metrics.deadline_buffer_min is not None:
-        buf = int(round(metrics.deadline_buffer_min))
-        parts.append(
-            f"reaches the destination with a {buf}-minute deadline buffer"
-            if buf >= 0
-            else "is estimated past the deadline"
-        )
-    elif candidate.shipment_deadline is None:
-        parts.append("has no shipment deadline to enforce")
-
-    if metrics.detour_available and metrics.detour_distance_km is not None:
-        if metrics.detour_distance_km < 1:
-            parts.append("requires essentially no detour vs its normal route")
+    case = candidate.pickup_case
+    if case == "at_node":
+        lines.append("✓ Already at pickup hub")
+    elif case == "pass_through":
+        lines.append("✓ Compatible existing route")
+        route_label = candidate.existing_route_code or candidate.existing_route_id
+        if route_label:
+            lines.append(f"✓ On route {route_label}")
+    elif case == "detour":
+        extra = _additional_movement_km(candidate, metrics)
+        if extra is not None and extra > 0:
+            lines.append(f"△ Requires diversion ({extra:.1f} km extra)")
         else:
-            detour_t = (
-                f" / {_fmt_min(metrics.detour_time_min)}"
-                if metrics.detour_time_min is not None
-                else ""
-            )
-            parts.append(
-                f"requires a {metrics.detour_distance_km:.1f} km{detour_t} detour"
-            )
+            lines.append("△ Requires diversion from current movement")
     else:
-        parts.append("has no normal-route baseline for detour comparison")
+        lines.append("△ Pickup path incomplete")
 
-    if metrics.connectivity_degree is not None:
-        hub = candidate.shipment_current_node
-        parts.append(
-            f"picks up at hub '{hub}' with degree {metrics.connectivity_degree} "
-            f"(centrality {metrics.connectivity_centrality:.3f})"
+    usable = _usable_capacity_pct(candidate)
+    if usable is not None:
+        lines.append(f"✓ {usable:.0f}% usable residual capacity after pickup")
+    else:
+        lines.append(
+            f"✓ {metrics.available_capacity_weight:.0f} kg / "
+            f"{metrics.available_capacity_volume:.1f} m³ residual capacity"
         )
+
+    buf_label = _fmt_buffer_hours(metrics.deadline_buffer_min)
+    if buf_label is not None:
+        if (metrics.deadline_buffer_min or 0) >= 0:
+            lines.append(f"✓ {buf_label} deadline buffer")
+        else:
+            lines.append(f"✗ Past deadline by {buf_label.lstrip('-')}")
+    elif candidate.shipment_deadline is None:
+        lines.append("· No shipment deadline to enforce")
+
+    extra = _additional_movement_km(candidate, metrics)
+    if extra is not None:
+        if extra < 1:
+            lines.append("✓ Low additional distance")
+        elif case == "detour":
+            lines.append(f"△ Additional distance {extra:.1f} km")
+        else:
+            lines.append(f"· Additional distance {extra:.1f} km")
+    elif not metrics.detour_available:
+        lines.append("· No normal-route baseline for detour comparison")
+
+    if metrics.travel_time_min is not None:
+        lines.append(f"· Estimated recovery travel {_fmt_min(metrics.travel_time_min)}")
 
     if helped:
-        parts.append(f"strongest factors: {', '.join(helped[:3])}")
+        lines.append(f"· Strongest score factors: {', '.join(helped[:3])}")
     if hurt:
-        parts.append(f"weakest factors: {', '.join(hurt[:3])}")
+        lines.append(f"· Weakest score factors: {', '.join(hurt[:3])}")
 
-    # Join into 1–2 readable sentences.
-    if len(parts) == 1:
-        return parts[0] + "."
-    if len(parts) == 2:
-        return f"{parts[0]}, {parts[1]}."
-    return f"{parts[0]}, " + ", ".join(parts[1:-1]) + f", and {parts[-1]}."
+    return "\n".join(lines)
+
+
+def _contrast_reason(
+    selected: ScoredCandidate,
+    other: ScoredCandidate,
+) -> str:
+    """One short clause explaining why selected ranked above other."""
+    if not other.feasible:
+        return f"{other.vehicle_number} rejected ({other.rejection_reason})"
+    if selected.breakdown is None or other.breakdown is None:
+        return f"higher total score than {other.vehicle_number}"
+
+    if (
+        selected.pickup_case in ("at_node", "pass_through")
+        and other.pickup_case == "detour"
+    ):
+        return (
+            f"{other.vehicle_number} needs a larger diversion while "
+            f"{selected.vehicle_number} uses an existing compatible movement"
+        )
+
+    deltas = {
+        "time": selected.breakdown.time - other.breakdown.time,
+        "cost": selected.breakdown.cost - other.breakdown.cost,
+        "capacity": selected.breakdown.capacity - other.breakdown.capacity,
+        "deadline": selected.breakdown.deadline - other.breakdown.deadline,
+        "detour": selected.breakdown.detour - other.breakdown.detour,
+        "priority": selected.breakdown.priority - other.breakdown.priority,
+    }
+    best = max(deltas, key=deltas.get)
+    if deltas[best] <= 0.02:
+        return f"higher weighted total than {other.vehicle_number}"
+    labels = {
+        "time": "faster recovery",
+        "cost": "lower recovery cost",
+        "capacity": "more residual capacity",
+        "deadline": "larger deadline buffer",
+        "detour": "less additional movement",
+        "priority": "better priority fit",
+    }
+    return f"{labels[best]} than {other.vehicle_number}"
+
+
+def _build_selection_explanation(
+    selected: ScoredCandidate,
+    feasible_scored: list[ScoredCandidate],
+) -> str:
+    others = [
+        c for c in feasible_scored if c.candidate_id != selected.candidate_id
+    ]
+    header = (
+        f"Selected {selected.vehicle_number or selected.vehicle_id} "
+        f"(score={selected.score:.4f}) as the best piggyback option among "
+        f"{len(feasible_scored)} feasible candidate(s)."
+    )
+    if not others:
+        return f"{header}\n\n{selected.explanation}"
+
+    ranked = sorted(others, key=lambda c: -(c.score or 0.0))
+    contrasts = [_contrast_reason(selected, o) for o in ranked[:3]]
+    why_lower = " Why others ranked lower: " + "; ".join(contrasts) + "."
+    return f"{header}{why_lower}\n\n{selected.explanation}"
 
 
 def _normalize_weights(weights: dict[str, float]) -> dict[str, float]:
@@ -669,6 +831,9 @@ def score_recovery_candidates(
     """
     w = _normalize_weights(weights or dict(DEFAULT_WEIGHTS))
     baselines = route_baselines or {}
+    # Single clock for the whole scoring pass — avoids tiny now() drift
+    # flipping deadline-buffer ranks among otherwise equal candidates.
+    now = datetime.now(tz=timezone.utc)
 
     shipment_id = candidates[0].shipment_id if candidates else "unknown"
 
@@ -680,7 +845,9 @@ def score_recovery_candidates(
     # Pass 1 — feasibility + metrics for feasible set
     for cand in candidates:
         cid = candidate_id_for(cand)
-        ok, reason, recovery_path, travel_min = check_feasibility(G, cand)
+        ok, reason, recovery_path, travel_min = check_feasibility(
+            G, cand, now=now
+        )
         if not ok:
             scored.append(
                 ScoredCandidate(
@@ -707,6 +874,7 @@ def score_recovery_candidates(
             cost_per_km,
             recovery_path=recovery_path,
             travel_min=travel_min,
+            now=now,
         )
         feasible_indices.append(len(scored))
         feasible_raw.append(cand)
@@ -741,7 +909,7 @@ def score_recovery_candidates(
             sc.factors_helped = helped
             sc.factors_hurt = hurt
             sc.explanation = _build_explanation(
-                cand, sc.metrics, breakdown, helped, hurt
+                cand, sc.metrics, breakdown, helped, hurt, score=sc.score
             )
 
     # Select highest-scoring feasible candidate
@@ -749,11 +917,8 @@ def score_recovery_candidates(
     selected: ScoredCandidate | None = None
     if feasible_scored:
         selected = max(feasible_scored, key=lambda c: c.score or 0.0)
-        selection_explanation = (
-            f"Selected {selected.vehicle_number or selected.vehicle_id} "
-            f"(score={selected.score:.4f}) because it has the highest "
-            f"weighted score among {len(feasible_scored)} feasible candidate(s). "
-            f"{selected.explanation}"
+        selection_explanation = _build_selection_explanation(
+            selected, feasible_scored
         )
     else:
         rejection_summary: dict[str, int] = {}

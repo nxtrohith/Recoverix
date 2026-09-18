@@ -28,14 +28,22 @@ export const coordinatesSchema = new Schema<ICoordinates>(
   { _id: false },
 );
 
-/** Multi-criteria scores used to rank recovery options. */
+/**
+ * Multi-criteria scores used to rank recovery options.
+ *
+ * Aligns with `graph/recovery_scorer.ScoreBreakdown`:
+ *   deliveryTime ← time, plus detour / connectivity.
+ * `resourceUtilization` is retained as an optional legacy field.
+ */
 export interface IRecoveryScores {
   cost: number;
   deliveryTime: number;
   capacity: number;
   deadline: number;
   priority: number;
-  resourceUtilization: number;
+  detour?: number;
+  connectivity?: number;
+  resourceUtilization?: number;
 }
 
 export const recoveryScoresSchema = new Schema<IRecoveryScores>(
@@ -45,7 +53,9 @@ export const recoveryScoresSchema = new Schema<IRecoveryScores>(
     capacity: { type: Number, required: true },
     deadline: { type: Number, required: true },
     priority: { type: Number, required: true },
-    resourceUtilization: { type: Number, required: true },
+    detour: { type: Number, required: false },
+    connectivity: { type: Number, required: false },
+    resourceUtilization: { type: Number, required: false },
   },
   { _id: false },
 );

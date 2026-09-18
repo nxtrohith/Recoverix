@@ -7,7 +7,7 @@ how much capacity do they have left?"  Does NOT touch the NetworkX graph.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from bson import ObjectId
@@ -43,9 +43,15 @@ class VehicleState:
     current_location_name: str | None
     current_node: str | None          # Location.graphNodeKey → telangana_nodes hub_name
 
-    # Assigned route (if any)
+    # Assigned route (if any) — used for genuine piggyback detection
     current_route_id: str | None
     destination_node: str | None      # graphNodeKey of route's destination location
+    route_code: str | None = None
+    # Ordered hubs: origin → sequenced stops → destination (when currentRoute set)
+    route_nodes: list[str] = field(default_factory=list)
+    # Hackathon: no separate Driver entity — vehicle number is the driver handle
+    driver_id: str | None = None
+    driver_name: str | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -72,10 +78,18 @@ def _resolve_location(
     return doc.get("name"), doc.get("graphNodeKey")
 
 
-def _resolve_route_destination_node(db: Database, route_id: Any) -> str | None:
-    """Return graphNodeKey of the Route's destination location."""
+def _resolve_route_nodes(
+    db: Database, route_id: Any
+) -> tuple[str | None, str | None, list[str]]:
+    """
+    Load an active Route into an ordered hub sequence.
+
+    Returns (route_code, destination_graph_node, nodes).
+    nodes = origin → stops (by sequence) → destination, deduped.
+    """
     if route_id is None:
-        return None
+        return None, None, []
+
     try:
         oid = (
             route_id
@@ -83,12 +97,39 @@ def _resolve_route_destination_node(db: Database, route_id: Any) -> str | None:
             else ObjectId(route_id)
         )
     except Exception:
-        return None
-    route = db["routes"].find_one({"_id": oid}, {"destination": 1})
+        return None, None, []
+
+    route = db["routes"].find_one(
+        {"_id": oid},
+        {
+            "routeCode": 1,
+            "origin": 1,
+            "destination": 1,
+            "stops": 1,
+            "status": 1,
+        },
+    )
     if route is None:
-        return None
-    _, node = _resolve_location(db, route.get("destination"))
-    return node
+        return None, None, []
+
+    nodes: list[str] = []
+
+    _, origin_node = _resolve_location(db, route.get("origin"))
+    if origin_node:
+        nodes.append(origin_node)
+
+    stops = list(route.get("stops") or [])
+    stops.sort(key=lambda s: int(s.get("sequence") or 0))
+    for stop in stops:
+        _, stop_node = _resolve_location(db, stop.get("location"))
+        if stop_node and (not nodes or nodes[-1] != stop_node):
+            nodes.append(stop_node)
+
+    _, dest_node = _resolve_location(db, route.get("destination"))
+    if dest_node and (not nodes or nodes[-1] != dest_node):
+        nodes.append(dest_node)
+
+    return route.get("routeCode"), dest_node, nodes
 
 
 def _doc_to_vehicle_state(db: Database, doc: dict[str, Any]) -> VehicleState:
@@ -104,11 +145,15 @@ def _doc_to_vehicle_state(db: Database, doc: dict[str, Any]) -> VehicleState:
     curr_loc_name, curr_node = _resolve_location(db, curr_loc_id)
 
     route_id = doc.get("currentRoute")
-    dest_node = _resolve_route_destination_node(db, route_id)
+    route_code, dest_node, route_nodes = _resolve_route_nodes(db, route_id)
+
+    vehicle_number = doc.get("vehicleNumber", "")
+    # No separate Driver collection — vehicle identity is the driver handle.
+    driver_name = vehicle_number or None
 
     return VehicleState(
         vehicle_id=str(doc["_id"]),
-        vehicle_number=doc.get("vehicleNumber", ""),
+        vehicle_number=vehicle_number,
         vehicle_type=doc.get("type", ""),
         status=doc.get("status", ""),
         capacity_weight=cap_w,
@@ -122,6 +167,10 @@ def _doc_to_vehicle_state(db: Database, doc: dict[str, Any]) -> VehicleState:
         current_node=curr_node,
         current_route_id=str(route_id) if route_id else None,
         destination_node=dest_node,
+        route_code=route_code,
+        route_nodes=route_nodes,
+        driver_id=str(doc["_id"]),
+        driver_name=driver_name,
     )
 
 
@@ -134,6 +183,7 @@ def get_active_vehicles(db: Database) -> list[VehicleState]:
     Return all vehicles whose status is available, in_transit, or loading.
 
     Each vehicle's currentLocation is resolved to a graph node key.
+    When ``currentRoute`` is set, ordered route hubs are also resolved.
     """
     docs = list(
         db["vehicles"].find(

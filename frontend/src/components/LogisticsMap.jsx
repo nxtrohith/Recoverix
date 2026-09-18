@@ -66,9 +66,11 @@ export default function LogisticsMap({
       .filter(Boolean);
   }, [graph, nodeById]);
 
-  // Prefer assigned incident path (persisted) over ephemeral analysis selection
+  // Prefer assigned / pickup-confirmed incident path over ephemeral analysis
   const recoveryPath =
-    (activeIncident?.status === 'ASSIGNED' && activeIncident?.recoveryPath?.length
+    ((activeIncident?.status === 'ASSIGNED' ||
+      activeIncident?.status === 'PICKUP_CONFIRMED') &&
+    activeIncident?.recoveryPath?.length
       ? activeIncident.recoveryPath
       : null) ||
     recoveryAnalysis?.selectedRecovery?.path ||

@@ -15,6 +15,7 @@ Endpoints
   GET  /api/recovery/{shipment_id}
   POST /api/recovery/{shipment_id}/calculate
   POST /api/recovery/{shipment_id}/assign
+  POST /api/recovery/{shipment_id}/pickup
   POST /api/recovery/{shipment_id}/resolve
   POST /api/recovery/analyze/{shipment_id}
   POST /api/recovery/graph/refresh
@@ -70,6 +71,7 @@ from graph.api_services import (
 from graph.graph_cache import cache_status, get_db, get_graph, refresh_graph
 from graph.incident_service import (
     assign_recovery,
+    confirm_recovery_pickup,
     list_active_incidents,
     resolve_recovery,
     simulate_misplaced_incident,
@@ -460,7 +462,22 @@ def post_assign_recovery(
         vehicle_id=payload.vehicleId,
         path=payload.path,
         pickup_case=payload.pickupCase,
+        score=payload.score,
     )
+
+
+@app.post(
+    "/api/recovery/{shipment_id}/pickup",
+    summary="Simulate driver pickup confirmation",
+    tags=["recovery"],
+)
+def post_confirm_pickup(shipment_id: str) -> dict[str, Any]:
+    """
+    Simulated driver confirmation that the shipment was picked up at the
+    recovery node. Does not resolve the incident; operator resolve is separate.
+    """
+    db = get_db()
+    return confirm_recovery_pickup(db, shipment_id)
 
 
 @app.post(
@@ -469,7 +486,7 @@ def post_assign_recovery(
     tags=["recovery"],
 )
 def post_resolve_recovery(shipment_id: str) -> dict[str, Any]:
-    """Set shipment → recovered and incident → RESOLVED."""
+    """Resolve incident after simulated pickup (end of demo recovery workflow)."""
     db = get_db()
     return resolve_recovery(db, shipment_id)
 
@@ -594,6 +611,7 @@ def serve(host: str = "127.0.0.1", port: int = 5055) -> None:
     print("  GET  /api/recovery/{shipment_id}", flush=True)
     print("  POST /api/recovery/{shipment_id}/calculate", flush=True)
     print("  POST /api/recovery/{shipment_id}/assign", flush=True)
+    print("  POST /api/recovery/{shipment_id}/pickup", flush=True)
     print("  POST /api/recovery/{shipment_id}/resolve", flush=True)
     print("  POST /api/incidents/simulate", flush=True)
     print("  GET  /api/incidents/active", flush=True)

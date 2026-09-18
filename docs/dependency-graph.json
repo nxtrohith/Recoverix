@@ -89,9 +89,18 @@
       "dependsOn": []
     },
     {
+      "id": "graph.recovery_persistence",
+      "path": "graph/recovery_persistence.py",
+      "dependsOn": []
+    },
+    {
       "id": "graph.incident_service",
       "path": "graph/incident_service.py",
-      "dependsOn": ["graph.recovery_orchestrator", "graph.services.driver_communication"]
+      "dependsOn": [
+        "graph.recovery_orchestrator",
+        "graph.recovery_persistence",
+        "graph.services.driver_communication"
+      ]
     },
     {
       "id": "graph.services.driver_communication",
@@ -101,12 +110,22 @@
     {
       "id": "frontend.api",
       "path": "frontend/src/api/client.js",
+      "dependsOn": ["frontend.types"]
+    },
+    {
+      "id": "frontend.types",
+      "path": "frontend/src/types/api.ts",
       "dependsOn": []
+    },
+    {
+      "id": "frontend.hooks.useRecoveryData",
+      "path": "frontend/src/hooks/useRecoveryData.js",
+      "dependsOn": ["frontend.api"]
     },
     {
       "id": "frontend.app",
       "path": "frontend/src/App.jsx",
-      "dependsOn": ["frontend.api"]
+      "dependsOn": ["frontend.api", "frontend.hooks.useRecoveryData"]
     }
   ]
 }

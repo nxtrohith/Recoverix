@@ -53,11 +53,14 @@ class RecoveryContext:
     Everything the candidate generator needs to enumerate recovery options.
 
     shipment            — full operational state of the distressed shipment
-    current_node        — graph node where the shipment currently is (may be None)
+    current_node        — actual / last-confirmed hub (recovery pickup node)
     destination_node    — graph node the shipment must reach (may be None)
     relevant_vehicles   — active vehicles with enough capacity + a known graph node
-    relevant_routes     — active routes touching the shipment's current location
-    graph_context       — direct-path analysis between current and destination nodes
+    relevant_routes     — active routes touching the shipment's actual hub
+    graph_context       — direct-path analysis between actual and destination nodes
+
+    Note: expectedNode lives on ``shipment.expected_node`` and is used for
+    misplaced detection, not as the pickup location.
     """
     shipment: ShipmentState
     current_node: str | None
@@ -116,10 +119,10 @@ def _get_relevant_routes(
 ) -> list[dict[str, Any]]:
     """
     Return active routes whose origin or destination is the shipment's
-    current location (matched via graphNodeKey).
+    actual / recovery hub (matched via graphNodeKey).
 
     Keeps it simple: useful for showing the planner what traffic passes
-    through the shipment's current hub.
+    through the misplaced pickup hub.
     """
     if current_node is None:
         return []
@@ -201,20 +204,23 @@ def get_recovery_context(
     if shipment is None:
         return None
 
+    # Pickup / recovery hub = actualNode (last-confirmed), never expectedNode.
+    pickup_node = shipment.actual_node or shipment.current_node
+
     # Vehicles: active + can carry the shipment + have a known graph node.
     all_active = get_active_vehicles(db)
     capable = filter_capable_vehicles(all_active, shipment.weight, shipment.volume)
     relevant_vehicles = [v for v in capable if v.current_node is not None]
 
-    relevant_routes = _get_relevant_routes(db, shipment.current_node)
+    relevant_routes = _get_relevant_routes(db, pickup_node)
 
     graph_context = _build_graph_context(
-        G, shipment.current_node, shipment.destination_node
+        G, pickup_node, shipment.destination_node
     )
 
     return RecoveryContext(
         shipment=shipment,
-        current_node=shipment.current_node,
+        current_node=pickup_node,
         destination_node=shipment.destination_node,
         relevant_vehicles=relevant_vehicles,
         relevant_routes=relevant_routes,
@@ -231,20 +237,23 @@ def get_recovery_context_from_state(
     Build a RecoveryContext from an already-loaded ShipmentState.
 
     Use this when the shipment was constructed in-memory (e.g. mock/test mode).
+    Pickup is always ``actual_node`` (physical last-confirmed hub).
     """
+    pickup_node = shipment.actual_node or shipment.current_node
+
     all_active = get_active_vehicles(db)
     capable = filter_capable_vehicles(all_active, shipment.weight, shipment.volume)
     relevant_vehicles = [v for v in capable if v.current_node is not None]
 
-    relevant_routes = _get_relevant_routes(db, shipment.current_node)
+    relevant_routes = _get_relevant_routes(db, pickup_node)
 
     graph_context = _build_graph_context(
-        G, shipment.current_node, shipment.destination_node
+        G, pickup_node, shipment.destination_node
     )
 
     return RecoveryContext(
         shipment=shipment,
-        current_node=shipment.current_node,
+        current_node=pickup_node,
         destination_node=shipment.destination_node,
         relevant_vehicles=relevant_vehicles,
         relevant_routes=relevant_routes,
