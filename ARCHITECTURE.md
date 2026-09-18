@@ -146,14 +146,20 @@ Recovery response `status` values: `RECOVERY_PLAN_AVAILABLE` | `NO_FEASIBLE_RECO
 
 Incident lifecycle (computed + persisted): `NORMAL` → `MISPLACED` → `RECOVERY_ANALYSIS` → `RECOVERY_ASSIGNED` → `PICKUP_CONFIRMED` → `RECOVERED`.
 
-Demo recovery workflow (simulated — no live driver/GPS/telephony):
+Demo recovery workflow:
 
 ```
+Late detection (package already on wrong / outbound vehicle)
+  → Sarvam call to current driver (configurable script; non-blocking)
 Analyze → candidates → score → select best → Persist recovery plan
-  → Assign (uses persisted plan) → Contact driver (log stub)
+  → Assign (uses persisted plan) → Sarvam call to recovery driver
   → Driver confirms pickup (POST /pickup) → Shipment recovered
-  → Resolve incident (recoveryoption → completed, recoverycase → resolved)
+  → Resolve incident
 ```
+
+When Sarvam Instant Outbound env is incomplete, calls fall back to the log stub.
+Scripts: `SARVAM_SCRIPT_LATE_DETECTION` / `SARVAM_SCRIPT_RECOVERY_ASSIGN`.
+Phone: vehicle `phone` fields if present, else `SARVAM_DEMO_DRIVER_PHONE`.
 
 Recovery response includes `recoveryPlan: { id, status, score, … }` when a plan was persisted (null when `NO_FEASIBLE_RECOVERY`).
 
@@ -169,7 +175,8 @@ Pickup confirmation sets shipment `status=recovered` and writes `recovery_pickup
 | `graph/api_server.py` | FastAPI routes + CORS + error handlers |
 | `graph/incident_service.py` | Simulate / assign / pickup-confirm / resolve incident workflow (MongoDB) |
 | `graph/recovery_persistence.py` | Persist selected recovery plans; assign/resolve status transitions |
-| `graph/services/driver_communication.py` | Driver notification integration point (log stub) |
+| `graph/services/driver_communication.py` | Driver notify: Sarvam Instant Outbound + log fallback; env scripts |
+| `graph/services/sarvam_outbound.py` | Sarvam Conversations Instant Outbound HTTP client |
 
 **CORS:** Controlled by the `CORS_ORIGINS` env var (comma-separated). Defaults to
 `localhost:3000/3001/5173/5174`. Set `CORS_ORIGINS=*` for permissive hackathon deployment.
@@ -185,12 +192,20 @@ Functional admin dashboard (intentionally basic UI). The React app calls the **N
 | --- | --- |
 | `frontend/src/api/client.js` | Centralized Node-gateway client (health, graph, hubs, vehicles, shipments, recovery, incidents) |
 | `frontend/src/types/api.ts` | TypeScript types for API response shapes (mirrors FastAPI / orchestrator JSON) |
-| `frontend/src/hooks/useRecoveryData.js` | Recovery data layer: loading/error/data, refresh, analyze/assign/pickup/resolve |
+| `frontend/src/hooks/useRecoveryData.js` | Recovery data layer: loading/error/data, refresh, analyze/assign/pickup/resolve (no optimistic lifecycle) |
 | `frontend/src/App.jsx` | Dashboard shell + wiring for incident → assign → pickup → resolve workflow |
 | `frontend/src/components/*` | Header, MetricsBar, SearchPanel, LogisticsMap, ShipmentPanel, VehiclePanel, IncidentAlert, RecoveryCandidates, RecoveryPlan |
-| `frontend/src/components/recovery/*` | Operator recovery incident view + candidate panel helpers (cards, type badges, score breakdown) — display only |
+| `frontend/src/components/recovery/*` | Operator recovery incident view, action panel (state-gated confirmations), timeline, candidate helpers, `recoveryMapState` (map overlay derivation) — assignment uses persisted plan only |
 
-Map data comes only from `GET /api/graph` (node lat/lon + edges). Recovery path highlighting uses assigned incident `recoveryPath` or `selectedRecovery.path` from analysis — no client-side routing/scoring.
+Map data comes only from `GET /api/graph` (node lat/lon + edges). `LogisticsMap` overlays recovery context from existing API fields only:
+
+- expected route ← `shipment.plannedRoute` / `network.plannedRoute`
+- pickup / actual ← incident hub / `actualNode` / `currentNode`
+- recovery path ← assigned `incident.recoveryPath` or `selectedRecovery.path` / candidate `path` (optionally split at pickup for display)
+- vehicle existing movement ← `GET /api/vehicles/:id` `currentPath` when the recovery vehicle is loaded
+- candidate type ← backend `pickupCase` / `candidateType` (`at_node` | `pass_through` | `detour`)
+
+Expanding a candidate in RecoveryCandidates previews that candidate’s backend `path` on the map (selected plan stays dominant). No client-side routing/scoring.
 
 ## Out of scope (for now)
 

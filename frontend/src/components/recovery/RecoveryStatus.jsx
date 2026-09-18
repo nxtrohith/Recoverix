@@ -6,7 +6,7 @@ import {
 } from './recoveryStatus';
 
 /**
- * Operator-facing recovery lifecycle stepper.
+ * Operator-facing recovery lifecycle timeline.
  * Maps backend incident/lifecycle fields — does not invent workflow states.
  */
 export default function RecoveryStatus({
@@ -31,16 +31,19 @@ export default function RecoveryStatus({
   }
 
   const driverContactedIdx = RECOVERY_DISPLAY_STEPS.indexOf('DRIVER_CONTACTED');
+  const isComplete = current === 'RESOLVED';
 
   return (
     <div className="recovery-section recovery-status">
       <div className="panel-header-row">
         <h3>Recovery Status</h3>
-        <span className="flag flag-warn">{recoveryStepLabel(current)}</span>
+        <span className={`flag ${isComplete ? 'flag-ok' : 'flag-warn'}`}>
+          {isComplete ? 'RECOVERY COMPLETE' : recoveryStepLabel(current)}
+        </span>
       </div>
 
-      <div
-        className="lifecycle-bar recovery-status-bar"
+      <ol
+        className="recovery-timeline"
         aria-label={`Recovery status ${current}`}
       >
         {RECOVERY_DISPLAY_STEPS.map((step, i) => {
@@ -48,20 +51,31 @@ export default function RecoveryStatus({
           // Once DRIVER_CONTACTED is reached, ASSIGNED is complete too
           const isDone =
             (idx >= 0 && i < idx) ||
-            (step === 'ASSIGNED' && idx >= driverContactedIdx);
+            (step === 'ASSIGNED' && idx >= driverContactedIdx) ||
+            (isComplete && i <= idx);
+          const marker = isDone ? '✓' : isActive ? '●' : '○';
           return (
-            <span
+            <li
               key={step}
-              className={`lifecycle-step ${isActive ? 'lifecycle-active' : ''} ${
-                isDone ? 'lifecycle-done' : ''
-              }`}
+              className={`recovery-timeline-step ${
+                isActive ? 'recovery-timeline-active' : ''
+              } ${isDone ? 'recovery-timeline-done' : ''}`}
             >
-              {isActive ? '● ' : ''}
-              {recoveryStepLabel(step)}
-            </span>
+              <span className="recovery-timeline-marker" aria-hidden="true">
+                {marker}
+              </span>
+              <span className="recovery-timeline-label">
+                {recoveryStepLabel(step)}
+              </span>
+              {i < RECOVERY_DISPLAY_STEPS.length - 1 ? (
+                <span className="recovery-timeline-arrow" aria-hidden="true">
+                  ↓
+                </span>
+              ) : null}
+            </li>
           );
         })}
-      </div>
+      </ol>
 
       {incident?.status ? (
         <p className="cell-sub">

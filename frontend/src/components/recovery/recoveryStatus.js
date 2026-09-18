@@ -29,7 +29,7 @@ export const RECOVERY_DISPLAY_STEPS = [
 
 const STEP_LABELS = {
   RECOVERY_REQUIRED: 'Recovery Required',
-  ASSIGNED: 'Assigned',
+  ASSIGNED: 'Vehicle Assigned',
   DRIVER_CONTACTED: 'Driver Contacted',
   PICKUP_CONFIRMED: 'Pickup Confirmed',
   RECOVERED: 'Recovered',

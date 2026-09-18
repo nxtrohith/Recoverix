@@ -199,6 +199,11 @@ export interface Incident {
   recoveryCaseId?: string | null;
   selectedRecoveryOptionId?: string | null;
   driverMessage?: string | null;
+  lateDetectionMessage?: string | null;
+  lateDetectionCallAttemptId?: string | null;
+  lateDetectionCallChannel?: string | null;
+  driverCallAttemptId?: string | null;
+  driverCallChannel?: string | null;
   analysisStatus?: string | null;
   lifecycleStatus?: LifecycleStatus | null;
   assignedAt?: string | null;
@@ -377,6 +382,10 @@ export interface DriverNotification {
   sentAt?: string | null;
   detail?: string | null;
   simulated?: boolean;
+  attemptId?: string | null;
+  callKind?: string | null;
+  phone?: string | null;
+  language?: string | null;
 }
 
 export interface AssignRecoveryResponse {
