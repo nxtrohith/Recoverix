@@ -1,0 +1,76 @@
+{
+  "generatedAt": "2026-09-18",
+  "modules": [
+    {
+      "id": "db",
+      "path": "src/db.js",
+      "dependsOn": []
+    },
+    {
+      "id": "models.shared",
+      "path": "src/models/shared.ts",
+      "dependsOn": []
+    },
+    {
+      "id": "models.Location",
+      "path": "src/models/Location.ts",
+      "dependsOn": ["models.shared"]
+    },
+    {
+      "id": "models.Vehicle",
+      "path": "src/models/Vehicle.ts",
+      "dependsOn": ["models.shared", "models.Location", "models.Route"]
+    },
+    {
+      "id": "models.Route",
+      "path": "src/models/Route.ts",
+      "dependsOn": ["models.shared", "models.Location", "models.Vehicle"]
+    },
+    {
+      "id": "models.Shipment",
+      "path": "src/models/Shipment.ts",
+      "dependsOn": ["models.Location", "models.Route", "models.Vehicle"]
+    },
+    {
+      "id": "models.RecoveryCase",
+      "path": "src/models/RecoveryCase.ts",
+      "dependsOn": ["models.Shipment", "models.Location", "models.RecoveryOption"]
+    },
+    {
+      "id": "models.RecoveryOption",
+      "path": "src/models/RecoveryOption.ts",
+      "dependsOn": [
+        "models.shared",
+        "models.RecoveryCase",
+        "models.Shipment",
+        "models.Route",
+        "models.Vehicle",
+        "models.Location"
+      ]
+    },
+    {
+      "id": "models.ShipmentEvent",
+      "path": "src/models/ShipmentEvent.ts",
+      "dependsOn": ["models.Shipment", "models.Location", "models.Route", "models.Vehicle"]
+    },
+    {
+      "id": "models.index",
+      "path": "src/models/index.ts",
+      "dependsOn": [
+        "models.Location",
+        "models.Vehicle",
+        "models.Route",
+        "models.Shipment",
+        "models.RecoveryCase",
+        "models.RecoveryOption",
+        "models.ShipmentEvent",
+        "models.shared"
+      ]
+    },
+    {
+      "id": "app",
+      "path": "src/index.js",
+      "dependsOn": ["db"]
+    }
+  ]
+}

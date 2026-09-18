@@ -1,0 +1,35 @@
+{
+  "name": "conv-software-hackathon",
+  "version": "1.0.0",
+  "description": "Hackathon app with Mongoose MongoDB connection",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nxtrohith/Conv-Software-Hackathon.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/nxtrohith/Conv-Software-Hackathon/issues"
+  },
+  "homepage": "https://github.com/nxtrohith/Conv-Software-Hackathon#readme",
+  "dependencies": {
+    "dotenv": "^18.0.0",
+    "mongoose": "^9.10.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.1",
+    "nodemon": "^3.1.14",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2"
+  }
+}
