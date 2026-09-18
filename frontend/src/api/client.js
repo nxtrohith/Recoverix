@@ -247,6 +247,18 @@ export function getDriverCallStatus(shipmentId) {
 }
 
 /**
+ * Update driver call status in backend.
+ * @param {string} shipmentId
+ * @param {{ status: string, failure_reason?: string }} payload
+ */
+export function updateDriverCallStatus(shipmentId, payload) {
+  return request(`/api/recovery/${encodeURIComponent(shipmentId)}/call-status`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+/**
  * Test endpoint for immediate real-time Sarvam Telugu driver call testing.
  * @param {{ phone: string, shipment_id?: string, shipmentId?: string }} payload
  */

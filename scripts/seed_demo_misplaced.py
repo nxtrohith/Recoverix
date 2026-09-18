@@ -145,6 +145,17 @@ def seed(db, *, reset: bool) -> str:
         _ROOT / ".env"
     )  # just reference or use os.getenv
     demo_phone = (os.getenv("SARVAM_DEMO_DRIVER_PHONE") or "+917780645727").strip()
+    db["vehicles"].update_many(
+        {"currentLocation": actual["_id"]},
+        {
+            "$set": {
+                "phone": demo_phone,
+                "driverPhone": demo_phone,
+                "driverName": "Ramesh",
+                "updatedAt": now,
+            }
+        },
+    )
     db["vehicles"].update_one(
         {"_id": vehicle["_id"]},
         {
@@ -153,7 +164,7 @@ def seed(db, *, reset: bool) -> str:
                 "status": "in_transit",
                 "phone": demo_phone,
                 "driverPhone": demo_phone,
-                "driverName": "Ramesh (Demo Driver)",
+                "driverName": "Ramesh",
                 "updatedAt": now,
             }
         },
