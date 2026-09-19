@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import {
   AlertTriangle,
+  GitBranch,
   LayoutDashboard,
   MapPinned,
   Package,
@@ -147,15 +148,27 @@ export default function Sidebar({
         <p className="mt-6 mb-2 px-2 text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
           Network
         </p>
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2.5 rounded-base px-2.5 py-2 text-sm">
-            <LayoutDashboard className="size-4 text-muted-foreground" />
-            <span className="flex-1">Graph nodes</span>
-            <span className="font-mono text-xs tabular-nums">
-              {health?.graph?.nodeCount ?? '—'}
-            </span>
-          </div>
-        </div>
+        <ul className="flex flex-col gap-1">
+          <li>
+            <NavLink
+              to="/dashboard/graph"
+              className={({ isActive }) =>
+                cn(
+                  'group flex items-center gap-2.5 rounded-base border-2 border-transparent px-2.5 py-2 text-sm font-medium transition-all duration-200',
+                  isActive
+                    ? 'border-border bg-main shadow-shadow'
+                    : 'hover:border-border hover:bg-background',
+                )
+              }
+            >
+              <GitBranch className="size-4 shrink-0" strokeWidth={2.1} />
+              <span className="flex-1 truncate">Graph nodes</span>
+              <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                {health?.graph?.nodeCount ?? '—'}
+              </span>
+            </NavLink>
+          </li>
+        </ul>
       </nav>
 
       <div className="border-t-2 border-border p-3">

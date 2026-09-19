@@ -196,14 +196,15 @@ Marketing landing + logistics ops dashboard styled with **NeoBrutalism / shadcn*
 | `frontend/src/App.jsx` | Route table: `/` landing, `/dashboard/*` nested dashboard routes |
 | `frontend/src/pages/LandingPage.jsx` | NeoBrutalism marketing landing (brand hero, features, process/stats, CTA) |
 | `frontend/src/layouts/DashboardLayout.jsx` | Sidebar shell + shared dashboard state/hooks; provides Outlet context |
-| `frontend/src/components/Sidebar.jsx` | Left nav (Overview, Shipments, Fleet, Hubs, Exceptions, Search) + global search |
+| `frontend/src/components/Sidebar.jsx` | Left nav (Overview, Shipments, Fleet, Hubs, Exceptions, Search) + Network → Graph nodes + global search |
 | `frontend/src/components/ui/*` | Installed NeoBrutalism/shadcn primitives (button, card, badge, alert, dialog, …) |
 | `frontend/src/components/ops/*` | Thin app helpers composing UI kit (PageHeader, KpiCard, StatusBadge, DetailField, EmptyState) |
-| `frontend/src/pages/*` | Overview / Shipments / Vehicles / Hubs / Recovery / Search views consuming outlet context |
-| `frontend/src/components/*` | MetricsBar, SearchPanel, LogisticsMap, ShipmentPanel, VehiclePanel, HubPanel, IncidentAlert, RecoveryCandidates, RecoveryPlan |
+| `frontend/src/pages/*` | Overview / Shipments / Vehicles / Hubs / GraphNodes / Recovery / Search views consuming outlet context |
+| `frontend/src/components/*` | MetricsBar, SearchPanel, LogisticsMap, NetworkGraph (3D ego force viz), ShipmentPanel, VehiclePanel, HubPanel, IncidentAlert, RecoveryCandidates, RecoveryPlan |
+| `frontend/src/lib/egoSubgraph.js` | Client ego-neighborhood extract over `/api/graph` (BFS hops; degree for sizing only) |
 | `frontend/src/components/recovery/*` | Operator recovery incident view, action panel (state-gated confirmations), `RecoveryTimeline` (backend-driven lifecycle + event history), candidate helpers, `recoveryMapState` (map overlay derivation) — assignment uses persisted plan only |
 
-Map data comes only from `GET /api/graph` (node lat/lon + edges). `LogisticsMap` overlays recovery context from existing API fields only:
+Map data comes only from `GET /api/graph` (node lat/lon + edges). The **Graph nodes** tab (`/dashboard/graph`) renders a **3D** ego neighborhood (default 1 undirected hop; optional 2) over those same edges — camera opens on the highest-degree hub; node color = `hub_type`; size = degree; no centrality dashboard. `LogisticsMap` overlays recovery context from existing API fields only:
 
 - expected route ← `shipment.plannedRoute` / `network.plannedRoute`
 - pickup / actual ← incident hub / `actualNode` / `currentNode`
