@@ -227,3 +227,9 @@ class UpdateCallStatusRequest(BaseModel):
     status: str
     failure_reason: Optional[str] = None
 
+
+class DemoSwitchRequest(BaseModel):
+    case: int = 1                # 1, 2, or 3
+    reset: bool = True           # wipe & recreate the demo shipment
+
+

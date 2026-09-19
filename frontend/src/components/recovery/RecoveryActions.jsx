@@ -277,7 +277,7 @@ export default function RecoveryActions({
                   border: '1px solid #c8e6c9',
                 }}
               >
-                Telugu Voice Agent
+                {incident?.driverLanguage || 'Telugu'} Voice Agent
               </span>
               {onRetryCall &&
               (effectiveCallStatus === 'failed' ||
@@ -348,12 +348,12 @@ export default function RecoveryActions({
 
           {effectiveCallStatus === 'calling' ? (
             <p style={{ margin: '6px 0 0', fontSize: '0.76rem', color: 'var(--muted)' }}>
-              Sarvam AI Voice Agent is placing an outbound call in Telugu with dynamic recovery instructions.
+              Sarvam AI Voice Agent is placing an outbound call in {incident?.driverLanguage || 'Telugu'} with dynamic recovery instructions.
             </p>
           ) : null}
           {effectiveCallStatus === 'answered' ? (
             <p style={{ margin: '6px 0 0', fontSize: '0.76rem', color: '#2e7d32' }}>
-              Driver answered the call and is listening to the Telugu recovery brief.
+              Driver answered the call and is listening to the {incident?.driverLanguage || 'Telugu'} recovery brief.
             </p>
           ) : null}
           {effectiveCallStatus === 'confirmed' ? (

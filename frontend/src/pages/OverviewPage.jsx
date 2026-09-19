@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { RefreshCw } from 'lucide-react'
+import DemoCaseSwitcher from '../components/DemoCaseSwitcher'
 import IncidentAlert from '../components/IncidentAlert'
 import LogisticsMap from '../components/LogisticsMap'
 import MetricsBar from '../components/MetricsBar'
@@ -142,9 +143,16 @@ export default function OverviewPage() {
                   Hubs, fleet positions, and active recovery paths
                 </CardDescription>
               </div>
-              <Badge variant="neutral" className="uppercase tracking-[0.08em]">
-                Primary surface
-              </Badge>
+              <div className="flex items-center gap-2">
+                <DemoCaseSwitcher
+                  activeDemoCase={ctx.activeDemoCase}
+                  setActiveDemoCase={ctx.setActiveDemoCase}
+                  onSwitch={ctx.loadDashboard}
+                />
+                <Badge variant="neutral" className="uppercase tracking-[0.08em]">
+                  Primary surface
+                </Badge>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="p-0">

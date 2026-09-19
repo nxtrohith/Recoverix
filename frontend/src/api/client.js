@@ -272,3 +272,16 @@ export function testSarvamCall(payload) {
   });
 }
 
+/**
+ * Switch to one of the 3 pre-built demo scenarios.
+ * Seeds the shipment in MongoDB and simulates a misplaced incident.
+ * @param {1|2|3} caseNum
+ * @param {{ reset?: boolean }} [opts]
+ * @returns {Promise<{status: string, case_num: number, label: string, pickup_case: string, tracking_number: string, shipment_id: string, driver: object, topology: object, incident?: object}>}
+ */
+export function switchDemoCase(caseNum, { reset = true } = {}) {
+  return request('/api/demo/switch', {
+    method: 'POST',
+    body: JSON.stringify({ case: caseNum, reset }),
+  })
+}

@@ -105,6 +105,22 @@ def _vehicle_number(db: Database, vehicle_id: Any) -> str | None:
     return doc.get("vehicleNumber") if doc else None
 
 
+def _vehicle_language(db: Database, vehicle_id: Any) -> str | None:
+    oid = _to_oid(vehicle_id)
+    if oid is None:
+        return None
+    doc = db["vehicles"].find_one({"_id": oid}, {"driverLanguage": 1})
+    return doc.get("driverLanguage") if doc else None
+
+
+def _vehicle_driver_name(db: Database, vehicle_id: Any) -> str | None:
+    oid = _to_oid(vehicle_id)
+    if oid is None:
+        return None
+    doc = db["vehicles"].find_one({"_id": oid}, {"driverName": 1})
+    return doc.get("driverName") if doc else None
+
+
 def _lifecycle_status(
     shipment_status: str,
     incident: dict[str, Any] | None,
@@ -197,6 +213,9 @@ def serialize_incident(db: Database, doc: dict[str, Any]) -> dict[str, Any]:
         "createdAt": _iso(doc.get("createdAt") or doc.get("detectedAt")),
         "resolvedAt": _iso(doc.get("resolvedAt")),
         "updatedAt": _iso(doc.get("updatedAt")),
+        # Driver info from vehicle (populated by demo_cases.py)
+        "driverLanguage": _vehicle_language(db, vehicle_id) or _vehicle_language(db, recovery_vehicle_id),
+        "driverName": _vehicle_driver_name(db, vehicle_id) or _vehicle_driver_name(db, recovery_vehicle_id),
     }
 
 

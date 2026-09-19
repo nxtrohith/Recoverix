@@ -47,6 +47,7 @@ export default function DashboardLayout() {
 
   const [focusNodeId, setFocusNodeId] = useState(null)
   const [previewCandidateId, setPreviewCandidateId] = useState(null)
+  const [activeDemoCase, setActiveDemoCase] = useState(1)
 
   const loadVehicle = useCallback(async (id) => {
     if (!id) return
@@ -416,6 +417,8 @@ export default function DashboardLayout() {
       showAlert,
       searchHint,
       setSearchHint,
+      activeDemoCase,
+      setActiveDemoCase,
     }),
     [
       health,
@@ -468,6 +471,7 @@ export default function DashboardLayout() {
       clearActionError,
       showAlert,
       searchHint,
+      activeDemoCase,
     ],
   )
 

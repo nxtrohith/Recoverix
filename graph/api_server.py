@@ -47,6 +47,7 @@ from fastapi.responses import JSONResponse
 
 from graph.api_models import (
     AssignRecoveryRequest,
+    DemoSwitchRequest,
     ErrorDetail,
     ErrorResponse,
     GraphResponse,
@@ -745,6 +746,62 @@ def get_incident_by_shipment(shipment_id: str) -> dict[str, Any]:
         shipment.get("status", ""), incident
     )
     return {"incident": payload}
+
+
+# ---------------------------------------------------------------------------
+# Demo scenario switcher
+# ---------------------------------------------------------------------------
+
+
+@app.post(
+    "/api/demo/switch",
+    summary="Switch to a named demo recovery scenario (at_node / detour / pass_through)",
+    tags=["demo"],
+)
+def post_demo_switch(body: DemoSwitchRequest) -> dict:
+    """
+    Seed one of the 3 pre-built demo scenarios in MongoDB and immediately
+    simulate a misplaced-shipment incident for it.
+
+    Returns the case metadata + the fresh incident payload so the frontend
+    can focus the right shipment without a full page reload.
+    """
+    from graph.demo_cases import DEMO_CASES, seed_demo_case
+
+    if body.case not in DEMO_CASES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid case number {body.case}. Choose 1, 2, or 3.",
+        )
+
+    db = get_db()
+
+    # Plant the demo shipment
+    try:
+        seeded = seed_demo_case(db, body.case, reset=body.reset)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=409, detail=str(exc))
+
+    # Immediately simulate the misplaced incident
+    try:
+        incident_result = simulate_misplaced_incident(
+            db,
+            seeded["tracking_number"],
+            auto_analyze=False,
+        )
+    except Exception as exc:
+        # Seed succeeded but incident simulation failed — return partial result
+        return {
+            "status": "seeded",
+            "warning": str(exc),
+            **seeded,
+        }
+
+    return {
+        "status": "ok",
+        **seeded,
+        "incident": incident_result,
+    }
 
 
 # ---------------------------------------------------------------------------
