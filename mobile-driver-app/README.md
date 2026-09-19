@@ -4,6 +4,16 @@ Expo / React Native driver app wired to the live FastAPI/MongoDB recovery backen
 
 ## Setup
 
+**One-shot (recommended)** — from repo root:
+
+```bash
+./dev-mobile.sh --install          # deps + .env + seed drivers + API + Expo
+./dev-mobile.sh --web              # same, open Expo web
+./dev-mobile.sh --with-frontend    # also start operator dashboard :5173
+```
+
+Manual:
+
 ```bash
 # From repo root — stamp 3 demo drivers onto real vehicles
 npm run seed:demo-drivers

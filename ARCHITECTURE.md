@@ -188,6 +188,8 @@ and routes in a small number of MongoDB round-trips (not one query per document)
 
 Expo / React Native driver cockpit connected to the same Node gateway (`EXPO_PUBLIC_API_BASE_URL`, default `:3000`). Does **not** duplicate recovery logic or place Sarvam calls. UI tokens mirror the dashboard **NeoBrutalism** palette (`config/theme.ts`: light blue bg, hard black borders, offset shadows, `#5294FF` main). Navigation uses a colorful Google Maps–style roadmap (JS Maps / native light style) with a turn-banner overlay; without a Maps key the SVG schematic simulates parks, water, roads, and a blue route casing.
 
+**Local bootstrap:** `./dev-mobile.sh` (vs `./dev.sh` for dashboard). Installs mobile deps, writes `mobile-driver-app/.env`, runs `seed:demo-drivers`, starts Recovery + Node + Expo Metro (`:8082`). Flags: `--install`, `--web` / `--android` / `--ios`, `--with-frontend`, `--no-seed`, `--no-backend`.
+
 | Area | Role |
 | --- | --- |
 | `app/index` | Driver Selection — exactly 3 demo profiles resolved against live `/api/vehicles` |
