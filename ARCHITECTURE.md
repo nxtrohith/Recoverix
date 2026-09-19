@@ -127,7 +127,7 @@ to FastAPI transparently.
 | `GET` | `/api/health` | MongoDB connectivity + graph status |
 | `GET` | `/api/hubs` | All operational locations (`locations` collection) |
 | `GET` | `/api/graph` | Telangana network topology for map rendering (nodes + edges) |
-| `GET` | `/api/vehicles` | All vehicles with capacity, load, location, and route info |
+| `GET` | `/api/vehicles` | All vehicles with capacity, load, location, route, and optional driver profile fields |
 | `GET` | `/api/vehicles/:vehicleId` | Single vehicle detail + NetworkX shortest path to destination |
 | `GET` | `/api/shipments` | Lightweight shipment list for admin dashboard |
 | `GET` | `/api/shipments/:shipmentId` | Full shipment detail + recent tracking events + active incident |
@@ -179,10 +179,25 @@ Pickup confirmation sets shipment `status=recovered` and writes `recovery_pickup
 | `graph/services/sarvam_outbound.py` | Sarvam Conversations Instant Outbound HTTP client |
 
 **CORS:** Controlled by the `CORS_ORIGINS` env var (comma-separated). Defaults to
-`localhost:3000/3001/5173/5174`. Set `CORS_ORIGINS=*` for permissive hackathon deployment.
+`localhost:3000/3001/5173/5174/8081/8082/19006` (includes Expo web). Set `CORS_ORIGINS=*` for permissive hackathon deployment.
 
 **Performance:** Vehicle and shipment list endpoints batch-load all referenced locations
 and routes in a small number of MongoDB round-trips (not one query per document).
+
+## Driver mobile app (`mobile-driver-app/`)
+
+Expo / React Native driver cockpit connected to the same Node gateway (`EXPO_PUBLIC_API_BASE_URL`, default `:3000`). Does **not** duplicate recovery logic or place Sarvam calls.
+
+| Area | Role |
+| --- | --- |
+| `app/index` | Driver Selection — exactly 3 demo profiles resolved against live `/api/vehicles` |
+| `app/cockpit` | Navigation map + HUD + recovery alert + pickup/resolve actions |
+| `services/api.ts` | Same REST surface as the operator dashboard client |
+| `services/directions.ts` | Google Directions when keyed; else graph hub polyline from `/api/graph` |
+| `services/mockGps.ts` | Demo GPS walk along the active route for geofence demos |
+| `hooks/useDriverCockpit.ts` | Polls `/api/incidents/active` + vehicle detail; maps backend lifecycle → mission status |
+
+Demo drivers are stamped onto real vehicles via `npm run seed:demo-drivers` (`driverId` / `driverName` / `phone`). Vehicle list responses expose those fields plus current hub `coordinates`.
 
 ## Frontend (`frontend/`)
 

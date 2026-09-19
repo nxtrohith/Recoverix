@@ -108,6 +108,10 @@ export interface Vehicle {
   destination?: string | null;
   destinationNode?: string | null;
   eta?: string | null;
+  driverId?: string | null;
+  driverName?: string | null;
+  phone?: string | null;
+  coordinates?: Coordinates | null;
   currentLocationId?: string | null;
   vehicleType?: string | null;
   currentPath?: string[] | null;

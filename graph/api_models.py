@@ -123,6 +123,11 @@ class VehicleListItem(BaseModel):
     destination: Optional[str] = None       # destination location name
     destinationNode: Optional[str] = None
     eta: Optional[str] = None
+    # Optional driver profile fields (stamped on demo vehicles)
+    driverId: Optional[str] = None
+    driverName: Optional[str] = None
+    phone: Optional[str] = None
+    coordinates: Optional[CoordinatesModel] = None
 
 
 class VehicleListResponse(BaseModel):

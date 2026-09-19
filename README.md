@@ -233,11 +233,16 @@ npm run frontend
 ### 6. Start the Driver Mobile App _(optional)_
 
 ```bash
+# Stamp 3 demo drivers onto real vehicles (once)
+npm run seed:demo-drivers
+
 cd mobile-driver-app
 npm install
 npm start
 # Press 'w' for browser at http://localhost:8082
 ```
+
+Select **Ramesh Kumar** (TS-09-UB-1077) for the Kamareddy → Karimnagar recovery demo.
 
 ---
 

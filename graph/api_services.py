@@ -117,6 +117,34 @@ def _loc_info(
     return doc.get("name"), doc.get("graphNodeKey"), str(oid)
 
 
+def _loc_coords(locs: dict[str, dict], location_id: Any) -> CoordinatesModel | None:
+    """Extract coordinates from a pre-loaded location document, if present."""
+    oid = _to_oid(location_id)
+    if oid is None:
+        return None
+    doc = locs.get(str(oid))
+    if not doc:
+        return None
+    coords_doc = doc.get("coordinates") or {}
+    lat = coords_doc.get("latitude") or coords_doc.get("lat")
+    lon = (
+        coords_doc.get("longitude")
+        or coords_doc.get("lng")
+        or coords_doc.get("lon")
+    )
+    if lat is None and lon is None:
+        return None
+    return CoordinatesModel(latitude=lat, longitude=lon)
+
+
+def _resolve_driver_phone(doc: dict[str, Any]) -> str | None:
+    for key in ("phone", "driverPhone", "contactPhone", "mobile", "phoneNumber"):
+        val = doc.get(key)
+        if val and str(val).strip():
+            return str(val).strip()
+    return None
+
+
 # ---------------------------------------------------------------------------
 # Hub service
 # ---------------------------------------------------------------------------
@@ -237,6 +265,10 @@ def _build_vehicle_item(
                 if dest_loc_doc:
                     dest_name = dest_loc_doc.get("name")
 
+    driver_name = doc.get("driverName") or doc.get("driver")
+    driver_id = doc.get("driverId") or None
+    phone = _resolve_driver_phone(doc)
+
     return VehicleListItem(
         id=str(doc["_id"]),
         vehicleNumber=doc.get("vehicleNumber", ""),
@@ -251,6 +283,10 @@ def _build_vehicle_item(
         currentRouteId=route_id_str,
         destination=dest_name,
         destinationNode=dest_node,
+        driverId=str(driver_id) if driver_id else None,
+        driverName=str(driver_name) if driver_name else None,
+        phone=phone,
+        coordinates=_loc_coords(locs, doc.get("currentLocation")),
     )
 
 

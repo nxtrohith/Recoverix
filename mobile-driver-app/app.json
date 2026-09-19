@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "SH-205 Driver Cockpit",
+    "slug": "mobile-driver-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "sh205driver",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": false,
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow SH-205 Driver to use your location for navigation and recovery geofencing."
+        }
+      ],
+      "expo-asset",
+      "expo-font"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "apiBaseUrl": "http://127.0.0.1:3000",
+      "googleMapsApiKey": ""
+    }
+  }
+}
