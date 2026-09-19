@@ -30,7 +30,7 @@ export default function DriverSelectionScreen() {
       <View style={styles.blobB} />
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.brandChip}>
-          <Text style={styles.brand}>SH-205</Text>
+          <Text style={styles.brand}>Recoverix</Text>
         </View>
         <Text style={styles.title}>Driver Selection</Text>
         <Text style={styles.sub}>

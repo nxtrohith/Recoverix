@@ -9,6 +9,7 @@ export { default as IncidentMetadata } from './IncidentMetadata';
 export { default as CandidateTypeBadge } from './CandidateTypeBadge';
 export { default as CandidateCard } from './CandidateCard';
 export { default as ScoreBreakdown } from './ScoreBreakdown';
+export { default as ScoreHoverValue, ScoreDetailField } from './ScoreHoverValue';
 export {
   RECOVERY_DISPLAY_STEPS,
   RECOVERY_STATUS_CONTEXT,

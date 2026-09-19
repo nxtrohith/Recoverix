@@ -17,6 +17,7 @@ from pymongo.database import Database
 
 logger = logging.getLogger(__name__)
 
+from graph.analysis_cache import invalidate_analysis_cache
 from graph.recovery_orchestrator import (
     RecoveryError,
     ShipmentNotFoundError,
@@ -34,6 +35,7 @@ from graph.services.driver_communication import (
     resolve_driver_phone,
     send_driver_notification,
 )
+from graph.services.recovery_xai import build_simulate_step
 from graph.services.sarvam_outbound import (
     call_driver,
     get_outbound_call_status,
@@ -41,6 +43,14 @@ from graph.services.sarvam_outbound import (
 )
 from graph.shipment_state import apply_shipment_event, sync_expected_location
 
+
+def _invalidate_shipment_analysis(shipment: dict[str, Any], shipment_id: str) -> None:
+    """Drop demo analysis cache entries for this shipment."""
+    invalidate_analysis_cache(shipment_id)
+    invalidate_analysis_cache(str(shipment.get("_id") or ""))
+    tracking = shipment.get("trackingNumber")
+    if tracking:
+        invalidate_analysis_cache(str(tracking))
 
 
 # Active (unresolved) incident statuses for the demo workflow:
@@ -191,6 +201,23 @@ def serialize_incident(db: Database, doc: dict[str, Any]) -> dict[str, Any]:
     vehicle_id = doc.get("vehicle")
     recovery_vehicle_id = doc.get("recoveryVehicle")
     hub_id = doc.get("hub")
+    recovery_score = doc.get("recoveryScore")
+    recovery_component_scores = doc.get("recoveryComponentScores")
+    # Backfill from persisted recovery option when analyze stamped the
+    # option id but older incidents never stored recoveryScore.
+    option_oid = _to_oid(doc.get("selectedRecoveryOption"))
+    if option_oid is not None and (
+        recovery_score is None or not recovery_component_scores
+    ):
+        option = db["recoveryoptions"].find_one(
+            {"_id": option_oid},
+            {"totalScore": 1, "componentScores": 1},
+        )
+        if option:
+            if recovery_score is None and option.get("totalScore") is not None:
+                recovery_score = option.get("totalScore")
+            if not recovery_component_scores and option.get("componentScores"):
+                recovery_component_scores = option.get("componentScores")
     return {
         "incidentId": doc.get("incidentId"),
         "id": str(doc["_id"]),
@@ -213,7 +240,8 @@ def serialize_incident(db: Database, doc: dict[str, Any]) -> dict[str, Any]:
         "pickupCase": doc.get("pickupCase"),
         "pickupNode": doc.get("pickupNode"),
         "destinationNode": doc.get("destinationNode"),
-        "recoveryScore": doc.get("recoveryScore"),
+        "recoveryScore": recovery_score,
+        "recoveryComponentScores": recovery_component_scores,
         "recoveryCaseId": (
             str(doc["recoveryCase"]) if doc.get("recoveryCase") else None
         ),
@@ -286,6 +314,8 @@ def simulate_misplaced_incident(
     if shipment is None:
         raise ShipmentNotFoundError(shipment_id)
 
+    _invalidate_shipment_analysis(shipment, shipment_id)
+
     ship_oid = shipment["_id"]
     # actual / last-confirmed hub → recovery pickup node
     hub_id = shipment.get("currentLocation")
@@ -297,6 +327,7 @@ def simulate_misplaced_incident(
         )
 
     vehicle_id = shipment.get("assignedVehicle")
+    used_nearby_vehicle = False
     # Fall back to a vehicle currently at the same hub (demo-friendly)
     if vehicle_id is None:
         nearby = db["vehicles"].find_one(
@@ -304,6 +335,7 @@ def simulate_misplaced_incident(
         ) or db["vehicles"].find_one({"currentLocation": hub_id})
         if nearby:
             vehicle_id = nearby["_id"]
+            used_nearby_vehicle = True
 
     now = _now()
     incident_id = f"INC-{uuid4().hex[:8].upper()}"
@@ -497,6 +529,23 @@ def simulate_misplaced_incident(
         updated_shipment.get("status", "misplaced"), incident_doc
     )
 
+    hub_name = _loc_name(db, hub_id)
+    expected_name = _loc_name(
+        db, updated_shipment.get("expectedLocation") or shipment.get("expectedLocation")
+    )
+    simulate_step = build_simulate_step(
+        hub_name=hub_name,
+        expected_name=expected_name,
+        tracking=updated_shipment.get("trackingNumber"),
+        vehicle_id=vehicle_id,
+        used_nearby_vehicle=used_nearby_vehicle,
+    )
+    explanation_trace = [simulate_step]
+    if recovery and recovery.get("explanationTrace"):
+        # Prepend simulate; analysis steps already cover context→select
+        explanation_trace = [simulate_step] + list(recovery["explanationTrace"])
+        recovery = {**recovery, "explanationTrace": explanation_trace}
+
     return {
         "incident": incident_payload,
         "shipment": {
@@ -520,9 +569,10 @@ def simulate_misplaced_incident(
         },
         "recovery": recovery,
         "lateDetectionNotification": late_detection_notification,
+        "explanationTrace": explanation_trace,
         "message": (
             "Incident simulated — recovery required at actual/last-confirmed hub "
-            f"({_loc_name(db, hub_id)})"
+            f"({hub_name})"
             + (
                 "; late-detection driver call placed"
                 if late_detection_notification
@@ -564,6 +614,8 @@ def assign_recovery(
     shipment = _find_shipment(db, shipment_id)
     if shipment is None:
         raise ShipmentNotFoundError(shipment_id)
+
+    _invalidate_shipment_analysis(shipment, shipment_id)
 
     ship_oid = shipment["_id"]
     incident = get_active_incident_for_shipment(db, ship_oid)
@@ -838,6 +890,11 @@ def assign_recovery(
                 "pickupNode": pickup_hub,
                 "destinationNode": destination,
                 "recoveryScore": recovery_score,
+                "recoveryComponentScores": (
+                    selected.get("breakdown")
+                    or selected.get("componentScores")
+                    or (persisted_option or {}).get("componentScores")
+                ),
                 "assignedAt": now,
                 "pickupConfirmedAt": None,
                 "driverMessage": notify_message,
@@ -1326,6 +1383,8 @@ def confirm_recovery_pickup(db: Database, shipment_id: str) -> dict[str, Any]:
     if shipment is None:
         raise ShipmentNotFoundError(shipment_id)
 
+    _invalidate_shipment_analysis(shipment, shipment_id)
+
     ship_oid = shipment["_id"]
     incident = get_active_incident_for_shipment(db, ship_oid)
     if incident is None:
@@ -1474,6 +1533,8 @@ def resolve_recovery(db: Database, shipment_id: str) -> dict[str, Any]:
     shipment = _find_shipment(db, shipment_id)
     if shipment is None:
         raise ShipmentNotFoundError(shipment_id)
+
+    _invalidate_shipment_analysis(shipment, shipment_id)
 
     ship_oid = shipment["_id"]
     incident = get_active_incident_for_shipment(db, ship_oid)

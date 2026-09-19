@@ -71,21 +71,21 @@
 }
 
 :root {
-  /* NeoBrutalism blue palette (installed) */
-  --background: hsl(214, 95%, 93%);
+  /* NeoBrutalism teal palette */
+  --background: hsl(174, 65%, 92%);
   --secondary-background: oklch(100% 0 0);
-  --main: hsl(217, 100%, 66%);
+  --main: hsl(173, 80%, 42%);
   --ring: oklch(0% 0 0);
   --foreground: oklch(0% 0 0);
   --main-foreground: oklch(0% 0 0);
   --border: oklch(0% 0 0);
   --overlay: oklch(0% 0 0 / 0.8);
   --shadow: 4px 4px 0px 0px var(--border);
-  --chart-1: #5294ff;
+  --chart-1: #14b8a6;
   --chart-2: #ff4d50;
   --chart-3: #facc00;
   --chart-4: #05e17a;
-  --chart-5: #7a83ff;
+  --chart-5: #2dd4bf;
   --chart-active-dot: #000;
 
   /* Semantic roles mapped to palette — refine later without touching components */
@@ -230,14 +230,14 @@ body,
   height: min(62vh, 640px);
   min-height: 360px;
   width: 100%;
-  background: #dbe7f5;
+  background: #d5f5f0;
 }
 
 .map-workspace .leaflet-container {
   height: 100%;
   width: 100%;
   font-family: var(--font-sans);
-  background: #dbe7f5;
+  background: #d5f5f0;
 }
 
 .map-swatch {

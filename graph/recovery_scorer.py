@@ -124,7 +124,7 @@ class ScoredCandidate:
     vehicle_to_destination_path: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
-        """JSON-serialisable representation matching the SH-205 result shape."""
+        """JSON-serialisable representation matching the Recoverix result shape."""
         out: dict[str, Any] = {
             "candidateId": self.candidate_id,
             "vehicleId": self.vehicle_id,

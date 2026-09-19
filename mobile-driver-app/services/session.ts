@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const DRIVER_KEY = 'sh205.activeDriverId';
-const ACK_KEY = 'sh205.ackIncidentIds';
+const DRIVER_KEY = 'recoverix.activeDriverId';
+const ACK_KEY = 'recoverix.ackIncidentIds';
 
 export type ActiveDriverSession = {
   driverId: string;

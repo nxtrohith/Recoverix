@@ -72,6 +72,8 @@ export function useRecoveryData(options = {}) {
   const [confirmingPickup, setConfirmingPickup] = useState(false);
   const [resolving, setResolving] = useState(false);
   const shipmentRequestRef = useRef(0);
+  const selectedShipmentRef = useRef(null);
+  selectedShipmentRef.current = selectedShipment;
 
   const refreshActiveIncidents = useCallback(async () => {
     setIncidentsLoading(true);
@@ -97,14 +99,26 @@ export function useRecoveryData(options = {}) {
   }, []);
 
   const loadShipment = useCallback(
-    async (id, { fetchRecoveryPlan = false } = {}) => {
+    async (id, { fetchRecoveryPlan = false, showLoading } = {}) => {
       if (!id) return null;
       const requestId = ++shipmentRequestRef.current;
-      setShipmentLoading(true);
+      const current = selectedShipmentRef.current;
+      const switching =
+        !current ||
+        (shipmentKey(current) !== id && current?.id !== id);
+      // Only blank the panel on first selection. Soft-refresh / analyze /
+      // re-click keep the current shipment visible (jury-demo friendly).
+      const shouldShowLoading =
+        typeof showLoading === 'boolean' ? showLoading : !current;
+      if (shouldShowLoading) {
+        setShipmentLoading(true);
+      }
       setShipmentError(null);
       // Always clear stale recovery busy-state when switching shipments so
       // Assign / Resolve buttons are not stuck disabled from a prior fetch.
-      setRecoveryLoading(false);
+      if (switching) {
+        setRecoveryLoading(false);
+      }
       try {
         const data = await getShipment(id);
         if (requestId !== shipmentRequestRef.current) return null;
@@ -143,6 +157,12 @@ export function useRecoveryData(options = {}) {
               vehicleToDestinationPath: incident.vehicleToDestinationPath || [],
               pickupCase: incident.pickupCase,
               recoveryOptionId: incident.selectedRecoveryOptionId,
+              score: incident.recoveryScore ?? null,
+              componentScores: incident.recoveryComponentScores || null,
+              explanation:
+                incident.selectionExplanation ||
+                incident.recoveryExplanation ||
+                null,
             },
             recoveryPlan: incident.selectedRecoveryOptionId
               ? {
@@ -153,10 +173,16 @@ export function useRecoveryData(options = {}) {
                   destinationNode: incident.destinationNode,
                   candidateType: incident.pickupCase,
                   score: incident.recoveryScore,
+                  componentScores: incident.recoveryComponentScores || null,
                 }
               : null,
             candidates: [],
             reasons: [],
+            explanationTrace: [],
+            selectionExplanation:
+              incident.selectionExplanation ||
+              incident.recoveryExplanation ||
+              null,
             network: {
               actualNode: incident.pickupNode || data.actualLocation,
               currentNode: data.currentLocation,
@@ -181,6 +207,12 @@ export function useRecoveryData(options = {}) {
               path: incident.recoveryPath || [],
               pickupCase: incident.pickupCase,
               recoveryOptionId: incident.selectedRecoveryOptionId,
+              score: incident.recoveryScore ?? null,
+              componentScores: incident.recoveryComponentScores || null,
+              explanation:
+                incident.selectionExplanation ||
+                incident.recoveryExplanation ||
+                null,
             },
             recoveryPlan: {
               id: incident.selectedRecoveryOptionId,
@@ -190,9 +222,15 @@ export function useRecoveryData(options = {}) {
               destinationNode: incident.destinationNode,
               candidateType: incident.pickupCase,
               score: incident.recoveryScore,
+              componentScores: incident.recoveryComponentScores || null,
             },
             candidates: [],
             reasons: [],
+            explanationTrace: [],
+            selectionExplanation:
+              incident.selectionExplanation ||
+              incident.recoveryExplanation ||
+              null,
             network: {
               actualNode: incident.pickupNode || data.actualLocation,
               currentNode: data.currentLocation,
@@ -212,16 +250,32 @@ export function useRecoveryData(options = {}) {
 
         if (data.currentNode && onFocusNode) onFocusNode(data.currentNode);
 
-        // Optional full re-analysis (slow). Off by default — use Analyze action.
+        // Release the panel before optional recovery backfill so Analyze /
+        // selection never flash "Loading shipment" for the slow pipeline.
+        if (requestId === shipmentRequestRef.current && shouldShowLoading) {
+          setShipmentLoading(false);
+        }
+
+        // Backfill full analysis (candidates + explanationTrace) when an
+        // incident already has a plan but the UI only has a thin snapshot.
+        // Uses the demo analysis cache on the server when available.
+        const needsTraceBackfill =
+          !fetchRecoveryPlan &&
+          incident &&
+          (incident.status === 'ASSIGNED' ||
+            incident.status === 'PICKUP_CONFIRMED' ||
+            incident.selectedRecoveryOptionId ||
+            incident.analysisStatus === 'RECOVERY_PLAN_AVAILABLE');
+
         if (
-          fetchRecoveryPlan &&
+          (fetchRecoveryPlan || needsTraceBackfill) &&
           incident &&
           (incident.status === 'RECOVERY_REQUIRED' ||
             incident.status === 'OPEN' ||
             incident.status === 'ASSIGNED' ||
             incident.status === 'PICKUP_CONFIRMED')
         ) {
-          setRecoveryLoading(true);
+          if (fetchRecoveryPlan) setRecoveryLoading(true);
           try {
             const recovery = await getRecovery(id);
             if (requestId !== shipmentRequestRef.current) return null;
@@ -231,7 +285,7 @@ export function useRecoveryData(options = {}) {
           } catch {
             // Keep incident-derived analysis snapshot if GET fails
           } finally {
-            if (requestId === shipmentRequestRef.current) {
+            if (requestId === shipmentRequestRef.current && fetchRecoveryPlan) {
               setRecoveryLoading(false);
             }
           }
@@ -248,7 +302,7 @@ export function useRecoveryData(options = {}) {
         }
         return null;
       } finally {
-        if (requestId === shipmentRequestRef.current) {
+        if (requestId === shipmentRequestRef.current && shouldShowLoading) {
           setShipmentLoading(false);
         }
       }
@@ -300,7 +354,10 @@ export function useRecoveryData(options = {}) {
       }
 
       const incident = await loadIncidentForShipment(id);
-      const shipment = await loadShipment(id, { fetchRecoveryPlan: false });
+      const shipment = await loadShipment(id, {
+        fetchRecoveryPlan: false,
+        showLoading: false,
+      });
       if (onDashboardRefresh) await onDashboardRefresh();
       return { recovery, incident, shipment };
     },
@@ -337,7 +394,7 @@ export function useRecoveryData(options = {}) {
         const path = data?.selectedRecovery?.path;
         if (path?.length && onFocusNode) onFocusNode(path[0]);
         await loadIncidentForShipment(id);
-        await loadShipment(id, { fetchRecoveryPlan: false });
+        await loadShipment(id, { fetchRecoveryPlan: false, showLoading: false });
         if (mode !== 'get') {
           const planReady =
             data?.status === 'RECOVERY_PLAN_AVAILABLE' ||
@@ -398,7 +455,7 @@ export function useRecoveryData(options = {}) {
     try {
       const result = await simulateIncident(id, { autoAnalyze: false });
       setActiveIncident(result.incident);
-      await loadShipment(id);
+      await loadShipment(id, { showLoading: false });
       if (onDashboardRefresh) await onDashboardRefresh();
       if (onHint) {
         onHint(`Incident ${result.incident?.incidentId} simulated — recovery required`);
@@ -410,7 +467,7 @@ export function useRecoveryData(options = {}) {
         const path = data?.selectedRecovery?.path;
         if (path?.length && onFocusNode) onFocusNode(path[0]);
         await loadIncidentForShipment(id);
-        await loadShipment(id);
+        await loadShipment(id, { showLoading: false });
         setActionFeedback('Incident simulated — recovery analysis ready.');
       } catch (calcErr) {
         const message = errMsg(calcErr, 'Unable to analyze recovery.');

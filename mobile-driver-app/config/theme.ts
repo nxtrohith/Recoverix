@@ -1,19 +1,19 @@
 /**
  * NeoBrutalism tokens mirrored from frontend/src/index.css
- * (blue registry: main, hard black borders, offset shadow).
+ * (teal registry: main, hard black borders, offset shadow).
  */
 export const colors = {
-  bg: '#D6E8FE',
+  bg: '#D5F5F0',
   bgElevated: '#FFFFFF',
   bgPanel: '#FFFFFF',
-  bgMuted: '#E8F1FE',
+  bgMuted: '#E0F7F4',
   border: '#000000',
   text: '#000000',
   textMuted: '#4A5568',
-  main: '#5294FF',
-  mainSoft: 'rgba(82, 148, 255, 0.22)',
-  accent: '#5294FF',
-  accentSoft: 'rgba(82, 148, 255, 0.18)',
+  main: '#14B8A6',
+  mainSoft: 'rgba(20, 184, 166, 0.22)',
+  accent: '#14B8A6',
+  accentSoft: 'rgba(20, 184, 166, 0.18)',
   success: '#05E17A',
   warning: '#FACC00',
   danger: '#FF4D50',
@@ -21,7 +21,7 @@ export const colors = {
   recovery: '#FF4D50',
   recoverySoft: 'rgba(255, 77, 80, 0.16)',
   normal: '#05E17A',
-  chartTransit: '#7A83FF',
+  chartTransit: '#2DD4BF',
   mapRoute: '#1A73E8',
   mapRouteOutline: '#FFFFFF',
   mapRecovery: '#EA4335',

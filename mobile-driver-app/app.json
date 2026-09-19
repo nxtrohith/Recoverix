@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "SH-205 Driver Cockpit",
+    "name": "Recoverix Driver Cockpit",
     "slug": "mobile-driver-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "scheme": "sh205driver",
+    "scheme": "recoverixdriver",
     "userInterfaceStyle": "dark",
     "newArchEnabled": false,
     "web": {
@@ -16,7 +16,7 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow SH-205 Driver to use your location for navigation and recovery geofencing."
+          "locationAlwaysAndWhenInUsePermission": "Allow Recoverix Driver to use your location for navigation and recovery geofencing."
         }
       ],
       "expo-asset",

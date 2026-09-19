@@ -41,7 +41,7 @@ load_dotenv(_ROOT / ".env")
 CallKind = Literal["late_detection", "recovery_assign"]
 
 DEFAULT_SCRIPT_LATE_DETECTION = (
-    "Hello, this is the SH-205 logistics recovery desk. "
+    "Hello, this is the Recoverix logistics recovery desk. "
     "Shipment {tracking} was detected on your vehicle {vehicle_number} but is not "
     "supposed to be on this route. The package appears outbound toward the wrong "
     "destination. Please confirm you have the shipment and be ready for recovery "
@@ -50,7 +50,7 @@ DEFAULT_SCRIPT_LATE_DETECTION = (
 )
 
 DEFAULT_SCRIPT_RECOVERY_ASSIGN = (
-    "Hello, this is the SH-205 logistics recovery desk. "
+    "Hello, this is the Recoverix logistics recovery desk. "
     "Please pick up misplaced shipment {tracking} from {pickup_hub} and carry it "
     "toward {destination}. Recovery route: {route}. "
     "Required action: {required_action}."

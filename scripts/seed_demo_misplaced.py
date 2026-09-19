@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Seed the SH-205 demo misplaced-shipment scenario.
+Seed the Recoverix demo misplaced-shipment scenario.
 
 City-level story (README):
   Expected: Hyderabad → Siddipet → Karimnagar

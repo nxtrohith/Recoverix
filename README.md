@@ -1,4 +1,4 @@
-# 🚛 SH-205: Intelligent Shipment Piggybacking
+# 🚛 Recoverix: Intelligent Shipment Piggybacking
 
 > **Autonomous logistics recovery system that turns shipment exceptions into actionable in-transit piggybacking assignments across the Telangana freight network — with real-time Sarvam AI voice calls to drivers in Telugu.**
 
@@ -8,7 +8,7 @@
 
 When a high-value shipment is misplaced or delayed at a freight terminal, traditional logistics systems either wait for the next scheduled run or dispatch an expensive dedicated recovery vehicle.
 
-**Intelligent Shipment Piggybacking (SH-205)** solves this by analyzing active in-network vehicles and their existing routes. It dynamically identifies passing or nearby freight trucks with residual capacity, reroutes them to the misplaced hub, and piggybacks the cargo to its final destination — then immediately calls the assigned driver via a Sarvam AI Voice Agent in Telugu with the full recovery brief.
+**Intelligent Shipment Piggybacking (Recoverix)** solves this by analyzing active in-network vehicles and their existing routes. It dynamically identifies passing or nearby freight trucks with residual capacity, reroutes them to the misplaced hub, and piggybacks the cargo to its final destination — then immediately calls the assigned driver via a Sarvam AI Voice Agent in Telugu with the full recovery brief.
 
 ```
 Shipment Exception (Actual ≠ Expected Hub)

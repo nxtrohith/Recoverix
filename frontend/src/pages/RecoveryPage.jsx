@@ -3,6 +3,7 @@ import { Phone } from 'lucide-react'
 import RecoveryCandidates from '../components/RecoveryCandidates'
 import { RecoveryIncidentView } from '../components/recovery'
 import RecoveryPlan from '../components/RecoveryPlan'
+import ExplanationTrace from '../components/ExplanationTrace'
 import { PageHeader } from '@/components/ops/PageHeader'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -182,6 +183,11 @@ export default function RecoveryPage() {
             </CardContent>
           </Card>
         ) : null}
+
+        <ExplanationTrace
+          analysis={ctx.recoveryAnalysis}
+          loading={ctx.recoveryLoading}
+        />
 
         <div className="grid gap-4 xl:grid-cols-2">
           <RecoveryCandidates

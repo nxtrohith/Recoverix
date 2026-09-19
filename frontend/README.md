@@ -1,6 +1,6 @@
-# SH-205 Frontend
+# Recoverix Frontend
 
-Functional admin dashboard for the Intelligent Shipment Piggybacking prototype.
+Functional admin dashboard for the Recoverix intelligent shipment recovery prototype.
 
 ## Setup
 

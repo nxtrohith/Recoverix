@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Unit-style checks for the SH-205 recovery workflow:
+Unit-style checks for the Recoverix recovery workflow:
 
   assign → driver notification → pickup confirm → recover → resolve
 
@@ -192,7 +192,7 @@ def _seed(ids: dict[str, ObjectId]) -> _FakeDB:
             "shipments": [
                 {
                     "_id": ids["ship"],
-                    "trackingNumber": "SH-205-DEMO-1",
+                    "trackingNumber": "Recoverix-DEMO-1",
                     "origin": ids["origin"],
                     "destination": ids["dest"],
                     "currentLocation": ids["hub"],
@@ -418,7 +418,7 @@ def test_resolve_requires_pickup() -> None:
 
 
 def main() -> int:
-    print("SH-205 recovery workflow tests")
+    print("Recoverix recovery workflow tests")
     test_assign_and_driver_notification()
     test_pickup_confirmation_and_recovery_event()
     test_resolve_after_pickup()

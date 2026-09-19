@@ -10,6 +10,7 @@ import {
   resolveRecoveryDisplayStatus,
 } from './recoveryStatus';
 import { candidateTypeLabel } from './candidateUtils';
+import ScoreHoverValue from './ScoreHoverValue';
 
 /**
  * Operator recovery action panel — state-gated buttons + confirmations.
@@ -449,7 +450,13 @@ export default function RecoveryActions({
             </div>
             <div>
               <dt>Score</dt>
-              <dd>{assignDetails.scoreLabel}</dd>
+              <dd>
+                <ScoreHoverValue
+                  scoreLabel={assignDetails.scoreLabel}
+                  score={assignDetails.score}
+                  componentScores={assignDetails.componentScores}
+                />
+              </dd>
             </div>
           </dl>
         </ConfirmOverlay>

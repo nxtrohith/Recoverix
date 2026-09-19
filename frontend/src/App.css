@@ -129,11 +129,79 @@
 }
 
 .candidate-full-path,
-.selection-explanation,
+.selection-explanation {
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 2px solid var(--border);
+}
+
 .score-breakdown {
   margin-top: 1rem;
   padding-top: 0.85rem;
   border-top: 2px solid var(--border);
+}
+
+.score-breakdown-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.3rem 0.85rem;
+  margin: 0.35rem 0 0;
+}
+
+.score-breakdown-row {
+  display: contents;
+}
+
+.score-breakdown-row dt {
+  margin: 0;
+  font-size: 0.75rem;
+  color: color-mix(in oklab, var(--foreground) 65%, transparent);
+}
+
+.score-breakdown-row dd {
+  margin: 0;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  font-weight: 600;
+}
+
+.score-breakdown-total dt,
+.score-breakdown-total dd {
+  padding-top: 0.35rem;
+  border-top: 1px solid var(--border);
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+.score-breakdown.score-breakdown--tooltip {
+  margin-top: 0;
+  padding: 0.75rem 0.85rem;
+  border-top: none;
+  min-width: 12rem;
+}
+
+.score-breakdown.score-breakdown--tooltip h4 {
+  margin: 0 0 0.45rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.score-breakdown.score-breakdown--tooltip .muted {
+  margin: 0;
+  font-size: 0.75rem;
+}
+
+.score-hover-trigger {
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.score-hover-trigger:hover,
+.score-hover-trigger:focus-visible {
+  color: var(--foreground);
+  border-color: var(--foreground);
 }
 
 .path-cell {

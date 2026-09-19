@@ -58,6 +58,8 @@ class RecoveryContext:
     relevant_vehicles   — active vehicles with enough capacity + a known graph node
     relevant_routes     — active routes touching the shipment's actual hub
     graph_context       — direct-path analysis between actual and destination nodes
+    excluded_vehicles   — vehicles skipped during context assembly (with reasons)
+    active_vehicle_count — total active vehicles considered before filtering
 
     Note: expectedNode lives on ``shipment.expected_node`` and is used for
     misplaced detection, not as the pickup location.
@@ -68,6 +70,39 @@ class RecoveryContext:
     relevant_vehicles: list[VehicleState]
     relevant_routes: list[dict[str, Any]]
     graph_context: GraphContext
+    excluded_vehicles: list[dict[str, str]] = field(default_factory=list)
+    active_vehicle_count: int = 0
+
+
+def _partition_relevant_vehicles(
+    all_active: list[VehicleState],
+    weight_needed: float,
+    volume_needed: float,
+) -> tuple[list[VehicleState], list[dict[str, str]]]:
+    """Split active vehicles into relevant vs excluded-with-reason."""
+    capable_ids = {
+        v.vehicle_id
+        for v in filter_capable_vehicles(all_active, weight_needed, volume_needed)
+    }
+    relevant: list[VehicleState] = []
+    excluded: list[dict[str, str]] = []
+    for v in all_active:
+        if v.vehicle_id not in capable_ids:
+            excluded.append({
+                "vehicleId": v.vehicle_id,
+                "vehicleNumber": v.vehicle_number,
+                "reason": "Insufficient available capacity for shipment weight/volume",
+            })
+            continue
+        if v.current_node is None:
+            excluded.append({
+                "vehicleId": v.vehicle_id,
+                "vehicleNumber": v.vehicle_number,
+                "reason": "Vehicle has no known current graph location",
+            })
+            continue
+        relevant.append(v)
+    return relevant, excluded
 
 
 # ---------------------------------------------------------------------------
@@ -209,8 +244,9 @@ def get_recovery_context(
 
     # Vehicles: active + can carry the shipment + have a known graph node.
     all_active = get_active_vehicles(db)
-    capable = filter_capable_vehicles(all_active, shipment.weight, shipment.volume)
-    relevant_vehicles = [v for v in capable if v.current_node is not None]
+    relevant_vehicles, excluded = _partition_relevant_vehicles(
+        all_active, shipment.weight, shipment.volume
+    )
 
     relevant_routes = _get_relevant_routes(db, pickup_node)
 
@@ -225,6 +261,8 @@ def get_recovery_context(
         relevant_vehicles=relevant_vehicles,
         relevant_routes=relevant_routes,
         graph_context=graph_context,
+        excluded_vehicles=excluded,
+        active_vehicle_count=len(all_active),
     )
 
 
@@ -242,8 +280,9 @@ def get_recovery_context_from_state(
     pickup_node = shipment.actual_node or shipment.current_node
 
     all_active = get_active_vehicles(db)
-    capable = filter_capable_vehicles(all_active, shipment.weight, shipment.volume)
-    relevant_vehicles = [v for v in capable if v.current_node is not None]
+    relevant_vehicles, excluded = _partition_relevant_vehicles(
+        all_active, shipment.weight, shipment.volume
+    )
 
     relevant_routes = _get_relevant_routes(db, pickup_node)
 
@@ -258,4 +297,6 @@ def get_recovery_context_from_state(
         relevant_vehicles=relevant_vehicles,
         relevant_routes=relevant_routes,
         graph_context=graph_context,
+        excluded_vehicles=excluded,
+        active_vehicle_count=len(all_active),
     )

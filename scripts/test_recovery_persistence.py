@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Tests for SH-205 recovery plan persistence.
+Tests for Recoverix recovery plan persistence.
 
 Cases:
   1. Feasible analysis creates a recovery plan
@@ -202,7 +202,7 @@ def _seed(ids: dict[str, ObjectId]) -> _FakeDB:
             "shipments": [
                 {
                     "_id": ids["ship"],
-                    "trackingNumber": "SH-205-DEMO-1",
+                    "trackingNumber": "Recoverix-DEMO-1",
                     "origin": ids["origin"],
                     "destination": ids["dest"],
                     "currentLocation": ids["hub"],
@@ -606,7 +606,7 @@ def test_resolve_updates_plan_and_incident() -> None:
 
 
 def main() -> int:
-    print("SH-205 recovery plan persistence tests")
+    print("Recoverix recovery plan persistence tests")
     test_feasible_creates_plan()
     test_no_feasible_creates_no_assignment()
     test_repeated_analysis_idempotent()

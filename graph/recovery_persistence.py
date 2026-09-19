@@ -542,16 +542,23 @@ def persist_analysis_plan(
     )
 
     if incident:
+        recovery_score = selected_payload.get("score")
+        if recovery_score is None:
+            recovery_score = option_fields.get("totalScore")
+        incident_set: dict[str, Any] = {
+            "analysisStatus": status,
+            "recoveryCase": case_oid,
+            "selectedRecoveryOption": option_oid,
+            "updatedAt": now,
+        }
+        if recovery_score is not None:
+            incident_set["recoveryScore"] = recovery_score
+        component = option_fields.get("componentScores")
+        if component:
+            incident_set["recoveryComponentScores"] = component
         db["incidents"].update_one(
             {"_id": incident["_id"]},
-            {
-                "$set": {
-                    "analysisStatus": status,
-                    "recoveryCase": case_oid,
-                    "selectedRecoveryOption": option_oid,
-                    "updatedAt": now,
-                }
-            },
+            {"$set": incident_set},
         )
 
     stored = db["recoveryoptions"].find_one({"_id": option_oid})

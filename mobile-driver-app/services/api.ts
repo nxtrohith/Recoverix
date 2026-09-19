@@ -1,5 +1,5 @@
 /**
- * HTTP client for the SH-205 Node API gateway (proxies /api/* → FastAPI).
+ * HTTP client for the Recoverix Node API gateway (proxies /api/* → FastAPI).
  * Mirrors frontend/src/api/client.js — backend remains source of truth.
  */
 

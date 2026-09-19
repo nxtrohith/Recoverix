@@ -47,8 +47,8 @@ export function RecoveryAlert({
             whySelected ||
             incident.driverMessage ||
             (incident.pickupCase
-              ? `Best piggyback (${incident.pickupCase})`
-              : 'Selected by recovery engine')
+              ? `Recoverix selected you (${incident.pickupCase})`
+              : 'Selected by Recoverix recovery engine')
           }
         />
         <Row

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-SH-205 API smoke-test script.
+Recoverix API smoke-test script.
 
 Tests all public endpoints against a running FastAPI server.
 Does NOT create mock data — gracefully handles empty collections.
@@ -220,7 +220,7 @@ def test_recovery_not_found(base_url: str) -> bool:
 
 def run_tests(base_url: str) -> int:
     print(f"\n{'='*62}")
-    print(f"  SH-205 API smoke tests  →  {base_url}")
+    print(f"  Recoverix API smoke tests  →  {base_url}")
     print(f"{'='*62}\n")
 
     results: list[bool] = []
@@ -268,7 +268,7 @@ def run_tests(base_url: str) -> int:
 
 
 def main(argv: list[str] | None = None) -> None:
-    parser = argparse.ArgumentParser(description="SH-205 API smoke tests")
+    parser = argparse.ArgumentParser(description="Recoverix API smoke tests")
     parser.add_argument(
         "--base-url",
         default=BASE_URL,

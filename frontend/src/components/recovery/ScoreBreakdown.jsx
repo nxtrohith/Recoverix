@@ -13,10 +13,11 @@ export default function ScoreBreakdown({
   componentScores,
   totalScore,
   title = 'Recovery Score',
+  className = '',
 }) {
   if (!componentScores && totalScore == null) {
     return (
-      <div className="score-breakdown">
+      <div className={`score-breakdown ${className}`.trim()}>
         <h4>{title}</h4>
         <p className="muted">Score breakdown not available from the API.</p>
       </div>
@@ -39,7 +40,7 @@ export default function ScoreBreakdown({
   const total = totalScore != null ? totalScore : null;
 
   return (
-    <div className="score-breakdown">
+    <div className={`score-breakdown ${className}`.trim()}>
       <h4>{title}</h4>
       {entries.length ? (
         <dl className="score-breakdown-grid">

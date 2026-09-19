@@ -1,6 +1,6 @@
-# Architecture — SH-205 Intelligent Shipment Piggybacking
+# Architecture — Recoverix
 
-Hackathon prototype focused on recovering misplaced shipments by evaluating piggyback options on existing routes.
+Hackathon prototype focused on recovering misplaced shipments by evaluating piggyback options on existing routes. Product name: **Recoverix**.
 
 ## Stack
 
@@ -8,6 +8,7 @@ Hackathon prototype focused on recovering misplaced shipments by evaluating pigg
 - MongoDB via Mongoose
 - TypeScript for schema/type definitions (`src/models`)
 - Python (`uv` + NetworkX + FastAPI/uvicorn) for the logistics graph + recovery API
+- TypeSafe **Jev** (`typesafe-sdk`) for optional typed System One judgments on soft decisions
 - React + Vite frontend (`frontend/`) talking to the Node API gateway over HTTP (`VITE_API_BASE_URL`, default `:3000`; Node proxies `/api/*` to FastAPI `:5055`)
 
 ## Data layer
@@ -61,8 +62,9 @@ MongoDB (telangana_nodes + telangana_edges)
     → graph_cache (in-memory DiGraph, refreshable)
     → graph_metrics / graph_queries
     → shipment_state / vehicle_state / recovery_context / candidate_generator
-    → recovery_scorer (feasibility + weighted scoring + selection)
-    → recovery_orchestrator.analyze_shipment_recovery()
+    → recovery_scorer (feasibility + weighted scoring)
+    → recovery_xai / TypeSafe Jev (optional select among top-K + urgency)
+    → recovery_orchestrator.analyze_shipment_recovery() → explanationTrace
     → recovery_persistence (selected plan → recoverycases / recoveryoptions)
     → Node API proxy  GET /api/recovery/:shipmentId
 ```
@@ -70,6 +72,7 @@ MongoDB (telangana_nodes + telangana_edges)
 - **Graph type:** `nx.DiGraph` — route legs are directional; reverse edges are rare/absent.
 - **Node id:** `hub_name` (matches `Location.graphNodeKey`)
 - **Edge weights:** separate attributes `avg_distance_km`, `avg_time_min` (no synthetic single weight; no `cost` in DB yet — scorer uses a configurable ₹/km proxy)
+- **Demo analysis cache:** Successful `analyze` / `calculate` / `GET /api/recovery/:id` results are held in-memory (`graph/analysis_cache.py`, TTL via `RECOVERY_ANALYSIS_CACHE_TTL_SEC`, default 600s). Pass `?force=true` to recompute. Cache is invalidated on simulate / assign / pickup / resolve.
 - **Demo (graph):** `uv run python scripts/demo_graph.py`
 - **Demo (recovery):** `uv run python scripts/demo_recovery.py [shipment_id_or_tracking_number]`
 - **Demo (scoring):** `uv run python scripts/demo_scoring.py [shipment_id_or_tracking_number]`
@@ -84,11 +87,13 @@ MongoDB (telangana_nodes + telangana_edges)
 | `graph/shipment_state.py` | Resolve a Shipment into a `ShipmentState`: **actualNode** = last confirming event / `currentLocation`; **expectedNode** = route-progress hub from `assignedRoute` stops + on-route events (persisted `expectedLocation` is a cache only). Misplaced when both known and they differ. Recovery pickup = actualNode. |
 | `graph/vehicle_state.py` | Query active vehicles, resolve locations + **currentRoute hub sequence**, compute available capacity. Driver handle = vehicle number (no separate Driver entity). |
 | `graph/recovery_context.py` | Bridge: assembles `RecoveryContext` from shipment state + vehicle state + graph. Pickup = actual hub. Entry point: `get_recovery_context(db, G, identifier)`. |
-| `graph/candidate_generator.py` | Enumerate raw piggyback `RecoveryCandidate` objects using **existing active routes** for `at_node` / `pass_through` / `detour`. Shortest-path alone is not pass_through. No scoring. |
+| `graph/candidate_generator.py` | Enumerate raw piggyback `RecoveryCandidate` objects using **existing active routes** for `at_node` / `pass_through` / `detour`. Records per-vehicle skip reasons via `generate_candidates_with_audit`. No scoring. |
 | `graph/recovery_scorer.py` | Feasibility filter + configurable weighted scoring + selection. Does not write MongoDB. |
+| `graph/services/typesafe_client.py` | Sync TypeSafe Jev client; no-op when `TYPESAFE_API_KEY` missing. |
+| `graph/services/recovery_xai.py` | Assembles `explanationTrace` steps; optional Jev Choice among top-K feasible candidates (confidence-gated). |
 | `graph/recovery_persistence.py` | Idempotent persist of selected (+ rejected) plans into `recoverycases` / `recoveryoptions`. |
 | `graph/graph_cache.py` | In-memory NetworkX cache; `get_graph()` / `refresh_graph()`. |
-| `graph/recovery_orchestrator.py` | End-to-end coordinator: `analyze_shipment_recovery(shipment_id)` → score → persist plan. No algorithms/formulas. |
+| `graph/recovery_orchestrator.py` | End-to-end coordinator: `analyze_shipment_recovery(shipment_id)` → score → Jev select → persist plan + `explanationTrace`. No algorithms/formulas. |
 | `graph/api_server.py` | FastAPI recovery API (uvicorn; spawned by Node). |
 | `src/routes/recovery.js` | Thin Node controllers that proxy to the Python API. |
 
@@ -96,9 +101,20 @@ MongoDB (telangana_nodes + telangana_edges)
 - `GRAPH` — "Can something travel from A to B?" (NetworkX)
 - **OPERATIONAL STATE** — "Where is the shipment/vehicle right now (actual), and where should it be (expected)?" (MongoDB)
 - `CANDIDATE GENERATION` — "Could this vehicle/route potentially recover this shipment?"
-- `OPTIMIZATION` — "Which feasible option should be selected?" (`score_recovery_candidates`)
+- `OPTIMIZATION` — "Which feasible option should be selected?" (`score_recovery_candidates` + optional Jev Choice)
+- `XAI` — "Why was each step accepted or rejected?" (`explanationTrace`)
 - `ORCHESTRATION` — "Run the full pipeline for a shipment ID" (`analyze_shipment_recovery`)
 - `API` — "Expose JSON over HTTP" (Node proxy → Python recovery service)
+
+### Explainability (TypeSafe Jev)
+
+- Hard constraints (capacity, unreachable path, deadline) stay in code and are never overridden by Jev.
+- Analyze / calculate responses include `explanationTrace[]` with `{ id, title, outcome, summary, details?, judgments?, source }`.
+- Simulate responses include a `simulate` step (optional Jev urgency Choice when keyed) plus full analysis steps when `auto_analyze=true`.
+- When `TYPESAFE_API_KEY` is set, selection may ask Jev to Choice among top-K scored candidates; low confidence keeps the score winner.
+- Without a key, the same `explanationTrace` is emitted from deterministic code reasons only.
+- Env: `TYPESAFE_API_KEY`, optional `TYPESAFE_ENABLED`, `TYPESAFE_DEFAULT_MODEL` (see `.env.example`).
+- Dashboard: `frontend/src/components/ExplanationTrace.jsx` on the Recovery page.
 
 ### Scoring notes
 
@@ -107,7 +123,8 @@ MongoDB (telangana_nodes + telangana_edges)
 - Detour component uses RouteBaseline when present; otherwise piggyback facts (`at_node` / `pass_through` → no extra km). Missing baseline is never invented.
 - Connectivity is a softened minor tie-breaker (weight 0.05) so it cannot dominate route compatibility.
 - Each scored candidate exposes component scores + a bullet explanation; selection text contrasts why others ranked lower.
-- **Persistence:** After a feasible analysis (`RECOVERY_PLAN_AVAILABLE`), `graph/recovery_persistence.py` upserts the selected plan into `recoveryoptions` and links it from `recoverycases.selectedOption` (+ `incidents.selectedRecoveryOption`). Rejected alternatives are stored lightly for audit. Repeated analyze is idempotent (same candidate fingerprint → same option id). Assignment prefers the persisted selected option over re-scoring. Score fields map scorer `time` → `scores.deliveryTime` and include `detour` / `connectivity`.
+- **Persistence:** After a feasible analysis (`RECOVERY_PLAN_AVAILABLE`), `graph/recovery_persistence.py` upserts the selected plan into `recoveryoptions` and links it from `recoverycases.selectedOption` (+ `incidents.selectedRecoveryOption`). It also stamps `incidents.recoveryScore` / `recoveryComponentScores` so the assign-confirmation UI can show the score before assignment. `serialize_incident` backfills those fields from the option when older incidents lack them. Rejected alternatives are stored lightly for audit. Repeated analyze is idempotent (same candidate fingerprint → same option id). Assignment prefers the persisted selected option over re-scoring. Score fields map scorer `time` → `scores.deliveryTime` and include `detour` / `connectivity`.
+- **Frontend:** Assign confirmation Score field (`ScoreHoverValue`) shows the backend total and reveals the component breakdown on hover/focus.
 
 ### Location ↔ Graph node bridging
 
@@ -186,7 +203,7 @@ and routes in a small number of MongoDB round-trips (not one query per document)
 
 ## Driver mobile app (`mobile-driver-app/`)
 
-Expo / React Native driver cockpit connected to the same Node gateway (`EXPO_PUBLIC_API_BASE_URL`, default `:3000`). Does **not** duplicate recovery logic or place Sarvam calls. UI tokens mirror the dashboard **NeoBrutalism** palette (`config/theme.ts`: light blue bg, hard black borders, offset shadows, `#5294FF` main). Navigation uses a colorful Google Maps–style roadmap (JS Maps / native light style) with a turn-banner overlay; without a Maps key the SVG schematic simulates parks, water, roads, and a blue route casing.
+Expo / React Native driver cockpit connected to the same Node gateway (`EXPO_PUBLIC_API_BASE_URL`, default `:3000`). Does **not** duplicate recovery logic or place Sarvam calls. UI tokens mirror the dashboard **NeoBrutalism** palette (`config/theme.ts`: light teal bg, hard black borders, offset shadows, `#14B8A6` main). Navigation uses a colorful Google Maps–style roadmap (JS Maps / native light style) with a turn-banner overlay; without a Maps key the SVG schematic simulates parks, water, roads, and a teal route casing.
 
 **Local bootstrap:** `./dev-mobile.sh` (vs `./dev.sh` for dashboard). Installs mobile deps, writes `mobile-driver-app/.env`, runs `seed:demo-drivers`, starts Recovery + Node + Expo Metro (`:8082`). Flags: `--install`, `--web` / `--android` / `--ios`, `--with-frontend`, `--no-seed`, `--no-backend`.
 
@@ -205,7 +222,7 @@ Demo drivers are stamped onto real vehicles via `npm run seed:demo-drivers` (`dr
 
 ## Frontend (`frontend/`)
 
-Marketing landing + logistics ops dashboard styled with **NeoBrutalism / shadcn** (`frontend/src/components/ui/*`, blue registry tokens in `frontend/src/index.css`). Semantic status/surface tokens live alongside the palette so colors can be refined globally later. The React app calls the **Node gateway** (`VITE_API_BASE_URL`, default `http://127.0.0.1:3000`); it must not hardcode the FastAPI `:5055` URL in components. Routing via `react-router-dom`.
+Marketing landing + logistics ops dashboard styled with **NeoBrutalism / shadcn** (`frontend/src/components/ui/*`, teal registry tokens in `frontend/src/index.css`). Semantic status/surface tokens live alongside the palette so colors can be refined globally later. The React app calls the **Node gateway** (`VITE_API_BASE_URL`, default `http://127.0.0.1:3000`); it must not hardcode the FastAPI `:5055` URL in components. Routing via `react-router-dom`.
 
 | Path | Role |
 | --- | --- |

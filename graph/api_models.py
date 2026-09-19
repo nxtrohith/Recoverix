@@ -1,5 +1,5 @@
 """
-Pydantic response models for the SH-205 REST API.
+Pydantic response models for the Recoverix REST API.
 
 All models are strictly typed and JSON-safe.  ObjectId and datetime values
 must be converted to str before constructing these models.

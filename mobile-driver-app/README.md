@@ -1,4 +1,4 @@
-# SH-205 Driver Cockpit
+# Recoverix Driver Cockpit
 
 Expo / React Native driver app wired to the live FastAPI/MongoDB recovery backend.
 

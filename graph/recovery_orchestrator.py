@@ -1,11 +1,12 @@
 """
-Recovery Orchestrator — end-to-end SH-205 recovery pipeline.
+Recovery Orchestrator — end-to-end Recoverix recovery pipeline.
 
 Coordinates existing modules without owning graph algorithms or scoring:
 
   shipment → state → graph → vehicles → candidates → feasibility → score → plan
 
 Public entry point: ``analyze_shipment_recovery(shipment_id)``.
+Each step contributes to ``explanationTrace`` (code + optional TypeSafe Jev).
 """
 
 from __future__ import annotations
@@ -14,7 +15,12 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from graph.candidate_generator import generate_candidates
+from graph.analysis_cache import (
+    get_cached_analysis,
+    invalidate_analysis_cache,
+    put_cached_analysis,
+)
+from graph.candidate_generator import generate_candidates_with_audit
 from graph.graph_cache import get_db, get_graph, refresh_graph
 from graph.recovery_context import (
     get_recovery_context,
@@ -24,6 +30,14 @@ from graph.recovery_persistence import persist_analysis_plan
 from graph.recovery_scorer import (
     load_route_baselines,
     score_recovery_candidates,
+)
+from graph.services.recovery_xai import (
+    apply_jev_selection,
+    assemble_analysis_trace,
+    build_context_step,
+    build_feasibility_step,
+    build_generate_step,
+    build_score_step,
 )
 from graph.shipment_state import ShipmentState, get_shipment_state
 from bson import ObjectId
@@ -147,6 +161,8 @@ def _selected_payload(scored: Any) -> dict[str, Any] | None:
     if scored is None or not scored.feasible:
         return None
     m = scored.metrics
+    raw = scored.to_dict() if hasattr(scored, "to_dict") else {}
+    component_scores = raw.get("componentScores") or raw.get("breakdown")
     return {
         "candidateId": scored.candidate_id,
         "vehicleId": scored.vehicle_id,
@@ -161,6 +177,8 @@ def _selected_payload(scored: Any) -> dict[str, Any] | None:
         "estimatedDistance": m.distance_km if m else None,
         "estimatedTravelTimeMin": m.travel_time_min if m else None,
         "score": scored.score,
+        "componentScores": component_scores,
+        "breakdown": component_scores,
         "explanation": scored.explanation,
     }
 
@@ -193,7 +211,10 @@ class RecoveryOrchestrator:
     auto_refresh_graph: bool = False
 
     def analyze_shipment_recovery(
-        self, shipment_id: str
+        self,
+        shipment_id: str,
+        *,
+        force: bool = False,
     ) -> dict[str, Any]:
         """
         Run the full recovery pipeline for a shipment.
@@ -202,6 +223,8 @@ class RecoveryOrchestrator:
         ----------
         shipment_id :
             MongoDB ObjectId string or trackingNumber.
+        force :
+            When True, skip the demo analysis cache and recompute.
 
         Returns
         -------
@@ -221,12 +244,22 @@ class RecoveryOrchestrator:
                 http_status=400,
             )
 
+        if not force:
+            cached = get_cached_analysis(identifier)
+            if cached is not None:
+                return cached
+
         db = get_db()
 
         # 1–2. Validate + load shipment
         shipment = get_shipment_state(db, identifier)
         if shipment is None:
             raise ShipmentNotFoundError(identifier)
+
+        if force:
+            invalidate_analysis_cache(identifier)
+            invalidate_analysis_cache(shipment.shipment_id)
+            invalidate_analysis_cache(shipment.tracking_number)
 
         return self._run_pipeline(shipment, identifier=identifier)
 
@@ -289,8 +322,22 @@ class RecoveryOrchestrator:
         else:
             context = get_recovery_context_from_state(db, G, shipment)
 
-        # 7–9. Candidates → feasibility → scoring
-        candidates = generate_candidates(G, context)
+        context_step = build_context_step(
+            active_count=context.active_vehicle_count,
+            relevant_count=len(context.relevant_vehicles),
+            excluded=list(context.excluded_vehicles),
+            graph_nodes=cached.report.node_count,
+            graph_edges=cached.report.edge_count,
+        )
+
+        # 7–9. Candidates → feasibility → scoring (+ Jev select)
+        generation = generate_candidates_with_audit(G, context)
+        candidates = generation.candidates
+        generate_step = build_generate_step(
+            candidate_count=len(candidates),
+            skips=list(generation.skips),
+        )
+
         baselines = load_route_baselines(
             db, [c.vehicle_id for c in candidates]
         )
@@ -300,8 +347,30 @@ class RecoveryOrchestrator:
             route_baselines=baselines,
         )
 
+        feasibility_step = build_feasibility_step(scoring.candidates)
         feasible = [c for c in scoring.candidates if c.feasible]
-        selected = scoring.selected_option
+
+        score_step = build_score_step(
+            weights=dict(scoring.weights),
+            feasible_count=len(feasible),
+            selected=scoring.selected_option,
+        )
+
+        shipment_summary = {
+            "id": shipment.shipment_id,
+            "trackingNumber": shipment.tracking_number,
+            "priority": shipment.priority,
+            "actualHub": shipment.current_location_name,
+            "expectedHub": shipment.expected_location_name,
+            "destination": shipment.destination_name,
+            "weight": shipment.weight,
+            "volume": shipment.volume,
+            "deadline": _iso(shipment.deadline),
+        }
+        selected, select_step = apply_jev_selection(
+            scoring,
+            shipment_summary=shipment_summary,
+        )
 
         # Application-level outcomes (HTTP 200)
         reasons: list[str] = []
@@ -320,6 +389,14 @@ class RecoveryOrchestrator:
                 reasons.append("All candidates were infeasible")
         else:
             status = "RECOVERY_PLAN_AVAILABLE"
+
+        explanation_trace = assemble_analysis_trace(
+            context_step=context_step,
+            generate_step=generate_step,
+            feasibility_step=feasibility_step,
+            score_step=score_step,
+            select_step=select_step,
+        )
 
         result: dict[str, Any] = {
             "shipment": {
@@ -352,11 +429,15 @@ class RecoveryOrchestrator:
                 "graphNodes": cached.report.node_count,
                 "graphEdges": cached.report.edge_count,
             },
+            "scoringConfig": {
+                "weights": dict(scoring.weights),
+            },
             "candidates": [_candidate_payload(c) for c in scoring.candidates],
             "selectedRecovery": _selected_payload(selected),
             "selectionExplanation": scoring.selection_explanation,
             "reasons": reasons,
             "status": status,
+            "explanationTrace": explanation_trace,
             "recoveryPlan": None,
         }
 
@@ -365,6 +446,7 @@ class RecoveryOrchestrator:
             result["recoveryPlan"] = self._persist_plan(
                 db, shipment, result
             )
+            put_cached_analysis(result, identifier=identifier)
 
         return result
 
@@ -429,9 +511,15 @@ class RecoveryOrchestrator:
 _default_orchestrator = RecoveryOrchestrator()
 
 
-def analyze_shipment_recovery(shipment_id: str) -> dict[str, Any]:
+def analyze_shipment_recovery(
+    shipment_id: str,
+    *,
+    force: bool = False,
+) -> dict[str, Any]:
     """Convenience wrapper around ``RecoveryOrchestrator.analyze_shipment_recovery``."""
-    return _default_orchestrator.analyze_shipment_recovery(shipment_id)
+    return _default_orchestrator.analyze_shipment_recovery(
+        shipment_id, force=force
+    )
 
 
 def print_recovery_summary(result: dict[str, Any]) -> None:
@@ -462,6 +550,15 @@ def print_recovery_summary(result: dict[str, Any]) -> None:
         print("  Reasons:")
         for r in result["reasons"]:
             print(f"    • {r}")
+
+    trace = result.get("explanationTrace") or []
+    if trace:
+        print("\n  ── Explanation trace ──")
+        for step in trace:
+            print(
+                f"  [{step.get('outcome')}] {step.get('title')}: "
+                f"{step.get('summary')}"
+            )
 
     if selected is None:
         print("\n  Selected recovery: (none)")

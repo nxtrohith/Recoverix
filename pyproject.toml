@@ -1,7 +1,7 @@
 [project]
-name = "sh205-graph"
+name = "recoverix-graph"
 version = "0.1.0"
-description = "NetworkX graph layer for SH-205 Intelligent Shipment Piggybacking"
+description = "NetworkX graph layer for Recoverix intelligent shipment recovery"
 requires-python = ">=3.11"
 dependencies = [
     "pymongo",
@@ -13,6 +13,7 @@ dependencies = [
     "geopy",
     "fastapi",
     "uvicorn[standard]",
+    "typesafe-sdk>=0.7.0",
 ]
 
 [build-system]

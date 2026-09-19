@@ -67,7 +67,7 @@ export default function Sidebar({
             <Truck className="size-5" strokeWidth={2.25} />
           </div>
           <div className="min-w-0">
-            <p className="truncate text-base font-heading tracking-tight">SH-205</p>
+            <p className="truncate text-base font-heading tracking-tight">Recoverix</p>
             <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
               Ops control
             </p>

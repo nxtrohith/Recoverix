@@ -20,6 +20,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { DetailField, DetailGrid } from '@/components/ops/DetailField'
+import { ScoreDetailField } from '@/components/recovery/ScoreHoverValue'
 import { EmptyState } from '@/components/ops/EmptyState'
 import { StatusBadge } from '@/components/ops/StatusBadge'
 
@@ -229,7 +230,11 @@ export default function ShipmentPanel({
             <DetailField label="Pickup" value={assignDetails.pickup} />
             <DetailField label="Destination" value={assignDetails.destination} />
             <DetailField label="Type" value={assignDetails.typeLabel} />
-            <DetailField label="Score" value={assignDetails.scoreLabel} />
+            <ScoreDetailField
+              scoreLabel={assignDetails.scoreLabel}
+              score={assignDetails.score}
+              componentScores={assignDetails.componentScores}
+            />
           </DetailGrid>
           <DialogFooter>
             <Button type="button" variant="neutral" onClick={() => setConfirmKind(null)} disabled={assigning}>

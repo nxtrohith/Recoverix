@@ -1,5 +1,5 @@
 /**
- * Centralized HTTP client for the SH-205 Node API gateway.
+ * Centralized HTTP client for the Recoverix Node API gateway.
  * Base URL comes from VITE_API_BASE_URL — never hardcode hosts in components.
  * Default: Node proxy on :3000 (forwards /api/* to FastAPI on :5055).
  */

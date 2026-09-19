@@ -206,14 +206,16 @@ def _classify_pickup(
     dest: str,
     *,
     max_detour_ratio: float,
-) -> tuple[PickupCase, list[str], list[str], float | None] | None:
+) -> tuple[PickupCase, list[str], list[str], float | None] | tuple[None, str]:
     """
     Decide at_node / pass_through / detour for one vehicle.
 
     Returns
     -------
-    (case, pickup_path, destination_movement_path, detour_km) or None
-    if the vehicle cannot participate (unreachable pickup / dest / detour).
+    (case, pickup_path, destination_movement_path, detour_km)
+        when the vehicle can participate, or
+    (None, skip_reason)
+        when it cannot (unreachable pickup / dest / excessive detour).
 
     ``destination_movement_path``:
       - at_node / detour: pickup → destination
@@ -231,7 +233,7 @@ def _classify_pickup(
     if v_node == pickup:
         dest_path = _path_via_route_or_graph(G, remaining or vehicle.route_nodes, pickup, dest)
         if not dest_path:
-            return None
+            return None, "At pickup hub but no path to destination"
         return "at_node", [pickup], dest_path, 0.0
 
     # ------------------------------------------------------------------
@@ -264,15 +266,15 @@ def _classify_pickup(
     # 3. Detour — divert from current position / route, then to dest
     # ------------------------------------------------------------------
     if pickup not in G or v_node not in G or dest not in G:
-        return None
+        return None, "Pickup, vehicle, or destination node missing from graph"
 
     to_pickup = _shortest(G, v_node, pickup)
     if not to_pickup:
-        return None  # unable to reach pickup
+        return None, "No graph path from vehicle to pickup hub"
 
     to_dest = _shortest(G, pickup, dest)
     if not to_dest:
-        return None  # can reach pickup but not continue to destination
+        return None, "No graph path from pickup hub to destination"
 
     detour_km = _path_weight(G, to_pickup, "avg_distance_km")
 
@@ -290,7 +292,10 @@ def _classify_pickup(
         and baseline_km > 0
         and detour_km > max_detour_ratio * baseline_km
     ):
-        return None
+        return (
+            None,
+            f"Detour ratio exceeds max ({max_detour_ratio:.1f}× baseline)",
+        )
 
     return "detour", to_pickup, to_dest, detour_km
 
@@ -376,6 +381,14 @@ def _build_candidate(
 # Public API
 # ---------------------------------------------------------------------------
 
+@dataclass
+class CandidateGenerationResult:
+    """Candidates plus per-vehicle skip audit for explainability."""
+
+    candidates: list[RecoveryCandidate]
+    skips: list[dict[str, str]] = field(default_factory=list)
+
+
 def generate_candidates(
     G: nx.DiGraph,
     context: RecoveryContext,
@@ -384,6 +397,23 @@ def generate_candidates(
 ) -> list[RecoveryCandidate]:
     """
     Enumerate piggyback recovery candidates from a RecoveryContext.
+
+    Returns only the candidate list (backward compatible). Prefer
+    ``generate_candidates_with_audit`` when skip reasons are needed.
+    """
+    return generate_candidates_with_audit(
+        G, context, max_detour_ratio=max_detour_ratio
+    ).candidates
+
+
+def generate_candidates_with_audit(
+    G: nx.DiGraph,
+    context: RecoveryContext,
+    *,
+    max_detour_ratio: float = 3.0,
+) -> CandidateGenerationResult:
+    """
+    Enumerate piggyback recovery candidates and record skip reasons.
 
     Parameters
     ----------
@@ -395,29 +425,43 @@ def generate_candidates(
     max_detour_ratio : float
         Maximum allowed ratio of (detour to pickup) / (baseline route or
         vehicle→dest distance). Keeps extreme diversions out of the pool.
-
-    Returns
-    -------
-    list[RecoveryCandidate]
-        Candidates that are not physically impossible.  Not sorted or scored.
-        Deadline / capacity facts are attached for the scorer; hard rejects
-        for deadline happen in ``recovery_scorer``.
     """
     shipment = context.shipment
     dest_node = context.destination_node
     # Pickup is always the misplaced / actual hub — never expectedNode.
     pickup_node = context.current_node
 
+    skips: list[dict[str, str]] = []
+
     if dest_node is None or dest_node not in G:
-        return []
+        return CandidateGenerationResult(
+            candidates=[],
+            skips=[{
+                "vehicleId": "*",
+                "vehicleNumber": "*",
+                "reason": "Destination node missing or not in graph",
+            }],
+        )
     if pickup_node is None or pickup_node not in G:
-        return []
+        return CandidateGenerationResult(
+            candidates=[],
+            skips=[{
+                "vehicleId": "*",
+                "vehicleNumber": "*",
+                "reason": "Pickup/actual node missing or not in graph",
+            }],
+        )
 
     candidates: list[RecoveryCandidate] = []
 
     for vehicle in context.relevant_vehicles:
         v_node = vehicle.current_node
         if v_node is None or v_node not in G:
+            skips.append({
+                "vehicleId": vehicle.vehicle_id,
+                "vehicleNumber": vehicle.vehicle_number,
+                "reason": "Vehicle current node missing or not in graph",
+            })
             continue
 
         classified = _classify_pickup(
@@ -427,10 +471,15 @@ def generate_candidates(
             dest_node,
             max_detour_ratio=max_detour_ratio,
         )
-        if classified is None:
+        if classified[0] is None:
+            skips.append({
+                "vehicleId": vehicle.vehicle_id,
+                "vehicleNumber": vehicle.vehicle_number,
+                "reason": str(classified[1]),
+            })
             continue
 
-        pickup_case, pickup_path, dest_movement, detour_km = classified
+        pickup_case, pickup_path, dest_movement, detour_km = classified  # type: ignore[misc]
 
         candidates.append(
             _build_candidate(
@@ -459,4 +508,4 @@ def generate_candidates(
             c.vehicle_number,
         )
     )
-    return candidates
+    return CandidateGenerationResult(candidates=candidates, skips=skips)

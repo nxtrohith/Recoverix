@@ -1,4 +1,4 @@
-# SH-205 database cleanup and graph-readiness
+# Recoverix database cleanup and graph-readiness
 
 ## Canonical collection decisions
 

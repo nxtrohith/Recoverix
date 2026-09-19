@@ -1,5 +1,5 @@
 """
-In-memory NetworkX graph cache for the SH-205 recovery pipeline.
+In-memory NetworkX graph cache for the Recoverix recovery pipeline.
 
 Builds the Telangana logistics graph once and reuses it across orchestrator
 calls. Call ``refresh_graph()`` after network data changes in MongoDB.

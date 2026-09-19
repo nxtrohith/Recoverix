@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Start all local SH-205 services for development.
+# Start all local Recoverix services for development.
 #
 # Services:
 #   FastAPI recovery API  → http://127.0.0.1:5055

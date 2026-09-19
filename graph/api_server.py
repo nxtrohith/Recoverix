@@ -1,5 +1,5 @@
 """
-FastAPI server for the SH-205 backend.
+FastAPI server for the Recoverix backend.
 
 Exposes the RecoveryOrchestrator and all logistics data over HTTP.
 
@@ -41,7 +41,7 @@ from contextlib import asynccontextmanager
 from typing import Any
 
 import uvicorn
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -71,6 +71,7 @@ from graph.api_services import (
     get_shipment_detail,
     get_vehicle_detail,
 )
+from graph.analysis_cache import analysis_cache_status
 from graph.graph_cache import cache_status, get_db, get_graph, refresh_graph
 from graph.incident_service import (
     assign_recovery,
@@ -160,7 +161,7 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(
-    title="SH-205 Logistics API",
+    title="Recoverix Logistics API",
     description="Logistics network visualisation and shipment recovery API",
     version="0.2.0",
     lifespan=lifespan,
@@ -413,14 +414,19 @@ def get_shipment(shipment_id: str) -> ShipmentDetailResponse:
     summary="Full recovery analysis for a shipment",
     tags=["recovery"],
 )
-def get_recovery(shipment_id: str) -> dict[str, Any]:
+def get_recovery(
+    shipment_id: str,
+    force: bool = Query(False, description="Bypass demo analysis cache"),
+) -> dict[str, Any]:
     """
     Run the full recovery pipeline for a shipment.
 
     Returns the shipment, all candidates with scores, the selected recovery
     plan, estimated distance / time / cost, and a human-readable explanation.
+
+    Results are cached in-memory for jury demos (see RECOVERY_ANALYSIS_CACHE_TTL_SEC).
     """
-    result = analyze_shipment_recovery(shipment_id)
+    result = analyze_shipment_recovery(shipment_id, force=force)
     _stamp_incident_analysis(shipment_id, result.get("status"))
     return result
 
@@ -430,9 +436,12 @@ def get_recovery(shipment_id: str) -> dict[str, Any]:
     summary="Calculate recovery options for a shipment",
     tags=["recovery"],
 )
-def post_calculate_recovery(shipment_id: str) -> dict[str, Any]:
+def post_calculate_recovery(
+    shipment_id: str,
+    force: bool = Query(False, description="Bypass demo analysis cache"),
+) -> dict[str, Any]:
     """Explicit calculate verb — same pipeline as GET /api/recovery/{id}."""
-    result = analyze_shipment_recovery(shipment_id)
+    result = analyze_shipment_recovery(shipment_id, force=force)
     _stamp_incident_analysis(shipment_id, result.get("status"))
     return result
 
@@ -655,9 +664,14 @@ def post_resolve_recovery(shipment_id: str) -> dict[str, Any]:
     summary="Explicitly trigger recovery analysis",
     tags=["recovery"],
 )
-def post_analyze_recovery(shipment_id: str) -> dict[str, Any]:
+def post_analyze_recovery(
+    shipment_id: str,
+    force: bool = Query(False, description="Bypass demo analysis cache"),
+) -> dict[str, Any]:
     """Same as GET /api/recovery/{shipment_id} — explicit POST verb for frontend clients."""
-    return analyze_shipment_recovery(shipment_id)
+    result = analyze_shipment_recovery(shipment_id, force=force)
+    _stamp_incident_analysis(shipment_id, result.get("status"))
+    return result
 
 
 @app.post(
@@ -686,6 +700,7 @@ def post_refresh_graph() -> Any:
             "edgeCount": cached.report.edge_count,
             "skippedEdges": cached.report.skipped_edges,
         },
+        "analysisCache": analysis_cache_status(),
     }
 
 
@@ -759,7 +774,7 @@ def get_incident_by_shipment(shipment_id: str) -> dict[str, Any]:
 
 
 def serve(host: str = "127.0.0.1", port: int = 5055) -> None:
-    print(f"SH-205 API (FastAPI) listening on http://{host}:{port}", flush=True)
+    print(f"Recoverix API (FastAPI) listening on http://{host}:{port}", flush=True)
     print("  GET  /api/health", flush=True)
     print("  GET  /api/hubs", flush=True)
     print("  GET  /api/graph", flush=True)
@@ -786,7 +801,7 @@ def serve(host: str = "127.0.0.1", port: int = 5055) -> None:
 
 
 def main(argv: list[str] | None = None) -> None:
-    parser = argparse.ArgumentParser(description="SH-205 Logistics API (FastAPI)")
+    parser = argparse.ArgumentParser(description="Recoverix Logistics API (FastAPI)")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=5055)
     args = parser.parse_args(argv)

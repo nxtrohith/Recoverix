@@ -1,5 +1,5 @@
 """
-Service layer for the SH-205 REST API.
+Service layer for the Recoverix REST API.
 
 Each function encapsulates a MongoDB query + lightweight transformation.
 No business logic lives here — only data retrieval and serialisation helpers.

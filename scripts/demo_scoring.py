@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Demo: Recovery scoring / optimization engine (SH-205).
+Demo: Recovery scoring / optimization engine (Recoverix).
 
 Usage
 -----

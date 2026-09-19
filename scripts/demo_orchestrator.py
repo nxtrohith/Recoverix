@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Demo: end-to-end Recovery Orchestrator (SH-205).
+Demo: end-to-end Recovery Orchestrator (Recoverix).
 
 Usage
 -----

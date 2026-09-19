@@ -156,7 +156,20 @@ export function buildAssignConfirmation(input = {}) {
   const pickupCase =
     selected?.pickupCase || plan?.candidateType || full?.pickupCase;
   const score =
-    selected?.score ?? plan?.score ?? full?.score ?? full?.totalScore ?? null;
+    selected?.score ??
+    plan?.score ??
+    full?.score ??
+    full?.totalScore ??
+    incident?.recoveryScore ??
+    null;
+  const componentScores =
+    selected?.componentScores ||
+    selected?.breakdown ||
+    plan?.componentScores ||
+    full?.componentScores ||
+    full?.breakdown ||
+    incident?.recoveryComponentScores ||
+    null;
 
   return {
     vehicleLabel,
@@ -164,7 +177,9 @@ export function buildAssignConfirmation(input = {}) {
     pickup,
     destination,
     typeLabel: candidateTypeLabel(pickupCase),
+    score,
     scoreLabel: score != null ? fmtNum(score, 1) : '—',
+    componentScores,
   };
 }
 

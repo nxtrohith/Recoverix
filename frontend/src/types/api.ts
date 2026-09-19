@@ -203,6 +203,7 @@ export interface Incident {
   pickupNode?: string | null;
   destinationNode?: string | null;
   recoveryScore?: number | null;
+  recoveryComponentScores?: ComponentScores | null;
   recoveryCaseId?: string | null;
   selectedRecoveryOptionId?: string | null;
   driverMessage?: string | null;
@@ -297,6 +298,8 @@ export interface SelectedRecovery {
   estimatedDistance?: number | null;
   estimatedTravelTimeMin?: number | null;
   score?: number | null;
+  componentScores?: ComponentScores | null;
+  breakdown?: ComponentScores | null;
   explanation?: string | null;
   recoveryOptionId?: string | null;
   recoveryPlanStatus?: RecoveryOptionStatus | null;
@@ -369,6 +372,36 @@ export interface RecoveryAnalysis {
   reasons: string[];
   status: RecoveryAnalysisStatus;
   recoveryPlan: RecoveryPlan | null;
+  scoringConfig?: {
+    weights?: Record<string, number>;
+  } | null;
+  explanationTrace?: ExplanationStep[] | null;
+}
+
+export type ExplanationStepOutcome =
+  | 'accepted'
+  | 'rejected'
+  | 'info'
+  | 'skipped';
+
+export type ExplanationStepSource = 'code' | 'typesafe' | 'hybrid';
+
+export interface ExplanationJudgment {
+  questionId: string;
+  kind: 'choice' | 'noul' | 'score';
+  value: string | number | boolean | null;
+  confidence?: number | null;
+  probabilities?: Record<string, number> | null;
+}
+
+export interface ExplanationStep {
+  id: string;
+  title: string;
+  outcome: ExplanationStepOutcome;
+  summary: string;
+  details?: Record<string, unknown> | null;
+  judgments?: ExplanationJudgment[] | null;
+  source?: ExplanationStepSource | null;
 }
 
 export interface AssignRecoveryPayload {

@@ -58,7 +58,7 @@ export default function LandingPage() {
             <span className="flex size-9 items-center justify-center rounded-base border-2 border-border bg-main shadow-shadow">
               <Truck className="size-4" strokeWidth={2.4} />
             </span>
-            <span className="text-lg font-heading tracking-tight">SH-205</span>
+            <span className="text-lg font-heading tracking-tight">Recoverix</span>
           </Link>
           <nav className="hidden items-center gap-6 text-sm font-medium md:flex" aria-label="Primary">
             <a href="#top" className="underline decoration-2 underline-offset-6">
@@ -90,7 +90,7 @@ export default function LandingPage() {
             Logistics intelligence
           </Badge>
           <p className="mb-3 text-4xl font-heading tracking-tight sm:text-5xl lg:text-6xl">
-            SH-205
+            Recoverix
           </p>
           <h1 className="text-pretty text-2xl font-semibold tracking-tight text-foreground/90 sm:text-3xl">
             Recover misplaced shipments on trucks already moving.
@@ -232,7 +232,7 @@ export default function LandingPage() {
       <footer className="border-t-2 border-border bg-background py-8">
         <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <div>
-            <strong className="font-heading">SH-205</strong>
+            <strong className="font-heading">Recoverix</strong>
             <p className="text-sm text-muted-foreground">
               Intelligent shipment piggybacking
             </p>
@@ -242,7 +242,7 @@ export default function LandingPage() {
             <a href="#process">Recovery</a>
             <a href="#cta">Contact</a>
           </nav>
-          <p className="text-xs text-muted-foreground">© 2026 SH-205</p>
+          <p className="text-xs text-muted-foreground">© 2026 Recoverix</p>
         </div>
       </footer>
     </div>
