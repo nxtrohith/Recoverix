@@ -1,25 +1,36 @@
 /**
- * Design tokens for the driver cockpit.
- * High-contrast, large targets — optimized for in-cab use.
+ * NeoBrutalism tokens mirrored from frontend/src/index.css
+ * (blue registry: main, hard black borders, offset shadow).
  */
 export const colors = {
-  bg: '#0B1220',
-  bgElevated: '#121A2B',
-  bgPanel: 'rgba(14, 22, 40, 0.92)',
-  border: '#243049',
-  text: '#F4F7FB',
-  textMuted: '#9AA8C0',
-  accent: '#1FA2FF',
-  accentSoft: 'rgba(31, 162, 255, 0.18)',
-  success: '#2ECC71',
-  warning: '#F5A623',
-  danger: '#FF4D4F',
-  dangerSoft: 'rgba(255, 77, 79, 0.18)',
-  recovery: '#FF6B35',
-  recoverySoft: 'rgba(255, 107, 53, 0.22)',
-  normal: '#3DDC97',
-  mapRoute: '#1FA2FF',
-  mapRecovery: '#FF6B35',
+  bg: '#D6E8FE',
+  bgElevated: '#FFFFFF',
+  bgPanel: '#FFFFFF',
+  bgMuted: '#E8F1FE',
+  border: '#000000',
+  text: '#000000',
+  textMuted: '#4A5568',
+  main: '#5294FF',
+  mainSoft: 'rgba(82, 148, 255, 0.22)',
+  accent: '#5294FF',
+  accentSoft: 'rgba(82, 148, 255, 0.18)',
+  success: '#05E17A',
+  warning: '#FACC00',
+  danger: '#FF4D50',
+  dangerSoft: 'rgba(255, 77, 80, 0.18)',
+  recovery: '#FF4D50',
+  recoverySoft: 'rgba(255, 77, 80, 0.16)',
+  normal: '#05E17A',
+  chartTransit: '#7A83FF',
+  mapRoute: '#1A73E8',
+  mapRouteOutline: '#FFFFFF',
+  mapRecovery: '#EA4335',
+  mapLand: '#E8F0E3',
+  mapPark: '#C5E8B5',
+  mapWater: '#AAD3DF',
+  mapRoad: '#FFFFFF',
+  mapRoadMajor: '#F6D365',
+  mapBuilding: '#E6E1D9',
   white: '#FFFFFF',
   black: '#000000',
 };
@@ -32,11 +43,29 @@ export const spacing = {
   xl: 32,
 };
 
+/** NeoBrutalism uses a tight base radius (≈5px), not pills. */
 export const radii = {
-  sm: 10,
-  md: 16,
-  lg: 22,
-  pill: 999,
+  sm: 5,
+  md: 5,
+  lg: 8,
+  pill: 5,
+};
+
+export const shadow = {
+  offset: { width: 4, height: 4 },
+  color: '#000000',
+  opacity: 1,
+  radius: 0,
+  elevation: 4,
+};
+
+/** Hard offset shadow — NeoBrutalism signature. */
+export const neoShadow = {
+  shadowColor: shadow.color,
+  shadowOffset: shadow.offset,
+  shadowOpacity: shadow.opacity,
+  shadowRadius: shadow.radius,
+  elevation: shadow.elevation,
 };
 
 export const typography = {
@@ -59,10 +88,19 @@ export const typography = {
   },
   label: {
     fontSize: 13,
-    fontWeight: '600' as const,
+    fontWeight: '700' as const,
     letterSpacing: 0.8,
     textTransform: 'uppercase' as const,
   },
+};
+
+/** Shared NeoBrutal panel: white fill, 2px black border, offset shadow. */
+export const neoPanel = {
+  backgroundColor: colors.bgElevated,
+  borderColor: colors.border,
+  borderWidth: 2,
+  borderRadius: radii.md,
+  ...neoShadow,
 };
 
 /** Geofence radii (meters) for warehouse / destination detection. */

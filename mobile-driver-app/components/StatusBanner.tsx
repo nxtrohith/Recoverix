@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { colors, radii, spacing, typography } from '../config/theme';
+import { colors, neoShadow, radii, spacing } from '../config/theme';
 import { isRecoveryMission, missionLabel, type MissionStatus } from '../services/mission';
 
 type Props = {
@@ -13,10 +13,11 @@ export function StatusBanner({ status, driverName, vehicleNumber }: Props) {
   const recovery = isRecoveryMission(status);
   return (
     <View style={[styles.wrap, recovery ? styles.recovery : styles.normal]}>
-      <Text style={styles.label}>STATUS</Text>
-      <Text style={styles.status}>{missionLabel(status)}</Text>
+      <Text style={styles.status} numberOfLines={1}>
+        {missionLabel(status)}
+      </Text>
       {(driverName || vehicleNumber) && (
-        <Text style={styles.meta}>
+        <Text style={styles.meta} numberOfLines={1}>
           {[driverName, vehicleNumber].filter(Boolean).join(' · ')}
         </Text>
       )}
@@ -27,19 +28,29 @@ export function StatusBanner({ status, driverName, vehicleNumber }: Props) {
 const styles = StyleSheet.create({
   wrap: {
     borderRadius: radii.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderWidth: 2,
+    borderColor: colors.border,
+    ...neoShadow,
   },
   normal: {
-    backgroundColor: 'rgba(61, 220, 151, 0.12)',
-    borderColor: colors.normal,
+    backgroundColor: colors.success,
   },
   recovery: {
-    backgroundColor: colors.recoverySoft,
-    borderColor: colors.recovery,
+    backgroundColor: colors.recovery,
   },
-  label: { ...typography.label, color: colors.textMuted, marginBottom: 2 },
-  status: { color: colors.white, fontSize: 20, fontWeight: '800', letterSpacing: 0.6 },
-  meta: { color: colors.textMuted, marginTop: 2, fontSize: 13 },
+  status: {
+    color: colors.black,
+    fontSize: 13,
+    fontWeight: '900',
+    letterSpacing: 0.2,
+  },
+  meta: {
+    color: colors.black,
+    marginTop: 1,
+    fontSize: 11,
+    fontWeight: '700',
+    opacity: 0.75,
+  },
 });

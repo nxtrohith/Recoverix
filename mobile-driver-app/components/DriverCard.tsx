@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, radii, spacing, typography } from '../config/theme';
+import { colors, neoShadow, radii, spacing, typography } from '../config/theme';
 import type { ResolvedDriver } from '../hooks/useDriverCockpit';
 
 type Props = {
@@ -34,42 +34,48 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.bgElevated,
     borderColor: colors.border,
-    borderWidth: 1,
+    borderWidth: 2,
     borderRadius: radii.lg,
     padding: spacing.lg,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
     minHeight: 108,
+    ...neoShadow,
   },
   pressed: {
-    opacity: 0.88,
-    borderColor: colors.accent,
+    transform: [{ translateX: 2 }, { translateY: 2 }],
+    shadowOffset: { width: 2, height: 2 },
+    backgroundColor: colors.mainSoft,
   },
   avatar: {
     width: 56,
     height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.accentSoft,
+    borderRadius: radii.md,
+    backgroundColor: colors.main,
+    borderWidth: 2,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarText: {
-    color: colors.accent,
+    color: colors.black,
     fontSize: 24,
-    fontWeight: '800',
+    fontWeight: '900',
   },
   meta: { flex: 1, gap: 2 },
   name: { color: colors.text, ...typography.title, fontSize: 20 },
-  line: { color: colors.accent, fontWeight: '700', fontSize: 15 },
-  muted: { color: colors.textMuted, fontSize: 13 },
+  line: { color: colors.main, fontWeight: '800', fontSize: 15 },
+  muted: { color: colors.textMuted, fontSize: 13, fontWeight: '600' },
   cta: {
-    color: colors.white,
-    backgroundColor: colors.accent,
+    color: colors.black,
+    backgroundColor: colors.warning,
+    borderWidth: 2,
+    borderColor: colors.border,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    borderRadius: radii.pill,
-    fontWeight: '800',
+    borderRadius: radii.sm,
+    fontWeight: '900',
     overflow: 'hidden',
   },
 });

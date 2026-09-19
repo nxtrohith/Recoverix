@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, radii, spacing } from '../config/theme';
+import { colors, neoShadow, radii, spacing } from '../config/theme';
 
 type Props = {
   kind: 'pickup' | 'destination';
@@ -18,7 +18,12 @@ export function ArrivalPrompt({ kind, onConfirm, busy }: Props) {
           : 'You are approaching the destination for the recovery shipment.'}
       </Text>
       <Pressable
-        style={[styles.btn, busy && styles.disabled]}
+        style={({ pressed }) => [
+          styles.btn,
+          isPickup ? styles.btnPickup : styles.btnDest,
+          busy && styles.disabled,
+          pressed && !busy && styles.pressed,
+        ]}
         onPress={onConfirm}
         disabled={busy}
       >
@@ -34,30 +39,42 @@ const styles = StyleSheet.create({
   wrap: {
     borderRadius: radii.lg,
     borderWidth: 2,
-    padding: spacing.lg,
-    gap: spacing.md,
+    borderColor: colors.border,
+    padding: spacing.md,
+    gap: spacing.sm,
+    ...neoShadow,
   },
   pickup: {
-    backgroundColor: '#1A2A12',
-    borderColor: colors.success,
+    backgroundColor: '#D8FFE8',
   },
   dest: {
-    backgroundColor: '#12202A',
-    borderColor: colors.accent,
+    backgroundColor: colors.bgMuted,
   },
   title: {
-    color: colors.white,
-    fontSize: 18,
-    fontWeight: '800',
-    lineHeight: 24,
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: '900',
+    lineHeight: 20,
   },
   btn: {
-    backgroundColor: colors.success,
-    minHeight: 58,
+    minHeight: 46,
     borderRadius: radii.md,
+    borderWidth: 2,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
+    ...neoShadow,
+  },
+  btnPickup: {
+    backgroundColor: colors.success,
+  },
+  btnDest: {
+    backgroundColor: colors.main,
   },
   disabled: { opacity: 0.6 },
-  btnText: { color: colors.white, fontWeight: '800', fontSize: 18 },
+  pressed: {
+    transform: [{ translateX: 2 }, { translateY: 2 }],
+    shadowOffset: { width: 2, height: 2 },
+  },
+  btnText: { color: colors.black, fontWeight: '900', fontSize: 15 },
 });

@@ -13,7 +13,7 @@ import { HudTelemetry } from '../components/HudTelemetry';
 import { NavigationMap } from '../components/NavigationMap';
 import { RecoveryAlert } from '../components/RecoveryAlert';
 import { StatusBanner } from '../components/StatusBanner';
-import { colors, radii, spacing } from '../config/theme';
+import { colors, neoShadow, radii, spacing } from '../config/theme';
 import { useCockpit } from '../context/CockpitContext';
 import { isRecoveryMission } from '../services/mission';
 
@@ -79,6 +79,12 @@ export default function CockpitScreen() {
     incident?.shipmentTrackingNumber ||
     incident?.shipmentId;
 
+  const nextInstruction = route?.steps?.[0]?.instruction || null;
+  const locationLabel =
+    vehicle?.currentLocationName || vehicle?.currentNode || '—';
+  const truckDest =
+    vehicle?.destination || vehicle?.destinationNode || '—';
+
   return (
     <View style={styles.root}>
       <NavigationMap
@@ -87,21 +93,27 @@ export default function CockpitScreen() {
         pickup={includePickup ? pickupCoord : null}
         destination={destCoord || truckDestCoord}
         recoveryMode={recovery}
+        nextInstruction={nextInstruction}
       />
 
       <SafeAreaView style={styles.overlay} pointerEvents="box-none">
-        <View style={styles.topBar}>
-          <StatusBanner
-            status={missionStatus}
-            driverName={session.name}
-            vehicleNumber={session.vehicleNumber}
-          />
-          <View style={styles.topActions}>
-            <Pressable style={styles.chip} onPress={refresh}>
+        <View style={styles.topBar} pointerEvents="box-none">
+          <View style={styles.topRow}>
+            <View style={styles.statusSlot}>
+              <StatusBanner
+                status={missionStatus}
+                driverName={session.name}
+                vehicleNumber={session.vehicleNumber}
+              />
+            </View>
+            <Pressable
+              style={({ pressed }) => [styles.chip, pressed && styles.pressed]}
+              onPress={refresh}
+            >
               <Text style={styles.chipText}>Sync</Text>
             </Pressable>
             <Pressable
-              style={styles.chip}
+              style={({ pressed }) => [styles.chip, styles.chipAlt, pressed && styles.pressed]}
               onPress={async () => {
                 await signOut();
                 router.replace('/');
@@ -112,182 +124,234 @@ export default function CockpitScreen() {
           </View>
         </View>
 
-        <ScrollView
-          style={styles.sheet}
-          contentContainerStyle={styles.sheetContent}
-          pointerEvents="auto"
-        >
-          <View style={styles.infoCard}>
-            <Text style={styles.infoLabel}>LOCATION</Text>
-            <Text style={styles.infoValue}>
-              {vehicle?.currentLocationName || vehicle?.currentNode || '—'}
-            </Text>
-            <Text style={styles.infoLabel}>DESTINATION</Text>
-            <Text style={styles.infoValue}>
-              {vehicle?.destination || vehicle?.destinationNode || '—'}
-              {sameDestination && recovery ? '  · same as recovery' : ''}
-            </Text>
-            {recoveredShipment && recovery && (
-              <>
-                <Text style={styles.infoLabel}>ACTIVE SHIPMENT</Text>
-                <Text style={[styles.infoValue, styles.shipment]}>
+        <View style={styles.bottomDock} pointerEvents="box-none">
+          <ScrollView
+            style={styles.sheet}
+            contentContainerStyle={styles.sheetContent}
+            showsVerticalScrollIndicator={false}
+            bounces={false}
+            pointerEvents="auto"
+          >
+            <HudTelemetry
+              route={route}
+              distanceToTarget={distanceToTarget}
+              destinationLabel={destLabel}
+              recoveryMode={recovery}
+              nextInstruction={nextInstruction}
+              compact
+            />
+
+            <View style={styles.infoRow}>
+              <Text style={styles.infoText} numberOfLines={1}>
+                {locationLabel}
+                <Text style={styles.infoMuted}> → </Text>
+                {truckDest}
+                {sameDestination && recovery ? ' · same dest' : ''}
+              </Text>
+              {recoveredShipment && recovery ? (
+                <Text style={styles.shipmentChip} numberOfLines={1}>
                   {recoveredShipment}
                 </Text>
-              </>
+              ) : null}
+            </View>
+
+            {networkError && (
+              <View style={styles.warn}>
+                <Text style={styles.warnText}>{networkError}</Text>
+              </View>
             )}
-          </View>
 
-          <HudTelemetry
-            route={route}
-            distanceToTarget={distanceToTarget}
-            destinationLabel={destLabel}
-            recoveryMode={recovery}
-            nextInstruction={route?.steps?.[0]?.instruction}
-          />
+            {actionMessage && (
+              <View style={styles.note}>
+                <Text style={styles.noteText}>{actionMessage}</Text>
+              </View>
+            )}
 
-          {networkError && (
-            <View style={styles.warn}>
-              <Text style={styles.warnText}>{networkError}</Text>
+            {recoveryAlertVisible && incident && (
+              <RecoveryAlert
+                incident={incident}
+                sameDestination={sameDestination}
+                callStatus={callStatus}
+                whySelected={
+                  sameDestination
+                    ? 'Your truck already goes to this destination — recovery is an extra pickup on your route.'
+                    : incident.driverMessage
+                }
+                onAccept={acceptRecovery}
+                onView={acceptRecovery}
+              />
+            )}
+
+            {showPickupPrompt && (
+              <ArrivalPrompt kind="pickup" onConfirm={confirmPickup} busy={busy} />
+            )}
+
+            {showResolvePrompt && (
+              <ArrivalPrompt kind="destination" onConfirm={confirmResolve} busy={busy} />
+            )}
+
+            {proximity === 'approaching' && includePickup && recovery && !showPickupPrompt && (
+              <View style={styles.note}>
+                <Text style={styles.noteText}>
+                  Approaching recovery warehouse — prepare to collect the shipment.
+                </Text>
+              </View>
+            )}
+
+            <View style={styles.demoDock}>
+              <Text style={styles.demoLabel}>DEMO GPS</Text>
+              <View style={styles.demoRow}>
+                <Pressable
+                  style={({ pressed }) => [styles.demoBtn, pressed && styles.pressed]}
+                  onPress={advanceGps}
+                >
+                  <Text style={styles.demoBtnText}>Advance</Text>
+                </Pressable>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.demoBtn,
+                    styles.demoBtnAlt,
+                    pressed && styles.pressed,
+                  ]}
+                  onPress={jumpNearTarget}
+                >
+                  <Text style={styles.demoBtnText}>Near target</Text>
+                </Pressable>
+              </View>
             </View>
-          )}
-
-          {actionMessage && (
-            <View style={styles.note}>
-              <Text style={styles.noteText}>{actionMessage}</Text>
-            </View>
-          )}
-
-          {recoveryAlertVisible && incident && (
-            <RecoveryAlert
-              incident={incident}
-              sameDestination={sameDestination}
-              callStatus={callStatus}
-              whySelected={
-                sameDestination
-                  ? 'Your truck already goes to this destination — recovery is an extra pickup on your route.'
-                  : incident.driverMessage
-              }
-              onAccept={acceptRecovery}
-              onView={acceptRecovery}
-            />
-          )}
-
-          {showPickupPrompt && (
-            <ArrivalPrompt kind="pickup" onConfirm={confirmPickup} busy={busy} />
-          )}
-
-          {showResolvePrompt && (
-            <ArrivalPrompt kind="destination" onConfirm={confirmResolve} busy={busy} />
-          )}
-
-          {proximity === 'approaching' && includePickup && recovery && !showPickupPrompt && (
-            <View style={styles.note}>
-              <Text style={styles.noteText}>
-                Approaching recovery warehouse — prepare to collect the shipment.
-              </Text>
-            </View>
-          )}
-
-          <View style={styles.demoDock}>
-            <Text style={styles.demoLabel}>DEMO GPS</Text>
-            <View style={styles.demoRow}>
-              <Pressable style={styles.demoBtn} onPress={advanceGps}>
-                <Text style={styles.demoBtnText}>Advance</Text>
-              </Pressable>
-              <Pressable style={styles.demoBtn} onPress={jumpNearTarget}>
-                <Text style={styles.demoBtnText}>Near target</Text>
-              </Pressable>
-            </View>
-          </View>
-        </ScrollView>
+          </ScrollView>
+        </View>
       </SafeAreaView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.bg },
+  root: { flex: 1, backgroundColor: colors.mapLand },
   overlay: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'space-between',
   },
   topBar: {
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm,
-    gap: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingTop: spacing.sm + 56,
   },
-  topActions: { flexDirection: 'row', gap: 8 },
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  statusSlot: { flex: 1, minWidth: 0 },
   chip: {
-    backgroundColor: colors.bgPanel,
+    backgroundColor: colors.white,
     borderColor: colors.border,
-    borderWidth: 1,
-    borderRadius: radii.pill,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    borderWidth: 2,
+    borderRadius: radii.sm,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    ...neoShadow,
   },
-  chipText: { color: colors.text, fontWeight: '700' },
-  sheet: {
-    maxHeight: '58%',
+  chipAlt: {
+    backgroundColor: colors.warning,
+  },
+  chipText: { color: colors.black, fontWeight: '900', fontSize: 12 },
+  pressed: {
+    transform: [{ translateX: 2 }, { translateY: 2 }],
+    shadowOffset: { width: 2, height: 2 },
+  },
+  bottomDock: {
     marginTop: 'auto',
   },
+  sheet: {
+    maxHeight: 280,
+  },
   sheetContent: {
-    padding: spacing.md,
-    gap: spacing.md,
-    paddingBottom: spacing.xl,
+    paddingHorizontal: spacing.sm,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.md,
+    gap: spacing.sm,
   },
-  infoCard: {
-    backgroundColor: colors.bgPanel,
-    borderRadius: radii.lg,
-    borderWidth: 1,
+  infoRow: {
+    backgroundColor: colors.white,
+    borderWidth: 2,
     borderColor: colors.border,
-    padding: spacing.md,
+    borderRadius: radii.md,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
     gap: 4,
+    ...neoShadow,
   },
-  infoLabel: {
+  infoText: {
+    color: colors.text,
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  infoMuted: {
     color: colors.textMuted,
-    fontSize: 11,
     fontWeight: '700',
-    letterSpacing: 0.8,
-    marginTop: 6,
   },
-  infoValue: { color: colors.text, fontSize: 16, fontWeight: '700' },
-  shipment: { color: colors.recovery, fontSize: 18 },
-  warn: {
-    backgroundColor: colors.dangerSoft,
-    borderRadius: radii.md,
-    padding: spacing.sm,
-  },
-  warnText: { color: colors.text },
-  note: {
-    backgroundColor: colors.accentSoft,
-    borderRadius: radii.md,
-    padding: spacing.sm,
-  },
-  noteText: { color: colors.text, fontWeight: '600' },
-  demoDock: {
-    backgroundColor: colors.bgElevated,
-    borderRadius: radii.md,
-    borderWidth: 1,
+  shipmentChip: {
+    alignSelf: 'flex-start',
+    color: colors.black,
+    backgroundColor: colors.recovery,
+    borderWidth: 2,
     borderColor: colors.border,
-    padding: spacing.sm,
-    gap: 8,
+    borderRadius: radii.sm,
+    overflow: 'hidden',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  warn: {
+    backgroundColor: '#FFE8E8',
+    borderRadius: radii.md,
+    borderWidth: 2,
+    borderColor: colors.border,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    ...neoShadow,
+  },
+  warnText: { color: colors.text, fontWeight: '700', fontSize: 13 },
+  note: {
+    backgroundColor: colors.bgMuted,
+    borderRadius: radii.md,
+    borderWidth: 2,
+    borderColor: colors.border,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    ...neoShadow,
+  },
+  noteText: { color: colors.text, fontWeight: '700', fontSize: 13 },
+  demoDock: {
+    backgroundColor: colors.white,
+    borderRadius: radii.md,
+    borderWidth: 2,
+    borderColor: colors.border,
+    padding: 8,
+    gap: 6,
+    ...neoShadow,
   },
   demoLabel: {
     color: colors.textMuted,
-    fontSize: 11,
-    fontWeight: '800',
+    fontSize: 10,
+    fontWeight: '900',
     letterSpacing: 1,
   },
-  demoRow: { flexDirection: 'row', gap: 8 },
+  demoRow: { flexDirection: 'row', gap: 6 },
   demoBtn: {
     flex: 1,
-    minHeight: 48,
+    minHeight: 40,
     borderRadius: radii.sm,
-    backgroundColor: colors.bg,
-    borderWidth: 1,
+    backgroundColor: colors.main,
+    borderWidth: 2,
     borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
+    ...neoShadow,
   },
-  demoBtnText: { color: colors.text, fontWeight: '700' },
+  demoBtnAlt: {
+    backgroundColor: colors.success,
+  },
+  demoBtnText: { color: colors.black, fontWeight: '900', fontSize: 13 },
 });

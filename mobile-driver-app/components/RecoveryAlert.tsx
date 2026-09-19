@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, radii, spacing } from '../config/theme';
+import { colors, neoShadow, radii, spacing } from '../config/theme';
 import type { Incident } from '../services/mission';
 
 type Props = {
@@ -28,7 +28,9 @@ export function RecoveryAlert({
 
   return (
     <View style={styles.wrap} accessibilityRole="alert">
-      <Text style={styles.eyebrow}>⚠ RECOVERY ASSIGNMENT</Text>
+      <View style={styles.badge}>
+        <Text style={styles.eyebrow}>RECOVERY ASSIGNMENT</Text>
+      </View>
       <Text style={styles.title}>Misplaced shipment needs pickup</Text>
 
       <View style={styles.grid}>
@@ -75,10 +77,16 @@ export function RecoveryAlert({
       </View>
 
       <View style={styles.actions}>
-        <Pressable style={styles.primary} onPress={onAccept}>
+        <Pressable
+          style={({ pressed }) => [styles.primary, pressed && styles.pressed]}
+          onPress={onAccept}
+        >
           <Text style={styles.primaryText}>Accept Recovery</Text>
         </Pressable>
-        <Pressable style={styles.secondary} onPress={onView}>
+        <Pressable
+          style={({ pressed }) => [styles.secondary, pressed && styles.pressed]}
+          onPress={onView}
+        >
           <Text style={styles.secondaryText}>View Mission</Text>
         </Pressable>
       </View>
@@ -97,57 +105,82 @@ function Row({ label, value }: { label: string; value: string }) {
 
 const styles = StyleSheet.create({
   wrap: {
-    backgroundColor: '#2A120C',
-    borderColor: colors.recovery,
+    backgroundColor: colors.white,
+    borderColor: colors.border,
     borderWidth: 2,
     borderRadius: radii.lg,
-    padding: spacing.lg,
-    gap: spacing.sm,
+    padding: spacing.md,
+    gap: 6,
+    ...neoShadow,
+  },
+  badge: {
+    alignSelf: 'flex-start',
+    backgroundColor: colors.recovery,
+    borderWidth: 2,
+    borderColor: colors.border,
+    borderRadius: radii.sm,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
   },
   eyebrow: {
-    color: colors.recovery,
-    fontWeight: '800',
-    letterSpacing: 1,
-    fontSize: 13,
+    color: colors.black,
+    fontWeight: '900',
+    letterSpacing: 0.8,
+    fontSize: 11,
   },
   title: {
-    color: colors.white,
-    fontSize: 22,
-    fontWeight: '800',
+    color: colors.text,
+    fontSize: 17,
+    fontWeight: '900',
   },
-  grid: { gap: 8, marginTop: 4 },
-  row: { gap: 2 },
-  rowLabel: { color: colors.textMuted, fontSize: 12, fontWeight: '700', textTransform: 'uppercase' },
-  rowValue: { color: colors.text, fontSize: 16, fontWeight: '600' },
+  grid: { gap: 5, marginTop: 2 },
+  row: { gap: 1 },
+  rowLabel: {
+    color: colors.textMuted,
+    fontSize: 10,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+  },
+  rowValue: { color: colors.text, fontSize: 13, fontWeight: '700' },
   callBox: {
-    marginTop: 6,
-    backgroundColor: 'rgba(31,162,255,0.12)',
+    marginTop: 4,
+    backgroundColor: colors.bgMuted,
     borderRadius: radii.sm,
-    padding: spacing.sm,
+    borderWidth: 2,
+    borderColor: colors.border,
+    padding: 8,
     gap: 2,
   },
-  callTitle: { color: colors.accent, fontWeight: '800' },
-  callBody: { color: colors.text, fontSize: 14 },
-  callHint: { color: colors.textMuted, fontSize: 12 },
-  actions: { flexDirection: 'row', gap: 10, marginTop: 8 },
+  callTitle: { color: colors.main, fontWeight: '900', fontSize: 13 },
+  callBody: { color: colors.text, fontSize: 12, fontWeight: '600' },
+  callHint: { color: colors.textMuted, fontSize: 11, fontWeight: '600' },
+  actions: { flexDirection: 'row', gap: 8, marginTop: 4 },
   primary: {
     flex: 1,
     backgroundColor: colors.recovery,
     borderRadius: radii.md,
-    minHeight: 56,
+    borderWidth: 2,
+    borderColor: colors.border,
+    minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
+    ...neoShadow,
   },
-  primaryText: { color: colors.white, fontWeight: '800', fontSize: 16 },
+  primaryText: { color: colors.black, fontWeight: '900', fontSize: 13 },
   secondary: {
     flex: 1,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: colors.border,
     borderRadius: radii.md,
-    minHeight: 56,
+    minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.bgElevated,
+    backgroundColor: colors.warning,
+    ...neoShadow,
   },
-  secondaryText: { color: colors.text, fontWeight: '700', fontSize: 16 },
+  secondaryText: { color: colors.black, fontWeight: '900', fontSize: 13 },
+  pressed: {
+    transform: [{ translateX: 2 }, { translateY: 2 }],
+    shadowOffset: { width: 2, height: 2 },
+  },
 });

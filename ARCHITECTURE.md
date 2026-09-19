@@ -186,12 +186,14 @@ and routes in a small number of MongoDB round-trips (not one query per document)
 
 ## Driver mobile app (`mobile-driver-app/`)
 
-Expo / React Native driver cockpit connected to the same Node gateway (`EXPO_PUBLIC_API_BASE_URL`, default `:3000`). Does **not** duplicate recovery logic or place Sarvam calls.
+Expo / React Native driver cockpit connected to the same Node gateway (`EXPO_PUBLIC_API_BASE_URL`, default `:3000`). Does **not** duplicate recovery logic or place Sarvam calls. UI tokens mirror the dashboard **NeoBrutalism** palette (`config/theme.ts`: light blue bg, hard black borders, offset shadows, `#5294FF` main). Navigation uses a colorful Google Maps–style roadmap (JS Maps / native light style) with a turn-banner overlay; without a Maps key the SVG schematic simulates parks, water, roads, and a blue route casing.
 
 | Area | Role |
 | --- | --- |
 | `app/index` | Driver Selection — exactly 3 demo profiles resolved against live `/api/vehicles` |
 | `app/cockpit` | Navigation map + HUD + recovery alert + pickup/resolve actions |
+| `config/theme.ts` | Shared NeoBrutalism tokens (aligned with `frontend/src/index.css`) |
+| `config/mapStyles.ts` | Light colorful map style for native MapView |
 | `services/api.ts` | Same REST surface as the operator dashboard client |
 | `services/directions.ts` | Google Directions when keyed; else graph hub polyline from `/api/graph` |
 | `services/mockGps.ts` | Demo GPS walk along the active route for geofence demos |

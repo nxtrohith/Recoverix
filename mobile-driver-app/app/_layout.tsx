@@ -7,12 +7,12 @@ import { CockpitProvider } from '../context/CockpitContext';
 export default function RootLayout() {
   return (
     <CockpitProvider>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       <Stack
         screenOptions={{
           headerStyle: { backgroundColor: colors.bg },
           headerTintColor: colors.text,
-          headerTitleStyle: { fontWeight: '800' },
+          headerTitleStyle: { fontWeight: '900' },
           contentStyle: { backgroundColor: colors.bg },
           animation: 'fade',
         }}
