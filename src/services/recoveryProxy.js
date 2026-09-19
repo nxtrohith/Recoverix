@@ -18,15 +18,21 @@ const RECOVERY_PORT = Number(process.env.RECOVERY_API_PORT || 5055);
  * @param {string} [method]
  */
 export function proxyToRecovery(req, res, path, method = req.method) {
+  const upstreamHeaders = {
+    Accept: 'application/json',
+    'Content-Type': req.headers['content-type'] || 'application/json',
+  };
+  // Forward content-length so FastAPI doesn't have to wait for chunked-EOF
+  if (req.headers['content-length']) {
+    upstreamHeaders['Content-Length'] = req.headers['content-length'];
+  }
+
   const options = {
     hostname: RECOVERY_HOST,
     port: RECOVERY_PORT,
     path,
     method,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    },
+    headers: upstreamHeaders,
   };
 
   const upstream = http.request(options, (upRes) => {

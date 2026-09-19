@@ -151,23 +151,15 @@ export default function RecoveryActions({
       display === 'RESOLVED');
 
   const effectiveCallStatus = (() => {
-    if (driverCall?.status) {
-      const s = String(driverCall.status).toLowerCase();
+    const rawStatus = driverCall?.status || incident?.driverCallStatus;
+    if (rawStatus) {
+      const s = String(rawStatus).toLowerCase();
       if (s === 'in_progress' || s === 'connected' || s === 'answered') return 'answered';
       if (s === 'confirmed' || incident?.pickupConfirmedAt) return 'confirmed';
       if (s === 'declined' || s === 'rejected') return 'declined';
-      if (s === 'failed' || driverCall.error) return 'failed';
-      if (s === 'initiated' || s === 'ringing') return 'calling';
-      if (s === 'not_triggered') return 'not_triggered';
-      return s;
-    }
-    if (incident?.driverCallStatus) {
-      const s = String(incident.driverCallStatus).toLowerCase();
-      if (s === 'in_progress' || s === 'connected' || s === 'answered') return 'answered';
-      if (s === 'confirmed' || incident?.pickupConfirmedAt) return 'confirmed';
-      if (s === 'declined' || s === 'rejected') return 'declined';
-      if (s === 'failed' || incident.driverCallError) return 'failed';
-      if (s === 'initiated' || s === 'ringing') return 'calling';
+      if (s === 'retry_available' || s === 'call_retry_available') return 'retry_available';
+      if (s === 'failed' || driverCall?.error || incident?.driverCallError) return 'failed';
+      if (s === 'initiated' || s === 'ringing' || s === 'calling') return 'calling';
       if (s === 'not_triggered') return 'not_triggered';
       return s;
     }
@@ -251,6 +243,7 @@ export default function RecoveryActions({
                 {effectiveCallStatus === 'confirmed' && '✅'}
                 {effectiveCallStatus === 'declined' && '❌'}
                 {effectiveCallStatus === 'failed' && '⚠️'}
+                {effectiveCallStatus === 'retry_available' && '🔄'}
                 {effectiveCallStatus === 'not_triggered' && '⚪'}
               </span>
               <strong style={{ fontSize: '0.9rem', color: 'var(--text)' }}>
@@ -259,10 +252,26 @@ export default function RecoveryActions({
                 {effectiveCallStatus === 'confirmed' && 'Driver confirmed'}
                 {effectiveCallStatus === 'declined' && 'Driver declined'}
                 {effectiveCallStatus === 'failed' && 'Call failed'}
+                {effectiveCallStatus === 'retry_available' && 'Call retry available'}
                 {effectiveCallStatus === 'not_triggered' && 'Call not triggered'}
               </strong>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {(effectiveCallStatus === 'failed' || effectiveCallStatus === 'declined') ? (
+                <span
+                  style={{
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    padding: '2px 8px',
+                    borderRadius: '12px',
+                    background: '#fff3e0',
+                    color: '#e65100',
+                    border: '1px solid #ffe0b2',
+                  }}
+                >
+                  Call retry available
+                </span>
+              ) : null}
               <span
                 style={{
                   fontSize: '0.72rem',
@@ -279,6 +288,7 @@ export default function RecoveryActions({
               {onRetryCall &&
               (effectiveCallStatus === 'failed' ||
                 effectiveCallStatus === 'declined' ||
+                effectiveCallStatus === 'retry_available' ||
                 effectiveCallStatus === 'not_triggered' ||
                 effectiveCallStatus === 'calling') ? (
                 <button

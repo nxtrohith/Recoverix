@@ -7,12 +7,15 @@ RecoveryOrchestrator for option ranking (no duplicated scoring).
 
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
 
 from bson import ObjectId
 from pymongo.database import Database
+
+logger = logging.getLogger(__name__)
 
 from graph.recovery_orchestrator import (
     RecoveryError,
@@ -387,9 +390,10 @@ def simulate_misplaced_incident(
     if vehicle_id is not None:
         vehicle_doc = db["vehicles"].find_one({"_id": vehicle_id}) or {}
         vehicle_number = _vehicle_number(db, vehicle_id)
+        display_ship_id = shipment.get("trackingNumber") or str(ship_oid)
         late_msg = build_late_detection_message(
             shipment_tracking=shipment.get("trackingNumber", ""),
-            shipment_id=str(ship_oid),
+            shipment_id=display_ship_id,
             pickup_hub=_loc_name(db, hub_id),
             destination=_loc_name(db, shipment.get("destination")),
             vehicle_number=vehicle_number,
@@ -400,7 +404,7 @@ def simulate_misplaced_incident(
             call_kind="late_detection",
             vehicle_doc=vehicle_doc,
             metadata={
-                "shipmentId": str(ship_oid),
+                "shipmentId": display_ship_id,
                 "incidentId": incident_id,
                 "pickupNode": _loc_name(db, hub_id),
                 "destinationNode": _loc_name(db, shipment.get("destination")),
@@ -743,8 +747,9 @@ def assign_recovery(
         notify_simulated = existing_call.get("channel") != "sarvam_voice"
         notify_lang = existing_call.get("language", "Telugu")
     else:
+        display_shipment_id = shipment.get("trackingNumber") or str(ship_oid)
         message = build_recovery_assignment_message(
-            shipment_tracking=shipment.get("trackingNumber", ""),
+            shipment_tracking=display_shipment_id,
             shipment_id=str(ship_oid),
             pickup_hub=pickup_hub,
             destination=destination,
@@ -757,7 +762,8 @@ def assign_recovery(
             call_kind="recovery_assign",
             vehicle_doc=recovery_vehicle_doc,
             metadata={
-                "shipmentId": str(ship_oid),
+                "shipmentId": display_shipment_id,
+                "tracking": display_shipment_id,
                 "incidentId": incident.get("incidentId"),
                 "candidateId": candidate,
                 "pickupCase": pickup,
@@ -1034,8 +1040,9 @@ def retry_recovery_call(
         or "Destination Hub"
     )
 
+    display_shipment_id = shipment.get("trackingNumber") or str(ship_oid)
     message = build_recovery_assignment_message(
-        shipment_tracking=shipment.get("trackingNumber", ""),
+        shipment_tracking=display_shipment_id,
         shipment_id=str(ship_oid),
         pickup_hub=pickup_hub,
         destination=destination,
@@ -1050,7 +1057,8 @@ def retry_recovery_call(
         phone=phone,
         vehicle_doc=vehicle_doc,
         metadata={
-            "shipmentId": str(ship_oid),
+            "shipmentId": display_shipment_id,
+            "tracking": display_shipment_id,
             "incidentId": incident.get("incidentId"),
             "candidateId": incident.get("selectedCandidateId"),
             "pickupCase": incident.get("pickupCase"),
@@ -1168,7 +1176,7 @@ def get_recovery_call_status(
         latest_call.get("call_id") if latest_call else None
     )
     call_status = incident.get("driverCallStatus") or (
-        latest_call.get("status") if latest_call else "not_triggered"
+        latest_call.get("status") if latest_call else ("initiated" if call_id else "not_triggered")
     )
     call_error = incident.get("driverCallError") or (
         latest_call.get("failure_reason") if latest_call else None
@@ -1193,6 +1201,24 @@ def get_recovery_call_status(
                     {"_id": incident["_id"]},
                     {"$set": {"driverCallStatus": remote_status, "updatedAt": now}},
                 )
+                if remote_status in ("answered", "connected", "in_progress"):
+                    logger.info(
+                        "[SARVAM] call connected: call_id=%s, phone=%s",
+                        call_id,
+                        mask_phone(call_phone or ""),
+                    )
+                elif remote_status in ("completed", "confirmed"):
+                    logger.info(
+                        "[SARVAM] call completed: call_id=%s, phone=%s",
+                        call_id,
+                        mask_phone(call_phone or ""),
+                    )
+                elif remote_status in ("failed", "declined"):
+                    logger.warning(
+                        "[SARVAM] call failed: call_id=%s, status=%s",
+                        call_id,
+                        remote_status,
+                    )
 
     return {
         "ok": True,
@@ -1209,6 +1235,79 @@ def get_recovery_call_status(
         "incident": serialize_incident(db, incident),
     }
 
+
+def update_recovery_call_status(
+    db: Database,
+    shipment_id: str,
+    status: str,
+    failure_reason: str | None = None,
+) -> dict[str, Any]:
+    """
+    Update driver call status (e.g. from webhook, operator action, or driver response).
+    Statuses: 'calling', 'answered', 'confirmed', 'declined', 'failed', 'retry_available'.
+    """
+    shipment = _find_shipment(db, shipment_id)
+    if shipment is None:
+        raise ShipmentNotFoundError(shipment_id)
+    ship_oid = shipment["_id"]
+    incident = (
+        get_active_incident_for_shipment(db, ship_oid)
+        or get_latest_incident_for_shipment(db, ship_oid)
+    )
+    if incident is None:
+        raise RecoveryError(
+            "NO_INCIDENT",
+            f"No incident found for shipment {shipment_id}",
+            http_status=404,
+        )
+
+    now = _now()
+    clean_status = status.lower().strip()
+    update_fields: dict[str, Any] = {
+        "driverCallStatus": clean_status,
+        "updatedAt": now,
+    }
+    if failure_reason:
+        update_fields["driverCallError"] = failure_reason
+
+    db["incidents"].update_one({"_id": incident["_id"]}, {"$set": update_fields})
+    db["driver_calls"].update_many(
+        {"incident_id": str(incident["_id"])},
+        {
+            "$set": {
+                "status": clean_status,
+                "failure_reason": failure_reason,
+                "updated_at": now,
+                **(
+                    {"completed_at": now}
+                    if clean_status in ("completed", "confirmed")
+                    else {}
+                ),
+            }
+        },
+    )
+
+    if clean_status in ("answered", "connected"):
+        logger.info(
+            "[SARVAM] call connected: shipment=%s status=%s",
+            ship_oid,
+            clean_status,
+        )
+    elif clean_status in ("completed", "confirmed"):
+        logger.info(
+            "[SARVAM] call completed: shipment=%s status=%s",
+            ship_oid,
+            clean_status,
+        )
+    elif clean_status in ("failed", "declined"):
+        logger.warning(
+            "[SARVAM] call failed: shipment=%s status=%s reason=%s",
+            ship_oid,
+            clean_status,
+            failure_reason,
+        )
+
+    return get_recovery_call_status(db, shipment_id)
 
 
 # ---------------------------------------------------------------------------
@@ -1269,9 +1368,18 @@ def confirm_recovery_pickup(db: Database, shipment_id: str) -> dict[str, Any]:
             "$set": {
                 "status": "PICKUP_CONFIRMED",
                 "pickupConfirmedAt": now,
+                "driverCallStatus": "confirmed",
                 "updatedAt": now,
             }
         },
+    )
+    db["driver_calls"].update_many(
+        {"incident_id": str(incident["_id"])},
+        {"$set": {"status": "confirmed", "completed_at": now}},
+    )
+    logger.info(
+        "[SARVAM] call completed: driver confirmed recovery assignment for shipment %s",
+        ship_oid,
     )
 
     # Shipment is recovered once pickup is confirmed; incident stays open until resolve

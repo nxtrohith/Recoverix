@@ -1,20 +1,20 @@
 # 🚛 SH-205: Intelligent Shipment Piggybacking
 
-> **Autonomous logistics recovery system that turns shipment exceptions into actionable in-transit piggybacking assignments across the Telangana freight network.**
+> **Autonomous logistics recovery system that turns shipment exceptions into actionable in-transit piggybacking assignments across the Telangana freight network — with real-time Sarvam AI voice calls to drivers in Telugu.**
 
 ---
 
 ## 📌 Executive Summary
 
-When a high-value shipment is misplaced or delayed at a freight terminal, traditional logistics systems either wait for the next scheduled run or dispatch an expensive, ad-hoc dedicated recovery vehicle.
+When a high-value shipment is misplaced or delayed at a freight terminal, traditional logistics systems either wait for the next scheduled run or dispatch an expensive dedicated recovery vehicle.
 
-**Intelligent Shipment Piggybacking (SH-205)** solves this by analyzing active in-network vehicles and existing routes. It dynamically identifies passing or nearby freight trucks that have residual weight/volume capacity, reroutes them to the actual misplaced location, and piggybacks the cargo to its final destination within hard delivery deadlines.
+**Intelligent Shipment Piggybacking (SH-205)** solves this by analyzing active in-network vehicles and their existing routes. It dynamically identifies passing or nearby freight trucks with residual capacity, reroutes them to the misplaced hub, and piggybacks the cargo to its final destination — then immediately calls the assigned driver via a Sarvam AI Voice Agent in Telugu with the full recovery brief.
 
 ```
 Shipment Exception (Actual ≠ Expected Hub)
            │
            ▼
-Telangana Logistics Graph Search (NetworkX)
+Telangana Logistics Graph Search (NetworkX, 91 nodes / 143 edges)
            │
            ▼
 Candidate Generation (at_node / pass_through / detour)
@@ -31,79 +31,84 @@ Optimal Vehicle Selection & Driver Assignment
      ┌─────┴─────────────────────────┐
      ▼                               ▼
 Sarvam AI Outbound Call       Driver Mobile App
-(Indic Voice Notification)    (Turn-by-Turn Navigation)
+(Telugu Voice Notification)   (Turn-by-Turn Navigation)
 ```
 
 ---
 
-## 🌟 Core System Pillars
+## 🌟 System Components
 
 | Component | Technology | Description |
 | :--- | :--- | :--- |
-| **Operator Control Tower** | React, Vite, Leaflet, Tailwind | Web dashboard to monitor live shipments, visualize graph nodes/routes, inspect divergence, and trigger recovery assignments. |
-| **Piggyback Intelligence Engine** | Python 3.11+, FastAPI, NetworkX | In-memory graph search that evaluates capacity, routes, detour ratios, and deadlines across 50+ Telangana logistics hubs. |
-| **Driver Companion Mobile App** | Expo, React Native, Google Maps | Independent driver cockpit featuring live GPS tracking, 3D follow camera, turn-by-turn voice navigation, and recovery mission alerts. |
-| **Outbound Voice Integration** | Sarvam AI Conversations API | Automated outbound phone calls in Indic languages (Telugu/Hindi/English) notifying drivers of urgent cargo recovery tasks. |
+| **Operator Control Tower** | React, Vite, Leaflet | Web dashboard to monitor live shipments, visualize graph nodes/routes, inspect divergence, and trigger recovery assignments. |
+| **Piggyback Intelligence Engine** | Python 3.11+, FastAPI, NetworkX | In-memory graph search that evaluates capacity, routes, detour ratios, and deadlines across 91 Telangana logistics hubs. |
+| **Driver Companion Mobile App** | Expo, React Native, Google Maps | Driver cockpit with live GPS tracking, 3D follow camera, turn-by-turn voice navigation, and recovery mission alerts. |
+| **Outbound Voice Integration** | Sarvam AI Conversations API | Automated outbound phone calls in Telugu (configurable) notifying drivers of urgent cargo recovery tasks. |
 
 ---
 
 ## 🚀 Key Features
 
 ### 1. Expected vs. Actual Hub Divergence Detection
-- **`expectedNode`**: Where the package should be according to its sequenced route plan (`assignedRoute`).
-- **`actualNode`**: Where the shipment was last physically confirmed through scan events (`currentLocation`).
-- **Mismatch Trigger**: Automatically flags the shipment as `MISPLACED` and designates the actual hub as the pickup origin.
+- **`expectedNode`**: Where the package should be per its planned route (`assignedRoute`).
+- **`actualNode`**: Where the shipment was last physically confirmed via scan events (`currentLocation`).
+- **Mismatch Trigger**: Automatically flags the shipment as `MISPLACED` and uses the actual hub as the pickup origin for recovery.
 
 ### 2. Piggyback Candidate Classification
 - **`at_node`**: Vehicle is already stationed at the recovery pickup hub.
-- **`pass_through`**: The recovery pickup hub lies directly along the vehicle’s active route.
-- **`detour`**: Vehicle diverts from its planned corridor to retrieve cargo, bounded by a strict `max_detour_ratio` (default `≤ 3.0×`).
+- **`pass_through`**: The pickup hub lies directly along the vehicle's active route — zero detour cost.
+- **`detour`**: Vehicle diverts from its planned corridor to retrieve cargo, bounded by a strict `max_detour_ratio` (default ≤ 3.0×).
 
 ### 3. Hard Feasibility & Deterministic Scoring
-- **Hard Constraints**: Rejects candidates exceeding residual weight/volume or missing the shipment deadline.
+- **Hard Constraints**: Rejects candidates exceeding residual weight/volume capacity or that cannot meet the shipment deadline.
 - **Multi-Factor Scoring**:
-  $$\text{Score} = 0.25(\text{Time}) + 0.20(\text{Deadline}) + 0.15(\text{Cost}) + 0.15(\text{Capacity}) + 0.10(\text{Priority}) + 0.10(\text{Detour}) + 0.05(\text{Connectivity})$$
 
-### 4. Real-Time Driver Navigation & Sarvam Voice Alert
-- Dispatches notification via **Sarvam AI Instant Outbound** to call the driver in their preferred regional language.
-- Mobile Driver Cockpit automatically computes the optimal two-leg route (`Current Location → Recovery Hub → Final Destination`) with interactive turn-by-turn guidance.
+  ```
+  Score = 0.25(Time) + 0.20(Deadline) + 0.15(Cost) + 0.15(Capacity)
+        + 0.10(Priority) + 0.10(Detour) + 0.05(Connectivity)
+  ```
+
+### 4. Sarvam AI Outbound Voice Call (Telugu)
+- On assignment, the backend automatically calls the driver's phone number via **Sarvam Instant Outbound API**.
+- The voice agent speaks in Telugu, including the shipment ID, pickup hub, and final destination.
+- **Idempotency**: A call is placed only once per assignment. Use the explicit "Retry Call" action to re-trigger.
+- Call status is polled every 5 seconds and displayed live on the operator dashboard.
+
+### 5. Recovery Workflow State Machine
+
+```
+MISPLACED → [Analyze] → RECOVERY_PLAN_AVAILABLE
+          → [Assign]  → ASSIGNED  (+Sarvam call triggered)
+          → [Pickup]  → PICKUP_CONFIRMED
+          → [Resolve] → RESOLVED
+```
 
 ---
 
 ## 🏗️ Architecture
 
-```mermaid
-flowchart TB
-    subgraph Web["Operator Control Tower (:5173)"]
-        UI[React / Vite Dashboard]
-        LeafletMap[Telangana Graph Visualizer]
-    end
-
-    subgraph Backend["Recovery Core Engine (:5055)"]
-        API[FastAPI Server]
-        Orchestrator[Recovery Orchestrator]
-        Scorer[Feasibility & Scoring Engine]
-        GraphCache[(NetworkX DiGraph Cache)]
-    end
-
-    subgraph Mobile["Driver App (:8082)"]
-        DriverApp[Expo / React Native]
-        GNav[Google Maps Turn-by-Turn]
-    end
-
-    subgraph External["External Services & Storage"]
-        DB[(MongoDB Database)]
-        Sarvam[Sarvam AI Voice API]
-        GMapsAPI[Google Routes & Directions]
-    end
-
-    UI -->|REST / JSON| API
-    API --> Orchestrator
-    Orchestrator --> Scorer
-    Scorer <--> GraphCache
-    API <--> DB
-    API -->|Outbound Call| Sarvam
-    DriverApp -->|Route Calculation| GMapsAPI
+```
+┌──────────────────────────────────────────────────────────────┐
+│               Operator Control Tower (:5173 / :5174)         │
+│    React + Vite  │  Leaflet Map  │  Recovery Action Panel    │
+└────────────────────────┬─────────────────────────────────────┘
+                         │ REST / JSON
+┌────────────────────────▼─────────────────────────────────────┐
+│              Recovery Core Engine (:8000 / :5055)            │
+│   FastAPI API  │  Recovery Orchestrator  │  Scoring Engine   │
+│   NetworkX DiGraph (in-memory, 91 nodes, 143 edges)          │
+└──────┬──────────────────┬───────────────────────────┬────────┘
+       │                  │                           │
+       ▼                  ▼                           ▼
+  MongoDB Atlas    Sarvam AI Outbound       Node.js Proxy
+  (shipments,      (Telugu voice call       (src/index.js)
+   incidents,       to driver phone)
+   driver_calls)
+                         │
+┌────────────────────────▼─────────────────────────────────────┐
+│                 Driver Mobile App (:8082)                     │
+│   Expo / React Native  │  Google Maps  │  Turn-by-Turn Voice │
+└──────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -112,130 +117,243 @@ flowchart TB
 
 ```text
 Conv-Software-Hackathon/
-├── frontend/                     # Operator Web Dashboard (React + Vite + Leaflet)
+├── frontend/                        # Operator Web Dashboard (React + Vite + Leaflet)
 │   ├── src/
-│   │   ├── components/recovery/  # Recovery timeline, incident view & action panels
-│   │   ├── pages/                # Overview, Shipments, Vehicles & Recovery pages
-│   │   └── types/                # API contract schemas
+│   │   ├── components/
+│   │   │   └── recovery/            # Incident view, timeline, action panel, call status
+│   │   ├── hooks/
+│   │   │   ├── useRecoveryData.js   # Recovery state, call polling & retry logic
+│   │   │   └── useShipmentData.js
+│   │   ├── api/
+│   │   │   └── client.js            # All API fetch methods incl. call status & retry
+│   │   ├── pages/                   # Overview, Shipments, Vehicles & Recovery pages
+│   │   └── types/                   # TypeScript API contract schemas
 │   └── package.json
 │
-├── graph/                        # Python Graph Recovery Intelligence Core
-│   ├── api_server.py             # FastAPI REST endpoints (:5055)
-│   ├── candidate_generator.py    # at_node / pass_through / detour generation
-│   ├── recovery_scorer.py        # Constraint validation & multi-objective scoring
-│   ├── recovery_orchestrator.py  # End-to-end pipeline coordination
-│   ├── shipment_state.py         # Expected vs. actual divergence engine
+├── graph/                           # Python Recovery Intelligence Core
+│   ├── api_server.py                # FastAPI REST server (port 8000 / 5055)
+│   ├── api_models.py                # Pydantic request/response models
+│   ├── api_services.py              # Data retrieval & serialisation helpers
+│   ├── candidate_generator.py       # at_node / pass_through / detour generation
+│   ├── recovery_scorer.py           # Constraint validation & multi-objective scoring
+│   ├── recovery_orchestrator.py     # End-to-end pipeline coordination
+│   ├── incident_service.py          # Recovery workflow + Sarvam call + idempotency
+│   ├── shipment_state.py            # Expected vs. actual divergence engine
+│   ├── graph_cache.py               # In-memory NetworkX graph management
 │   └── services/
-│       └── sarvam_outbound.py    # Sarvam AI Indic voice calling integration
+│       └── sarvam_outbound.py       # Sarvam AI outbound voice call client
 │
-├── mobile-driver-app/            # Driver Turn-by-Turn Mobile Cockpit (Expo / React Native)
-│   ├── app/                      # Screens (Cockpit, Turn-by-Turn, Recovery, Hubs, Settings)
-│   ├── components/               # MapView, Vehicle Marker, HUD telemetry, Simulation dock
-│   ├── services/                 # Google Directions, voice guidance, mock GPS telemetry
-│   └── config/                   # Civic-tech design tokens & theme
+├── mobile-driver-app/               # Driver Turn-by-Turn Cockpit (Expo / React Native)
+│   ├── app/                         # Screens: Cockpit, Navigation, Recovery, Hubs, Settings
+│   ├── components/                  # MapView, HUD telemetry, Simulation dock
+│   ├── services/                    # Google Directions, voice guidance, mock GPS
+│   └── config/                      # Design tokens & theme
 │
-├── scripts/                      # Seed scripts & CLI recovery simulators
-│   ├── demo_orchestrator.py      # Interactive end-to-end recovery demo
-│   └── seed_demo_misplaced.py    # Demo incident seeding
+├── scripts/                         # Developer utilities
+│   ├── demo_orchestrator.py         # Interactive CLI end-to-end recovery demo
+│   └── seed_demo_misplaced.py       # Seeds SHP-DEMO-MISPLACED incident in MongoDB
 │
-├── src/                          # Node.js backend proxy & Mongoose schemas
-├── package.json                  # Root runner scripts
-├── pyproject.toml                # Python environment configuration (uv)
-└── .env                          # Environment secrets & connection strings
+├── src/                             # Node.js backend proxy & Mongoose schemas
+├── data/                            # Static Telangana hub & route graph data
+├── package.json                     # Root npm runner scripts
+├── pyproject.toml                   # Python environment config (uv)
+└── .env                             # Environment secrets & connection strings
 ```
 
 ---
 
-## ⚡ Quick Start Guide
+## ⚡ Quick Start
 
 ### Prerequisites
-- **Node.js** (v18+)
-- **Python** (v3.11+) with [`uv`](https://github.com/astral-sh/uv) installed
-- **MongoDB** cluster (Atlas or local)
+- **Node.js** v18+
+- **Python** 3.11+ with [`uv`](https://github.com/astral-sh/uv)
+- **MongoDB** Atlas cluster (or local instance)
 
 ### 1. Environment Configuration
-Create a `.env` file in the project root:
+
+Copy `.env.example` to `.env` and fill in the values:
+
 ```env
-# MongoDB Connection
+# MongoDB
 MONGODB_URI="mongodb+srv://<user>:<password>@cluster0.bxk7mqg.mongodb.net"
 MONGODB_DB_NAME="hackathon_new"
 
-# Sarvam AI Voice Calling (Optional for demo)
+# Sarvam AI Voice Calling
 SARVAM_API_KEY="sk_samvaad_..."
 SARVAM_ORG_ID="..."
 SARVAM_WORKSPACE_ID="..."
 SARVAM_APP_ID="..."
 SARVAM_DEFAULT_LANGUAGE="Telugu"
-SARVAM_DEMO_DRIVER_PHONE="+91XXXXXXXXXX"
+
+# Sarvam Outbound (required for live calls)
+SARVAM_APP_VERSION="1"
+SARVAM_CONNECTION_ID="..."                 # SIP/PSTN connection ID
+SARVAM_AGENT_PHONE_NUMBER="+91XXXXXXXXXX"  # Agent caller ID (Sarvam number)
+SARVAM_DEMO_DRIVER_PHONE="+91XXXXXXXXXX"   # Driver number for demo calls
 ```
 
-### 2. Start the Backend Recovery Engine
-Install dependencies and run the FastAPI server:
+### 2. Install Dependencies
+
 ```bash
-# Run FastAPI server on http://localhost:5055
+# Root (Node.js proxy + scripts)
+npm install
+
+# Frontend
+npm --prefix frontend install
+
+# Python backend
+uv sync
+```
+
+### 3. Seed the Demo Incident
+
+```bash
+npm run seed:demo-misplaced
+```
+
+Creates **SHP-DEMO-MISPLACED** in MongoDB — a pre-built misplacement scenario with driver contact info.
+
+### 4. Start the Backend
+
+```bash
+# Standard (port 5055)
 npm run recovery:api
+
+# Or with hot-reload on port 8000
+uv run uvicorn graph.api_server:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-### 3. Start the Operator Web Dashboard
-In a new terminal:
+### 5. Start the Operator Dashboard
+
 ```bash
-# Start Vite development server on http://localhost:5173
 npm run frontend
+# http://localhost:5173 (or :5174 if port busy)
 ```
 
-### 4. Start the Driver Mobile App (Optional)
-In a new terminal:
+### 6. Start the Driver Mobile App _(optional)_
+
 ```bash
 cd mobile-driver-app
 npm install
 npm start
-# Press 'w' to view in web browser on http://localhost:8082
+# Press 'w' for browser at http://localhost:8082
 ```
 
 ---
 
-## 🧪 Interactive Demo Scenario
+## 🧪 End-to-End Demo Flow
 
-We have pre-seeded an authentic multi-hub exception scenario across the Telangana freight network:
+The seeded scenario traces a real misplacement across the Telangana network:
 
-| Stage | Location / Entity | State |
+| Stage | Hub | Status |
 | :--- | :--- | :--- |
-| **Origin** | `Hyderabad_Shamshbd_H` | Package loaded |
-| **Planned Next Hub** | `Medchal_MROoffce_D` | Expected route destination |
-| **Actual Hub (Misplaced)** | `Kamareddy_Devenply_I` | Discovered off-route |
-| **Final Destination** | `Karimnagar_KamnHbRD_I` | Must arrive before deadline |
+| Origin | `Hyderabad_Shamshbd_H` | Package loaded & departed |
+| **Planned next hub** | `Medchal_MROoffce_D` | Expected handoff |
+| **Actual hub (wrong)** | `Kamareddy_Devenply_I` | Confirmed misplaced ✗ |
+| Final destination | `Karimnagar_KamnHbRD_I` | Must arrive by deadline |
 
-### Run the CLI Demonstration:
+### Operator Dashboard Steps
+
+1. **Open** → `http://localhost:5173`
+2. **Go to** → Recovery tab in the sidebar
+3. **Find** → `SHP-DEMO-MISPLACED` (flagged as MISPLACED)
+4. **Click "Analyze"** → candidate scoring runs (49 vehicles across 91 hubs evaluated)
+5. **Review candidates** → ranked by composite score; top pick pre-selected
+6. **Click "Assign"** → confirm the dialog (vehicle, pickup hub, destination, driver)
+   - ⚡ Sarvam outbound call is triggered to the driver's phone **in Telugu**
+7. **Watch the call status card**:
+   - `📞 Calling driver…` → `🟢 Driver answered` → `✅ Driver confirmed`
+   - Auto-polls every **5 seconds**
+8. **Answer the phone** — hear the Telugu voice agent read the recovery brief
+9. **Click "Confirm Pickup"** once driver arrives
+10. **Click "Resolve"** to close the incident
+
+### CLI Smoke Tests
+
 ```bash
-# 1. Seed the misplaced shipment incident
-npm run seed:demo-misplaced
-
-# 2. Execute the autonomous recovery orchestrator
+# Run full recovery pipeline without the UI
 npm run recovery:demo -- SHP-DEMO-MISPLACED
-```
 
-The orchestrator will:
-1. Detect divergence between `Medchal` (expected) and `Kamareddy` (actual).
-2. Scan all candidate vehicles moving through or near `Kamareddy`.
-3. Filter out overloaded trucks or those that would violate the arrival deadline.
-4. Select the highest-ranking truck, output the detour cost/time savings, and log or dispatch driver communications.
+# Check live call status
+curl http://localhost:8000/api/recovery/SHP-DEMO-MISPLACED/call-status
+
+# Force a new outbound call (overrides idempotency)
+curl -X POST http://localhost:8000/api/recovery/SHP-DEMO-MISPLACED/retry-call \
+     -H "Content-Type: application/json" -d '{}'
+
+# Test call to any number (no incident required)
+curl -X POST http://localhost:8000/api/sarvam/test-call \
+     -H "Content-Type: application/json" \
+     -d '{"phone": "+91XXXXXXXXXX"}'
+```
 
 ---
 
-## 📡 Essential API Reference
+## 📡 API Reference
+
+### Core
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `GET` | `/api/health` | Healthcheck verifying MongoDB and NetworkX graph status |
-| `GET` | `/api/graph` | Returns the complete Telangana graph topology (nodes + directed edges) |
-| `GET` | `/api/shipments` | List of all monitored shipments and their current statuses |
-| `GET` | `/api/recovery/{shipmentId}` | Executes full piggybacking analysis for a misplaced shipment |
-| `POST` | `/api/recovery/{shipmentId}/assign` | Assigns chosen piggyback vehicle and triggers driver alert |
-| `POST` | `/api/recovery/{shipmentId}/resolve` | Marks cargo as recovered and resolves active incident |
-| `POST` | `/api/incidents/simulate` | Simulates an in-network misplacement on a shipment |
+| `GET` | `/api/health` | Healthcheck — MongoDB + NetworkX graph status |
+| `GET` | `/api/graph` | Full Telangana graph topology (nodes + edges) |
+| `GET` | `/api/hubs` | All logistics hubs |
+| `GET` | `/api/shipments` | All shipments with current statuses |
+| `GET` | `/api/shipments/{shipmentId}` | Shipment detail + events |
+| `GET` | `/api/vehicles` | All vehicles with location and capacity |
+| `GET` | `/api/vehicles/{vehicleId}` | Single vehicle detail |
+
+### Recovery
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/recovery/{shipmentId}` | Piggybacking analysis — candidates, scores, plan |
+| `POST` | `/api/recovery/{shipmentId}/calculate` | Re-run candidate scoring |
+| `POST` | `/api/recovery/{shipmentId}/assign` | Assign vehicle → triggers Sarvam call |
+| `POST` | `/api/recovery/{shipmentId}/pickup` | Confirm driver collected the shipment |
+| `POST` | `/api/recovery/{shipmentId}/resolve` | Close the recovery incident |
+
+### Voice Call
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/recovery/{shipmentId}/call-status` | Live call status for active incident |
+| `POST` | `/api/recovery/{shipmentId}/retry-call` | Force a new Sarvam call |
+| `POST` | `/api/sarvam/test-call` | Test outbound call to any number |
+
+### Incident Management
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/incidents/active` | All open recovery incidents |
+| `GET` | `/api/incidents/by-shipment/{shipmentId}` | Incident for a specific shipment |
+| `POST` | `/api/incidents/simulate` | Simulate a misplacement event |
+| `POST` | `/api/recovery/graph/refresh` | Reload NetworkX graph from MongoDB |
+
+---
+
+## 🔊 Sarvam Voice Agent Behaviour
+
+When a vehicle is assigned, the backend:
+
+1. Looks up the driver's phone number from the vehicle/incident record.
+2. Normalises to E.164 format (handles Indian 10-digit, `+91`, `91` prefixes).
+3. Builds a dynamic Telugu message:
+
+   ```
+   నమస్కారం [Driver Name] గారు. మీకు ఒక ముఖ్యమైన రికవరీ అసైన్మెంట్ ఉంది.
+   షిప్మెంట్ [ID] తప్పు హబ్లో ఉన్నట్లు గుర్తించబడింది.
+   మీరు [Pickup Hub] కి వెళ్లి ఆ షిప్మెంట్ను తీసుకుని [Destination] కి తరలించాలి.
+   దయచేసి ఈ అసైన్మెంట్ను నిర్ధారించండి.
+   ```
+
+4. Places the call via Sarvam Instant Outbound API and records the attempt ID in MongoDB (`driver_calls` collection).
+5. **Idempotency**: Subsequent assign requests return the existing call record — no duplicate calls. Use `/retry-call` to force a new attempt.
+
+> **Configurable language**: Set `SARVAM_DEFAULT_LANGUAGE=Hindi` (or `Kannada`, `Tamil`, etc.) in `.env`.
 
 ---
 
 ## 🛡️ License
 
-This project was built for the Convergence Software Hackathon under the **ISC License**.
+Built for the **Convergence Software Hackathon** under the **ISC License**.

@@ -189,8 +189,17 @@ export default function DashboardLayout() {
     }
     setGraphLoading(false)
 
-    await Promise.all([loadDashboardLists(), refreshActiveIncidents()])
-  }, [loadDashboardLists, refreshActiveIncidents])
+    const [_, incidentList] = await Promise.all([
+      loadDashboardLists(),
+      refreshActiveIncidents(),
+    ]);
+    if (incidentList?.length && !selectedShipment) {
+      const targetId = incidentList[0].shipmentId || incidentList[0].trackingNumber;
+      if (targetId) {
+        await loadShipment(targetId);
+      }
+    }
+  }, [loadDashboardLists, refreshActiveIncidents, selectedShipment, loadShipment]);
 
   useEffect(() => {
     refreshHealth()

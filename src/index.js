@@ -32,6 +32,7 @@ async function main() {
     const method = req.method || 'GET';
     const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
     const pathname = url.pathname;
+    const fullPath = url.pathname + (url.search || '');
 
     if (method === 'OPTIONS') {
       res.writeHead(204, {
@@ -56,7 +57,7 @@ async function main() {
       return;
     }
 
-    if (handleApiRoutes(pathname, method, req, res)) {
+    if (handleApiRoutes(fullPath, method, req, res)) {
       return;
     }
 
