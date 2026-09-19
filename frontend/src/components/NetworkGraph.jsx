@@ -1,87 +1,46 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import ForceGraph3D from 'react-force-graph-3d'
+import { useEffect, useMemo, useRef } from 'react'
+import ForceGraph3D from '3d-force-graph'
 import {
   CanvasTexture,
+  SRGBColorSpace,
   Sprite,
   SpriteMaterial,
 } from 'three'
+import { colorForType } from '@/lib/graphColors'
 import { cn } from '@/lib/utils'
-
-/**
- * Distinct hex colors for real telangana hub_type values.
- * CSS vars don't work inside Three.js materials.
- */
-const TYPE_COLORS = {
-  delivery: '#2563eb',
-  intermediate: '#ea580c',
-  'distribution center': '#059669',
-  distribution: '#059669',
-  dc: '#059669',
-  collection: '#ca8a04',
-  hub: '#dc2626',
-  warehouse: '#db2777',
-  origin: '#0d9488',
-  destination: '#7c3aed',
-  unknown: '#64748b',
-  default: '#475569',
-}
-
-export function colorForType(type) {
-  const key = String(type || '')
-    .trim()
-    .toLowerCase()
-  if (!key) return TYPE_COLORS.default
-  if (TYPE_COLORS[key]) return TYPE_COLORS[key]
-  if (key.includes('distribut')) return TYPE_COLORS.dc
-  if (key.includes('intermed')) return TYPE_COLORS.intermediate
-  if (key.includes('collect')) return TYPE_COLORS.collection
-  if (key.includes('deliver')) return TYPE_COLORS.delivery
-  if (key.includes('ware')) return TYPE_COLORS.warehouse
-  if (key.includes('origin')) return TYPE_COLORS.origin
-  if (key.includes('dest')) return TYPE_COLORS.destination
-  if (key.includes('hub')) return TYPE_COLORS.hub
-  if (key.includes('unknown')) return TYPE_COLORS.unknown
-  return TYPE_COLORS.default
-}
 
 function shortLabel(name, id) {
   const raw = String(name || id || '')
-  if (raw.length <= 22) return raw
-  return `${raw.slice(0, 20)}…`
+  if (raw.length <= 20) return raw
+  return `${raw.slice(0, 18)}…`
 }
 
-/** Canvas sprite label — avoids three-spritetext resolve issues under Vite. */
 function makeLabelSprite(text, { emphasize = false } = {}) {
   const padX = 10
   const padY = 6
-  const fontSize = emphasize ? 28 : 22
+  const fontSize = emphasize ? 26 : 20
   const canvas = document.createElement('canvas')
   const ctx = canvas.getContext('2d')
   ctx.font = `700 ${fontSize}px Outfit, system-ui, sans-serif`
   const metrics = ctx.measureText(text)
-  const w = Math.max(24, Math.ceil(metrics.width + padX * 2))
-  const h = Math.max(20, Math.ceil(fontSize + padY * 2))
+  const w = Math.max(32, Math.ceil(metrics.width + padX * 2))
+  const h = Math.max(24, Math.ceil(fontSize + padY * 2))
   canvas.width = w
   canvas.height = h
   ctx.font = `700 ${fontSize}px Outfit, system-ui, sans-serif`
-  ctx.fillStyle = emphasize ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.82)'
-  ctx.strokeStyle = '#111111'
+  ctx.fillStyle = emphasize ? 'rgba(255,255,255,0.96)' : 'rgba(255,255,255,0.88)'
+  ctx.strokeStyle = '#0f172a'
   ctx.lineWidth = 2
-  const r = 4
   ctx.beginPath()
-  ctx.moveTo(r, 0)
-  ctx.arcTo(w, 0, w, h, r)
-  ctx.arcTo(w, h, 0, h, r)
-  ctx.arcTo(0, h, 0, 0, r)
-  ctx.arcTo(0, 0, w, 0, r)
-  ctx.closePath()
+  ctx.roundRect(0.5, 0.5, w - 1, h - 1, 4)
   ctx.fill()
   ctx.stroke()
-  ctx.fillStyle = '#111111'
+  ctx.fillStyle = '#0f172a'
   ctx.textBaseline = 'middle'
   ctx.fillText(text, padX, h / 2)
 
   const texture = new CanvasTexture(canvas)
+  texture.colorSpace = SRGBColorSpace
   texture.needsUpdate = true
   const material = new SpriteMaterial({
     map: texture,
@@ -89,21 +48,22 @@ function makeLabelSprite(text, { emphasize = false } = {}) {
     depthTest: false,
   })
   const sprite = new Sprite(material)
-  const scale = emphasize ? 16 : 12
+  const scale = emphasize ? 14 : 10
   sprite.scale.set((w / h) * scale, scale, 1)
-  sprite.center.set(0.5, 1.25)
+  sprite.position.set(0, emphasize ? 12 : 9, 0)
   return sprite
 }
 
 function scaleVal(degree, minDeg, maxDeg) {
-  const lo = 4
-  const hi = 16
-  if (maxDeg <= minDeg) return 8
+  const lo = 5
+  const hi = 18
+  if (maxDeg <= minDeg) return 10
   return lo + ((degree - minDeg) / (maxDeg - minDeg)) * (hi - lo)
 }
 
 /**
- * 3D force-directed ego graph. Camera opens framed on the neighborhood.
+ * Imperative 3D force graph — avoids react-force-graph-3d blank-canvas
+ * issues under React 19 Strict Mode.
  */
 export default function NetworkGraph({
   nodes = [],
@@ -112,28 +72,10 @@ export default function NetworkGraph({
   onNodeClick,
   className,
 }) {
-  const containerRef = useRef(null)
-  const fgRef = useRef(null)
-  const pendingFitKey = useRef('')
-  const [size, setSize] = useState({ width: 0, height: 0 })
-
-  useEffect(() => {
-    const el = containerRef.current
-    if (!el) return undefined
-
-    const apply = () => {
-      const width = Math.max(1, Math.floor(el.clientWidth))
-      const height = Math.max(1, Math.floor(el.clientHeight))
-      setSize((prev) =>
-        prev.width === width && prev.height === height ? prev : { width, height },
-      )
-    }
-
-    apply()
-    const ro = new ResizeObserver(apply)
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [])
+  const hostRef = useRef(null)
+  const graphRef = useRef(null)
+  const onNodeClickRef = useRef(onNodeClick)
+  onNodeClickRef.current = onNodeClick
 
   const { minDeg, maxDeg } = useMemo(() => {
     const degs = nodes.map((n) => n.degree || 0)
@@ -161,7 +103,11 @@ export default function NetworkGraph({
         target: e.target,
         distance: e.distance,
       }))
-    return { nodes: gNodes, links }
+    // Clone so the engine can mutate freely without touching React memo data.
+    return {
+      nodes: gNodes.map((n) => ({ ...n })),
+      links: links.map((l) => ({ ...l })),
+    }
   }, [nodes, edges, centerId, minDeg, maxDeg])
 
   const egoKey = useMemo(
@@ -173,72 +119,148 @@ export default function NetworkGraph({
     [centerId, graphData],
   )
 
-  const fitView = useCallback((ms = 700) => {
-    const fg = fgRef.current
-    if (!fg) return
-    // Padding keeps labels inside the frame; delay lets positions settle.
-    try {
-      fg.zoomToFit(ms, 80)
-    } catch {
-      // ignore if engine not ready
+  // Create once; resize / update data in separate effects.
+  useEffect(() => {
+    const host = hostRef.current
+    if (!host) return undefined
+
+    // Clear any leftover canvas from Strict Mode remount races.
+    host.innerHTML = ''
+
+    const width = Math.max(1, host.clientWidth)
+    const height = Math.max(1, host.clientHeight)
+
+    const fg = new ForceGraph3D(host, { controlType: 'orbit' })
+      .width(width)
+      .height(height)
+      .backgroundColor('#e8eefc')
+      .showNavInfo(false)
+      .nodeId('id')
+      .nodeLabel((n) => `${n.name || n.id}\n${n.type || 'node'} · degree ${n.degree}`)
+      .nodeVal((n) => n.val || 8)
+      .nodeColor((n) => n.color || '#475569')
+      .nodeOpacity(1)
+      .nodeResolution(16)
+      .nodeThreeObject((node) => {
+        try {
+          return makeLabelSprite(shortLabel(node.name, node.id), {
+            emphasize: Boolean(node.isCenter),
+          })
+        } catch {
+          return null
+        }
+      })
+      .nodeThreeObjectExtend(true)
+      .linkColor(() => '#0f172a')
+      .linkOpacity(0.7)
+      .linkWidth(1.6)
+      .linkDirectionalArrowLength(6)
+      .linkDirectionalArrowRelPos(1)
+      .linkLabel((l) =>
+        l.distance != null && Number.isFinite(Number(l.distance))
+          ? `${Number(l.distance).toFixed(0)} km`
+          : '',
+      )
+      .cooldownTicks(120)
+      .d3AlphaDecay(0.04)
+      .d3VelocityDecay(0.35)
+      .onNodeClick((node) => {
+        if (!node?.id) return
+        onNodeClickRef.current?.(node.id)
+        const dist = 120 + Math.min(160, (node.val || 8) * 6)
+        fg.cameraPosition(
+          {
+            x: node.x + dist * 0.6,
+            y: node.y + dist * 0.4,
+            z: node.z + dist,
+          },
+          node,
+          700,
+        )
+      })
+
+    graphRef.current = fg
+
+    const ro = new ResizeObserver(() => {
+      if (!hostRef.current || !graphRef.current) return
+      graphRef.current
+        .width(Math.max(1, hostRef.current.clientWidth))
+        .height(Math.max(1, hostRef.current.clientHeight))
+    })
+    ro.observe(host)
+
+    return () => {
+      ro.disconnect()
+      try {
+        fg._destructor?.()
+      } catch {
+        // ignore
+      }
+      graphRef.current = null
+      host.innerHTML = ''
     }
   }, [])
 
-  const focusNode = useCallback((nodeId, ms = 800) => {
-    const fg = fgRef.current
-    if (!fg || !nodeId) return
-    const live = fg.graphData()?.nodes?.find((n) => n.id === nodeId)
-    if (!live || live.x == null) {
-      fitView(ms)
-      return
-    }
-    const dist = 160 + Math.min(200, Math.max(40, (live.degree || 1) * 6))
-    fg.cameraPosition(
-      { x: live.x + dist * 0.55, y: live.y + dist * 0.35, z: live.z + dist },
-      { x: live.x, y: live.y, z: live.z },
-      ms,
-    )
-  }, [fitView])
-
-  // Spread forces whenever the ego set changes; request a fit after settle.
+  // Push data + frame camera whenever the ego neighborhood changes.
   useEffect(() => {
-    const fg = fgRef.current
-    if (!fg || !graphData.nodes.length || size.width < 2) return undefined
+    const fg = graphRef.current
+    if (!fg || !graphData.nodes.length) return undefined
 
-    pendingFitKey.current = egoKey
+    fg.graphData({
+      nodes: graphData.nodes.map((n) => ({ ...n })),
+      links: graphData.links.map((l) => ({ ...l })),
+    })
 
     const charge = fg.d3Force('charge')
-    if (charge) charge.strength(-320).distanceMax(800)
+    if (charge) charge.strength(-280).distanceMax(600)
 
     const link = fg.d3Force('link')
     if (link) {
       link.distance((l) => {
         const km = Number(l.distance)
-        if (Number.isFinite(km) && km > 0) return Math.min(180, 60 + km * 0.25)
-        return 90
+        if (Number.isFinite(km) && km > 0) return Math.min(140, 50 + km * 0.2)
+        return 80
       })
-      link.strength(0.35)
+      link.strength(0.4)
     }
 
-    fg.d3ReheatSimulation()
-
-    // Fallback fit if engine never fully stops (continuous drag etc.)
-    const t = window.setTimeout(() => {
-      if (pendingFitKey.current === egoKey) {
-        fitView(900)
-        // Then nudge toward the hub so it reads as the focus
-        window.setTimeout(() => focusNode(centerId, 600), 950)
+    let cancelled = false
+    const frame = () => {
+      if (cancelled || !graphRef.current) return
+      try {
+        graphRef.current.zoomToFit(700, 90)
+      } catch {
+        // ignore
       }
-    }, 700)
+      if (!centerId) return
+      window.setTimeout(() => {
+        if (cancelled || !graphRef.current) return
+        const live = graphRef.current
+          .graphData()
+          ?.nodes?.find((n) => n.id === centerId)
+        if (!live || live.x == null) return
+        const dist = 140 + Math.min(180, (live.val || 8) * 8)
+        graphRef.current.cameraPosition(
+          {
+            x: live.x + dist * 0.6,
+            y: live.y + dist * 0.4,
+            z: live.z + dist,
+          },
+          live,
+          650,
+        )
+      }, 750)
+    }
 
-    return () => window.clearTimeout(t)
-  }, [egoKey, centerId, graphData.nodes.length, size.width, size.height, fitView, focusNode])
+    const t1 = window.setTimeout(frame, 600)
+    const t2 = window.setTimeout(frame, 1600)
 
-  const nodeThreeObject = useCallback((node) => {
-    return makeLabelSprite(shortLabel(node.name, node.id), {
-      emphasize: Boolean(node.isCenter),
-    })
-  }, [])
+    return () => {
+      cancelled = true
+      window.clearTimeout(t1)
+      window.clearTimeout(t2)
+    }
+  }, [egoKey, graphData, centerId])
 
   if (!nodes.length) {
     return (
@@ -253,69 +275,15 @@ export default function NetworkGraph({
     )
   }
 
-  const ready = size.width > 1 && size.height > 1
-
   return (
     <div
-      ref={containerRef}
       className={cn(
         'relative h-full min-h-[360px] w-full overflow-hidden',
         className,
       )}
     >
-      {ready ? (
-        <ForceGraph3D
-          ref={fgRef}
-          width={size.width}
-          height={size.height}
-          graphData={graphData}
-          backgroundColor="#eef2ff"
-          showNavInfo={false}
-          nodeId="id"
-          nodeLabel={(n) =>
-            `${n.name || n.id}\n${n.type || 'node'} · degree ${n.degree}`
-          }
-          nodeVal="val"
-          nodeColor={(n) => n.color}
-          nodeOpacity={1}
-          nodeResolution={18}
-          nodeThreeObject={nodeThreeObject}
-          nodeThreeObjectExtend
-          linkColor={() => '#1e293b'}
-          linkOpacity={0.65}
-          linkWidth={1.4}
-          linkDirectionalArrowLength={5.5}
-          linkDirectionalArrowRelPos={1}
-          linkDirectionalParticles={0}
-          linkLabel={(l) =>
-            l.distance != null && Number.isFinite(Number(l.distance))
-              ? `${Number(l.distance).toFixed(0)} km`
-              : ''
-          }
-          cooldownTicks={100}
-          warmupTicks={30}
-          d3AlphaDecay={0.03}
-          d3VelocityDecay={0.35}
-          onEngineStop={() => {
-            if (pendingFitKey.current === egoKey) {
-              pendingFitKey.current = ''
-              fitView(500)
-              window.setTimeout(() => focusNode(centerId, 500), 550)
-            }
-          }}
-          onNodeClick={(node) => {
-            if (node?.id) {
-              onNodeClick?.(node.id)
-              focusNode(node.id, 700)
-            }
-          }}
-        />
-      ) : (
-        <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-          Preparing 3D view…
-        </div>
-      )}
-      <p className="pointer-events-none absolute bottom-2 left-3 z-10 rounded-base bg-secondary-background/80 px-2 py-1 text-[0.65rem] text-muted-foreground">
+      <div ref={hostRef} className="absolute inset-0" />
+      <p className="pointer-events-none absolute bottom-2 left-3 z-10 rounded-base bg-secondary-background/90 px-2 py-1 text-[0.65rem] text-muted-foreground">
         Drag to orbit · scroll to zoom · click a node to refocus
       </p>
     </div>

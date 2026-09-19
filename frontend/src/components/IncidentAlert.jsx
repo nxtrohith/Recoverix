@@ -101,7 +101,11 @@ export default function IncidentAlert({
     shipment,
     recoveryAnalysis,
   })
-  const busy = recovering || assigning || confirmingPickup || resolving
+  const busy =
+    (available === 'analyze' && recovering) ||
+    (available === 'assign' && assigning) ||
+    (available === 'pickup' && confirmingPickup) ||
+    (available === 'resolve' && resolving)
   const assignDetails = buildAssignConfirmation({
     analysis: recoveryAnalysis,
     vehicles,
@@ -208,7 +212,7 @@ export default function IncidentAlert({
           <div className="mt-4 flex flex-wrap items-center gap-2">
             {available === 'analyze' || available === 'assign' ? (
               <span className="text-xs text-muted-foreground">
-                {available === 'assign' && hasPersistedRecoveryPlan(recoveryAnalysis)
+                {available === 'assign' && hasPersistedRecoveryPlan(recoveryAnalysis, incident)
                   ? 'Selected recovery plan ready to assign.'
                   : 'Recovery analysis available.'}
               </span>

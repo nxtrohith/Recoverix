@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { GitBranch, MapPinned } from 'lucide-react'
-import NetworkGraph, { colorForType } from '../components/NetworkGraph'
+import NetworkGraph from '../components/NetworkGraph'
 import {
   computeDegrees,
   extractEgoSubgraph,
   highestDegreeNodeId,
 } from '../lib/egoSubgraph'
+import { colorForType, GRAPH_TYPE_LEGEND } from '@/lib/graphColors'
 import { PageHeader } from '@/components/ops/PageHeader'
 import { EmptyState } from '@/components/ops/EmptyState'
 import { Badge } from '@/components/ui/badge'
@@ -14,14 +15,7 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
 /** Legend matches telangana_nodes.hub_type values */
-const LEGEND_TYPES = [
-  { key: 'Hub', label: 'Hub' },
-  { key: 'Distribution Center', label: 'DC' },
-  { key: 'Intermediate', label: 'Intermediate' },
-  { key: 'Delivery', label: 'Delivery' },
-  { key: 'Collection', label: 'Collection' },
-  { key: 'Unknown', label: 'Unknown' },
-]
+const LEGEND_TYPES = GRAPH_TYPE_LEGEND
 
 export default function GraphNodesPage() {
   const ctx = useOutletContext()

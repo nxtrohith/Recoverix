@@ -12,6 +12,7 @@
   "dependencies": {
     "@base-ui/react": "^1.8.0",
     "@tailwindcss/vite": "^4.3.3",
+    "3d-force-graph": "^1.80.0",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.3.0",
     "framer-motion": "^13.4.0",
@@ -19,7 +20,6 @@
     "lucide-react": "^1.47.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "react-force-graph-3d": "^1.29.1",
     "react-leaflet": "^5.0.0",
     "react-router-dom": "^7.18.4",
     "tailwindcss": "^4.3.3",

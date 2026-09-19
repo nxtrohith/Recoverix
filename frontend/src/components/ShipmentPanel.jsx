@@ -1,11 +1,8 @@
 import { useState } from 'react'
 import { Package } from 'lucide-react'
-import {
-  getAvailableRecoveryAction,
-  buildAssignConfirmation,
-  RECOVERY_ACTION_LABELS,
-} from './recovery/recoveryActions'
+import { buildAssignConfirmation } from './recovery/recoveryActions'
 import { firstPresent } from './recovery/recoveryStatus'
+import RecoveryTimeline from './recovery/RecoveryTimeline'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -25,41 +22,6 @@ import {
 import { DetailField, DetailGrid } from '@/components/ops/DetailField'
 import { EmptyState } from '@/components/ops/EmptyState'
 import { StatusBadge } from '@/components/ops/StatusBadge'
-import { cn } from '@/lib/utils'
-
-const LIFECYCLE_STEPS = [
-  'NORMAL',
-  'MISPLACED',
-  'RECOVERY_ANALYSIS',
-  'RECOVERY_ASSIGNED',
-  'PICKUP_CONFIRMED',
-  'RECOVERED',
-]
-
-function LifecycleBar({ current }) {
-  const active = current || 'NORMAL'
-  const idx = LIFECYCLE_STEPS.indexOf(active)
-  return (
-    <div
-      className="flex flex-wrap gap-1.5"
-      aria-label={`Lifecycle status ${active}`}
-    >
-      {LIFECYCLE_STEPS.map((step, i) => (
-        <span
-          key={step}
-          className={cn(
-            'rounded-base border-2 border-border px-2 py-1 text-[0.6rem] font-semibold uppercase tracking-[0.06em] transition-colors duration-200',
-            i === idx && 'bg-main shadow-shadow',
-            i < idx && 'bg-status-delivered/20',
-            i > idx && 'bg-secondary-background text-muted-foreground',
-          )}
-        >
-          {step.replace(/_/g, ' ')}
-        </span>
-      ))}
-    </div>
-  )
-}
 
 export default function ShipmentPanel({
   shipment,
@@ -117,15 +79,15 @@ export default function ShipmentPanel({
   if (lifecycle !== 'NORMAL') flags.push(lifecycle.replace(/_/g, ' '))
 
   const resolvedIncident = incident || shipment.activeIncident || null
-  const available = getAvailableRecoveryAction({
-    incident: resolvedIncident,
-    shipment,
-    recoveryAnalysis,
-  })
+  const showTimeline =
+    Boolean(resolvedIncident) ||
+    shipment.needsRecovery ||
+    shipment.isMisplaced === true ||
+    (lifecycle && lifecycle !== 'NORMAL')
 
   const canSimulate =
     lifecycle === 'NORMAL' || lifecycle === 'RECOVERED' || !shipment.needsRecovery
-  const busy = analyzing || assigning || confirmingPickup || resolving || simulating
+
   const assignDetails = buildAssignConfirmation({
     analysis: recoveryAnalysis,
     vehicles,
@@ -138,15 +100,6 @@ export default function ShipmentPanel({
       shipment.actualLocation,
       shipment.currentLocation,
     ) || '—'
-
-  const onActionClick = (kind) => {
-    if (busy) return
-    if (kind === 'analyze') {
-      if (onAnalyze) onAnalyze()
-      return
-    }
-    setConfirmKind(kind)
-  }
 
   const runConfirmed = async () => {
     const kind = confirmKind
@@ -170,48 +123,28 @@ export default function ShipmentPanel({
                 <StatusBadge status={lifecycle} />
               </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {canSimulate ? (
-                <Button
-                  type="button"
-                  variant="neutral"
-                  size="sm"
-                  onClick={onSimulateIncident}
-                  disabled={busy}
-                >
-                  {simulating ? 'Simulating…' : 'Simulate incident'}
-                </Button>
-              ) : null}
-              {available === 'analyze' ? (
-                <Button type="button" size="sm" onClick={() => onActionClick('analyze')} disabled={busy}>
-                  {analyzing ? 'Analyzing…' : RECOVERY_ACTION_LABELS.analyze}
-                </Button>
-              ) : null}
-              {available === 'assign' ? (
-                <Button type="button" size="sm" onClick={() => onActionClick('assign')} disabled={busy}>
-                  {assigning ? 'Assigning…' : RECOVERY_ACTION_LABELS.assign}
-                </Button>
-              ) : null}
-              {available === 'pickup' ? (
-                <Button type="button" size="sm" onClick={() => onActionClick('pickup')} disabled={busy}>
-                  {confirmingPickup ? 'Confirming…' : RECOVERY_ACTION_LABELS.pickup}
-                </Button>
-              ) : null}
-              {available === 'resolve' ? (
-                <Button type="button" size="sm" onClick={() => onActionClick('resolve')} disabled={busy}>
-                  {resolving ? 'Resolving…' : RECOVERY_ACTION_LABELS.resolve}
-                </Button>
-              ) : null}
-            </div>
+            {canSimulate ? (
+              <Button
+                type="button"
+                variant="neutral"
+                size="sm"
+                onClick={onSimulateIncident}
+                disabled={simulating || assigning || confirmingPickup || resolving}
+              >
+                {simulating ? 'Simulating…' : 'Simulate incident'}
+              </Button>
+            ) : null}
           </div>
         </CardHeader>
         <CardContent className="space-y-5 pt-5">
-          <LifecycleBar current={lifecycle} />
-
           {flags.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {flags.map((f) => (
-                <Badge key={f} variant="neutral" className="bg-status-delayed/25 uppercase tracking-[0.06em]">
+                <Badge
+                  key={f}
+                  variant="neutral"
+                  className="bg-status-delayed/25 uppercase tracking-[0.06em]"
+                >
                   {f}
                 </Badge>
               ))}
@@ -260,6 +193,27 @@ export default function ShipmentPanel({
               }
             />
           </DetailGrid>
+
+          {showTimeline ? (
+            <div className="border-t-2 border-border pt-5">
+              <RecoveryTimeline
+                shipment={shipment}
+                incident={resolvedIncident}
+                recoveryAnalysis={recoveryAnalysis}
+                vehicles={vehicles}
+                lifecycleStatus={lifecycle}
+                analyzing={analyzing}
+                assigning={assigning}
+                confirmingPickup={confirmingPickup}
+                resolving={resolving}
+                onAnalyze={onAnalyze}
+                onAssign={() => setConfirmKind('assign')}
+                onConfirmPickup={() => setConfirmKind('pickup')}
+                onResolve={() => setConfirmKind('resolve')}
+                interactive
+              />
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 
@@ -270,9 +224,10 @@ export default function ShipmentPanel({
             <DialogDescription>Confirm the persisted recovery plan assignment.</DialogDescription>
           </DialogHeader>
           <DetailGrid className="sm:grid-cols-2">
+            <DetailField label="Vehicle" value={assignDetails.vehicleLabel} />
+            <DetailField label="Driver" value={assignDetails.driver} />
             <DetailField label="Pickup" value={assignDetails.pickup} />
             <DetailField label="Destination" value={assignDetails.destination} />
-            <DetailField label="Driver" value={assignDetails.driver} />
             <DetailField label="Type" value={assignDetails.typeLabel} />
             <DetailField label="Score" value={assignDetails.scoreLabel} />
           </DetailGrid>
@@ -281,7 +236,7 @@ export default function ShipmentPanel({
               Cancel
             </Button>
             <Button type="button" onClick={runConfirmed} disabled={assigning}>
-              {assigning ? 'Working…' : 'Confirm assignment'}
+              {assigning ? 'Assigning…' : 'Confirm assign'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -290,17 +245,22 @@ export default function ShipmentPanel({
       <Dialog open={confirmKind === 'pickup'} onOpenChange={(o) => !o && setConfirmKind(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirm pickup</DialogTitle>
+            <DialogTitle>Confirm pickup?</DialogTitle>
             <DialogDescription>
-              Confirm pickup from <strong>{pickupHub}</strong>.
+              Confirm that the driver has picked up the misplaced shipment from {pickupHub}.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button type="button" variant="neutral" onClick={() => setConfirmKind(null)} disabled={confirmingPickup}>
+            <Button
+              type="button"
+              variant="neutral"
+              onClick={() => setConfirmKind(null)}
+              disabled={confirmingPickup}
+            >
               Cancel
             </Button>
             <Button type="button" onClick={runConfirmed} disabled={confirmingPickup}>
-              {confirmingPickup ? 'Working…' : 'Confirm pickup'}
+              {confirmingPickup ? 'Confirming…' : 'Confirm pickup'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -309,7 +269,7 @@ export default function ShipmentPanel({
       <Dialog open={confirmKind === 'resolve'} onOpenChange={(o) => !o && setConfirmKind(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Resolve this recovery incident?</DialogTitle>
+            <DialogTitle>Resolve incident?</DialogTitle>
             <DialogDescription>
               The shipment has completed the recovery workflow.
             </DialogDescription>
@@ -319,7 +279,7 @@ export default function ShipmentPanel({
               Cancel
             </Button>
             <Button type="button" onClick={runConfirmed} disabled={resolving}>
-              {resolving ? 'Working…' : 'Resolve incident'}
+              {resolving ? 'Resolving…' : 'Resolve'}
             </Button>
           </DialogFooter>
         </DialogContent>

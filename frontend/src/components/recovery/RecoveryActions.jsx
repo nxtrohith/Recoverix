@@ -57,6 +57,7 @@ export default function RecoveryActions({
   onRetryCall,
   onClearError,
   hideTitle = false,
+  hidePrimaryAction = false,
 }) {
   const [confirmKind, setConfirmKind] = useState(null);
 
@@ -68,14 +69,19 @@ export default function RecoveryActions({
     incident,
     driverNotification,
   });
-  const busy = analyzing || assigning || confirmingPickup || resolving;
   const available = getAvailableRecoveryAction({
     incident,
     shipment,
     recoveryAnalysis,
     driverNotification,
   });
-  const hasPlan = hasPersistedRecoveryPlan(recoveryAnalysis);
+  const hasPlan = hasPersistedRecoveryPlan(recoveryAnalysis, incident);
+  // Don't freeze Assign/Resolve while a background analyze is running.
+  const busy =
+    (available === 'analyze' && analyzing) ||
+    (available === 'assign' && assigning) ||
+    (available === 'pickup' && confirmingPickup) ||
+    (available === 'resolve' && resolving);
 
   const vehicleLabel =
     incident?.recoveryVehicleNumber ||
@@ -380,7 +386,7 @@ export default function RecoveryActions({
         </div>
       ) : null}
 
-      {!isComplete && available && !actionError ? (
+      {!isComplete && available && !actionError && !hidePrimaryAction ? (
         <div className="recovery-action-buttons">
           <button
             type="button"
@@ -402,7 +408,7 @@ export default function RecoveryActions({
         </div>
       ) : null}
 
-      {!isComplete && !available && !actionError ? (
+      {!isComplete && !available && !actionError && !hidePrimaryAction ? (
         <p className="muted">No recovery actions available for the current state.</p>
       ) : null}
 

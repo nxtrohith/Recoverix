@@ -97,11 +97,14 @@ export function useRecoveryData(options = {}) {
   }, []);
 
   const loadShipment = useCallback(
-    async (id, { fetchRecoveryPlan = true } = {}) => {
+    async (id, { fetchRecoveryPlan = false } = {}) => {
       if (!id) return null;
       const requestId = ++shipmentRequestRef.current;
       setShipmentLoading(true);
       setShipmentError(null);
+      // Always clear stale recovery busy-state when switching shipments so
+      // Assign / Resolve buttons are not stuck disabled from a prior fetch.
+      setRecoveryLoading(false);
       try {
         const data = await getShipment(id);
         if (requestId !== shipmentRequestRef.current) return null;
@@ -118,14 +121,14 @@ export function useRecoveryData(options = {}) {
           });
         }
 
-        // Restore assigned / pickup-confirmed recovery path on refresh
+        // Restore plan / path from incident so actions work without re-running
+        // the expensive GET /api/recovery pipeline on every selection.
         if (
           incident?.recoveryPath?.length &&
           (incident.status === 'ASSIGNED' ||
             incident.status === 'PICKUP_CONFIRMED')
         ) {
-          setRecoveryAnalysis((prev) => ({
-            ...(prev || {}),
+          setRecoveryAnalysis({
             status:
               incident.status === 'PICKUP_CONFIRMED'
                 ? 'PICKUP_CONFIRMED'
@@ -141,20 +144,75 @@ export function useRecoveryData(options = {}) {
               pickupCase: incident.pickupCase,
               recoveryOptionId: incident.selectedRecoveryOptionId,
             },
-            candidates: prev?.candidates || [],
-            recoveryPlan: prev?.recoveryPlan || null,
-            reasons: prev?.reasons || [],
-            network: prev?.network || {},
-            shipment: prev?.shipment || {
+            recoveryPlan: incident.selectedRecoveryOptionId
+              ? {
+                  id: incident.selectedRecoveryOptionId,
+                  candidateId: incident.selectedCandidateId,
+                  selectedVehicleId: incident.recoveryVehicleId,
+                  pickupNode: incident.pickupNode,
+                  destinationNode: incident.destinationNode,
+                  candidateType: incident.pickupCase,
+                  score: incident.recoveryScore,
+                }
+              : null,
+            candidates: [],
+            reasons: [],
+            network: {
+              actualNode: incident.pickupNode || data.actualLocation,
+              currentNode: data.currentLocation,
+              destinationNode: incident.destinationNode || data.destination,
+            },
+            shipment: {
               id: data.id,
               trackingNumber: data.trackingNumber,
             },
-          }));
+          });
+        } else if (
+          incident &&
+          (incident.selectedRecoveryOptionId ||
+            incident.analysisStatus === 'RECOVERY_PLAN_AVAILABLE')
+        ) {
+          setRecoveryAnalysis({
+            status: 'RECOVERY_PLAN_AVAILABLE',
+            selectedRecovery: {
+              candidateId: incident.selectedCandidateId,
+              vehicleId: incident.recoveryVehicleId,
+              vehicleNumber: incident.recoveryVehicleNumber,
+              path: incident.recoveryPath || [],
+              pickupCase: incident.pickupCase,
+              recoveryOptionId: incident.selectedRecoveryOptionId,
+            },
+            recoveryPlan: {
+              id: incident.selectedRecoveryOptionId,
+              candidateId: incident.selectedCandidateId,
+              selectedVehicleId: incident.recoveryVehicleId,
+              pickupNode: incident.pickupNode,
+              destinationNode: incident.destinationNode,
+              candidateType: incident.pickupCase,
+              score: incident.recoveryScore,
+            },
+            candidates: [],
+            reasons: [],
+            network: {
+              actualNode: incident.pickupNode || data.actualLocation,
+              currentNode: data.currentLocation,
+              destinationNode: incident.destinationNode || data.destination,
+            },
+            shipment: {
+              id: data.id,
+              trackingNumber: data.trackingNumber,
+            },
+          });
         } else if (!incident) {
+          setRecoveryAnalysis(null);
+        } else {
+          // Open incident without a plan yet — clear stale analysis from prior shipment
           setRecoveryAnalysis(null);
         }
 
-        // Load persisted plan (GET) so Assign is available without re-analyze
+        if (data.currentNode && onFocusNode) onFocusNode(data.currentNode);
+
+        // Optional full re-analysis (slow). Off by default — use Analyze action.
         if (
           fetchRecoveryPlan &&
           incident &&
@@ -163,6 +221,7 @@ export function useRecoveryData(options = {}) {
             incident.status === 'ASSIGNED' ||
             incident.status === 'PICKUP_CONFIRMED')
         ) {
+          setRecoveryLoading(true);
           try {
             const recovery = await getRecovery(id);
             if (requestId !== shipmentRequestRef.current) return null;
@@ -171,10 +230,13 @@ export function useRecoveryData(options = {}) {
             if (path?.length && onFocusNode) onFocusNode(path[0]);
           } catch {
             // Keep incident-derived analysis snapshot if GET fails
+          } finally {
+            if (requestId === shipmentRequestRef.current) {
+              setRecoveryLoading(false);
+            }
           }
         }
 
-        if (data.currentNode && onFocusNode) onFocusNode(data.currentNode);
         return data;
       } catch (err) {
         if (requestId !== shipmentRequestRef.current) return null;

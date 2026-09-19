@@ -7,7 +7,6 @@ import RecoveryFlowStep from './RecoveryFlowStep'
 import RecoveryTimeline from './RecoveryTimeline'
 import RouteSummary from './RouteSummary'
 import ShipmentSummary from './ShipmentSummary'
-
 /**
  * Operator-facing recovery incident panel.
  * Progressive stepped reveal with bounce-in motion after simulate / actions.
@@ -118,14 +117,24 @@ export default function RecoveryIncidentView({
   const eligibleSteps = useMemo(() => {
     if (!displayShipment || (!inRecovery && !showResolvedContext)) return []
 
-    const steps = [{ id: 'summary', title: null, accent: true }]
+    const steps = [
+      { id: 'summary', title: null, accent: true },
+      { id: 'timeline', title: 'Recovery timeline', accent: true },
+      { id: 'divergence', title: 'Location divergence' },
+      { id: 'route', title: 'Route details' },
+    ]
 
-    // Actions stay early so operators can drive the flow
-    steps.push({ id: 'actions', title: 'Next action', accent: true })
-
-    steps.push({ id: 'divergence', title: 'Location divergence' })
-    steps.push({ id: 'route', title: 'Route details' })
-    steps.push({ id: 'timeline', title: 'Recovery status' })
+    // Call status / retry lives beside the timeline when assignment is active
+    if (
+      resolvedIncident?.status === 'ASSIGNED' ||
+      resolvedIncident?.status === 'PICKUP_CONFIRMED' ||
+      actionError ||
+      actionFeedback ||
+      driverCall ||
+      driverNotification
+    ) {
+      steps.splice(2, 0, { id: 'actions', title: 'Driver & follow-up', accent: false })
+    }
 
     if (resolvedIncident || incidentLoading) {
       steps.push({ id: 'metadata', title: 'Incident metadata' })
@@ -138,12 +147,16 @@ export default function RecoveryIncidentView({
     showResolvedContext,
     resolvedIncident,
     incidentLoading,
+    actionError,
+    actionFeedback,
+    driverCall,
+    driverNotification,
   ])
 
   const [revealedCount, setRevealedCount] = useState(0)
   const prevFlowKey = useRef('')
 
-  // Reset / restart cascade when shipment enters a new recovery phase (simulate, analyze, …)
+  // Reset / restart cascade when shipment enters a new recovery phase
   useEffect(() => {
     if (!eligibleSteps.length) {
       setRevealedCount(0)
@@ -155,20 +168,20 @@ export default function RecoveryIncidentView({
     prevFlowKey.current = flowKey
 
     if (phaseChanged) {
-      // Always show summary + actions immediately; cascade the diagnostics
-      const immediate = Math.min(2, eligibleSteps.length)
+      // Summary first; timeline (with actions) reveals next
+      const immediate = Math.min(1, eligibleSteps.length)
       setRevealedCount(immediate)
     }
   }, [flowKey, eligibleSteps.length])
 
-  // Stagger remaining diagnostic steps upward from the bottom
+  // Slow steady cascade for remaining diagnostic steps
   useEffect(() => {
     if (revealedCount <= 0) return
     if (revealedCount >= eligibleSteps.length) return
 
     const timer = setTimeout(() => {
       setRevealedCount((n) => Math.min(n + 1, eligibleSteps.length))
-    }, 320)
+    }, 520)
 
     return () => clearTimeout(timer)
   }, [revealedCount, eligibleSteps.length, flowKey])
@@ -209,6 +222,37 @@ export default function RecoveryIncidentView({
     switch (id) {
       case 'summary':
         return <ShipmentSummary shipment={displayShipment} />
+      case 'timeline':
+        return (
+          <RecoveryTimeline
+            shipment={displayShipment}
+            incident={resolvedIncident}
+            recoveryAnalysis={recoveryAnalysis}
+            vehicles={vehicles}
+            lifecycleStatus={displayShipment.lifecycleStatus}
+            driverNotification={driverNotification}
+            driverCall={driverCall}
+            loading={
+              (incidentLoading && !resolvedIncident) ||
+              (shipmentLoading && Boolean(resolvedIncident || displayShipment))
+            }
+            eventsLoading={shipmentLoading && Boolean(displayShipment)}
+            error={
+              (incidentError && !resolvedIncident ? incidentError : null) ||
+              (recoveryError && !recoveryAnalysis ? recoveryError : null)
+            }
+            hideTitle
+            interactive
+            analyzing={analyzing || recoveryLoading}
+            assigning={assigning}
+            confirmingPickup={confirmingPickup}
+            resolving={resolving}
+            onAnalyze={onAnalyze}
+            onAssign={onAssign}
+            onConfirmPickup={onConfirmPickup}
+            onResolve={onResolve}
+          />
+        )
       case 'actions':
         return (
           <RecoveryActions
@@ -233,6 +277,7 @@ export default function RecoveryIncidentView({
             onRetryCall={onRetryCall}
             onClearError={onClearActionError}
             hideTitle
+            hidePrimaryAction
           />
         )
       case 'divergence':
@@ -249,25 +294,6 @@ export default function RecoveryIncidentView({
           <RouteSummary
             shipment={displayShipment}
             recoveryNetwork={network}
-            hideTitle
-          />
-        )
-      case 'timeline':
-        return (
-          <RecoveryTimeline
-            shipment={displayShipment}
-            incident={resolvedIncident}
-            lifecycleStatus={displayShipment.lifecycleStatus}
-            driverNotification={driverNotification}
-            loading={
-              (incidentLoading && !resolvedIncident) ||
-              (shipmentLoading && Boolean(resolvedIncident || displayShipment))
-            }
-            eventsLoading={shipmentLoading && Boolean(displayShipment)}
-            error={
-              (incidentError && !resolvedIncident ? incidentError : null) ||
-              (recoveryError && !recoveryAnalysis ? recoveryError : null)
-            }
             hideTitle
           />
         )
@@ -301,7 +327,7 @@ export default function RecoveryIncidentView({
             Exception flow
           </p>
           <p className="text-sm text-muted-foreground">
-            Steps reveal as recovery advances
+            Step boxes reveal one by one — act from the current step
           </p>
         </div>
         <p className="font-mono text-xs tabular-nums text-foreground">

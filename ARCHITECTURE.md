@@ -200,7 +200,7 @@ Marketing landing + logistics ops dashboard styled with **NeoBrutalism / shadcn*
 | `frontend/src/components/ui/*` | Installed NeoBrutalism/shadcn primitives (button, card, badge, alert, dialog, …) |
 | `frontend/src/components/ops/*` | Thin app helpers composing UI kit (PageHeader, KpiCard, StatusBadge, DetailField, EmptyState) |
 | `frontend/src/pages/*` | Overview / Shipments / Vehicles / Hubs / GraphNodes / Recovery / Search views consuming outlet context |
-| `frontend/src/components/*` | MetricsBar, SearchPanel, LogisticsMap, NetworkGraph (3D ego force viz), ShipmentPanel, VehiclePanel, HubPanel, IncidentAlert, RecoveryCandidates, RecoveryPlan |
+| `frontend/src/components/*` | MetricsBar, SearchPanel, LogisticsMap, NetworkGraph (imperative 3d-force-graph ego viz), ShipmentPanel, VehiclePanel, HubPanel, IncidentAlert, RecoveryCandidates, RecoveryPlan |
 | `frontend/src/lib/egoSubgraph.js` | Client ego-neighborhood extract over `/api/graph` (BFS hops; degree for sizing only) |
 | `frontend/src/components/recovery/*` | Operator recovery incident view, action panel (state-gated confirmations), `RecoveryTimeline` (backend-driven lifecycle + event history), candidate helpers, `recoveryMapState` (map overlay derivation) — assignment uses persisted plan only |
 

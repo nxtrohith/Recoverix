@@ -17,11 +17,16 @@ import { candidateTypeLabel, fmtNum } from './candidateUtils';
 /**
  * Whether analysis returned a persisted selected plan the operator can assign.
  * @param {import('../../types/api.ts').RecoveryAnalysis | null | undefined} analysis
+ * @param {import('../../types/api.ts').Incident | null | undefined} incident
  */
-export function hasPersistedRecoveryPlan(analysis) {
-  if (!analysis) return false;
-  if (analysis.status === 'NO_FEASIBLE_RECOVERY') return false;
-  return Boolean(analysis.recoveryPlan || analysis.selectedRecovery);
+export function hasPersistedRecoveryPlan(analysis, incident = null) {
+  if (analysis?.status === 'NO_FEASIBLE_RECOVERY') return false;
+  if (analysis?.recoveryPlan || analysis?.selectedRecovery) return true;
+  // Backend already persisted a selected option (e.g. seeded / prior analyze)
+  return Boolean(
+    incident?.selectedRecoveryOptionId ||
+      incident?.analysisStatus === 'RECOVERY_PLAN_AVAILABLE',
+  );
 }
 
 /**
@@ -80,7 +85,7 @@ export function getAvailableRecoveryAction({
     shipment?.needsRecovery ||
     shipment?.isMisplaced
   ) {
-    if (hasPersistedRecoveryPlan(recoveryAnalysis)) {
+    if (hasPersistedRecoveryPlan(recoveryAnalysis, incident)) {
       return 'assign';
     }
     return 'analyze';

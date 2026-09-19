@@ -102,6 +102,48 @@ def _vehicle_number(db: Database, vehicle_id: Any) -> str | None:
     return doc.get("vehicleNumber") if doc else None
 
 
+def _persist_driver_call(
+    db: Database,
+    *,
+    call_id: str | None,
+    driver_phone: str | None,
+    shipment_id: Any,
+    incident_id: Any,
+    status: str,
+    channel: str | None,
+    language: str | None,
+    message: str | None,
+    failure_reason: str | None = None,
+    call_kind: str | None = None,
+    is_retry: bool = False,
+    simulated: bool = False,
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Insert a durable outbound-call / notification record into MongoDB."""
+    now = _now()
+    record = {
+        "call_id": call_id or str(uuid4()),
+        "driver_phone": driver_phone,
+        "shipment_id": str(shipment_id),
+        "assignment_id": str(incident_id) if incident_id is not None else None,
+        "incident_id": str(incident_id) if incident_id is not None else None,
+        "status": status,
+        "channel": channel,
+        "language": language or "Telugu",
+        "message": message,
+        "call_kind": call_kind,
+        "is_retry": is_retry,
+        "simulated": simulated,
+        "created_at": now,
+        "updated_at": now,
+        "completed_at": None,
+        "failure_reason": failure_reason,
+        "metadata": dict(metadata or {}),
+    }
+    db["driver_calls"].insert_one(record)
+    return record
+
+
 def _lifecycle_status(
     shipment_status: str,
     incident: dict[str, Any] | None,
@@ -365,6 +407,31 @@ def simulate_misplaced_incident(
                 "lateDetection": True,
             },
         )
+        late_call_status = (
+            "initiated"
+            if late_notify.delivered
+            else ("simulated" if late_notify.simulated else "failed")
+        )
+        _persist_driver_call(
+            db,
+            call_id=late_notify.attempt_id,
+            driver_phone=late_notify.phone,
+            shipment_id=ship_oid,
+            incident_id=incident_doc["_id"],
+            status=late_call_status,
+            channel=late_notify.channel,
+            language=late_notify.language,
+            message=late_notify.message,
+            failure_reason=None if late_notify.delivered else late_notify.detail,
+            call_kind="late_detection",
+            simulated=bool(late_notify.simulated),
+            metadata={
+                "pickupHub": _loc_name(db, hub_id),
+                "destinationHub": _loc_name(db, shipment.get("destination")),
+                "vehicleNumber": vehicle_number,
+                "trackingNumber": shipment.get("trackingNumber"),
+            },
+        )
         db["incidents"].update_one(
             {"_id": incident_doc["_id"]},
             {
@@ -372,6 +439,11 @@ def simulate_misplaced_incident(
                     "lateDetectionMessage": late_notify.message,
                     "lateDetectionCallAttemptId": late_notify.attempt_id,
                     "lateDetectionCallChannel": late_notify.channel,
+                    "lateDetectionCallStatus": late_call_status,
+                    "lateDetectionCallPhone": late_notify.phone,
+                    "lateDetectionCallError": (
+                        None if late_notify.delivered else late_notify.detail
+                    ),
                     "updatedAt": _now(),
                 }
             },
@@ -391,6 +463,7 @@ def simulate_misplaced_incident(
             "phone": late_notify.phone,
             "language": late_notify.language,
             "simulated": late_notify.simulated,
+            "status": late_call_status,
         }
 
     recovery: dict[str, Any] | None = None
@@ -709,28 +782,28 @@ def assign_recovery(
         notify_simulated = notify.simulated
         notify_lang = notify.language or "Telugu"
 
-        call_record = {
-            "call_id": call_id or str(uuid4()),
-            "driver_phone": driver_phone,
-            "shipment_id": str(ship_oid),
-            "assignment_id": str(incident["_id"]),
-            "incident_id": str(incident["_id"]),
-            "status": call_status,
-            "channel": notify_channel,
-            "language": notify_lang,
-            "message": notify_message,
-            "created_at": now,
-            "completed_at": None,
-            "failure_reason": call_error,
-            "metadata": {
+        _persist_driver_call(
+            db,
+            call_id=call_id,
+            driver_phone=driver_phone,
+            shipment_id=ship_oid,
+            incident_id=incident["_id"],
+            status=call_status,
+            channel=notify_channel,
+            language=notify_lang,
+            message=notify_message,
+            failure_reason=call_error,
+            call_kind="recovery_assign",
+            simulated=bool(notify_simulated),
+            metadata={
                 "candidateId": candidate,
                 "pickupHub": pickup_hub,
                 "destinationHub": destination,
                 "vehicleNumber": driver_id,
                 "driverName": driver_name,
+                "trackingNumber": shipment.get("trackingNumber"),
             },
-        }
-        db["driver_calls"].insert_one(call_record)
+        )
 
     option_oid = _to_oid(selected.get("recoveryOptionId"))
     if option_oid is None and persisted_option:
@@ -994,28 +1067,28 @@ def retry_recovery_call(
     call_error = notify.detail if not notify.delivered else None
     driver_phone = notify.phone
 
-    call_record = {
-        "call_id": call_id or str(uuid4()),
-        "driver_phone": driver_phone,
-        "shipment_id": str(ship_oid),
-        "assignment_id": str(incident["_id"]),
-        "incident_id": str(incident["_id"]),
-        "status": call_status,
-        "channel": notify.channel,
-        "language": notify.language or "Telugu",
-        "message": notify.message,
-        "created_at": now,
-        "completed_at": None,
-        "failure_reason": call_error,
-        "is_retry": True,
-        "metadata": {
+    _persist_driver_call(
+        db,
+        call_id=call_id,
+        driver_phone=driver_phone,
+        shipment_id=ship_oid,
+        incident_id=incident["_id"],
+        status=call_status,
+        channel=notify.channel,
+        language=notify.language or "Telugu",
+        message=notify.message,
+        failure_reason=call_error,
+        call_kind="recovery_assign",
+        is_retry=True,
+        simulated=bool(notify.simulated),
+        metadata={
             "pickupHub": pickup_hub,
             "destinationHub": destination,
             "vehicleNumber": driver_id,
             "driverName": driver_name,
+            "trackingNumber": shipment.get("trackingNumber"),
         },
-    }
-    db["driver_calls"].insert_one(call_record)
+    )
 
     db["incidents"].update_one(
         {"_id": incident["_id"]},
