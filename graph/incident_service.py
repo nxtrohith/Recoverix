@@ -1649,6 +1649,71 @@ def resolve_recovery(db: Database, shipment_id: str) -> dict[str, Any]:
     }
 
 
+def get_incident_stats(db: Database) -> dict[str, Any]:
+    """
+    Aggregate recovery-optimization KPIs across all incidents for the
+    overview dashboard: solved vs. active counts, resolution rate, and
+    average recovery score + component breakdown from persisted plans.
+    """
+    docs = list(db["incidents"].find({}))
+    total = len(docs)
+    resolved = [d for d in docs if d.get("status") == "RESOLVED"]
+    active = [d for d in docs if d.get("status") in ACTIVE_INCIDENT_STATUSES]
+    scored = [d for d in docs if isinstance(d.get("recoveryScore"), (int, float))]
+
+    avg_score = (
+        sum(float(d["recoveryScore"]) for d in scored) / len(scored)
+        if scored
+        else None
+    )
+
+    component_totals: dict[str, float] = {}
+    component_counts: dict[str, int] = {}
+    for d in docs:
+        components = d.get("recoveryComponentScores") or {}
+        for key, value in components.items():
+            if isinstance(value, (int, float)):
+                component_totals[key] = component_totals.get(key, 0.0) + float(value)
+                component_counts[key] = component_counts.get(key, 0) + 1
+    avg_components = {
+        key: round(component_totals[key] / component_counts[key], 4)
+        for key in component_totals
+    }
+
+    # "Detection → pickup confirmed" is the actual operational recovery
+    # speed. Detection → resolvedAt is intentionally excluded here: `resolve`
+    # is a manual demo close-out button an operator can click whenever, so
+    # that duration reflects operator timing, not recovery performance.
+    recovery_durations_min: list[float] = []
+    for d in docs:
+        created = d.get("createdAt")
+        picked_up_at = d.get("pickupConfirmedAt")
+        if created and picked_up_at:
+            try:
+                recovery_durations_min.append((picked_up_at - created).total_seconds() / 60.0)
+            except Exception:
+                continue
+    avg_recovery_min = (
+        sum(recovery_durations_min) / len(recovery_durations_min)
+        if recovery_durations_min
+        else None
+    )
+
+    resolution_rate = (len(resolved) / total) if total else None
+
+    return {
+        "totalIncidents": total,
+        "resolvedCount": len(resolved),
+        "activeCount": len(active),
+        "resolutionRate": round(resolution_rate, 4) if resolution_rate is not None else None,
+        "avgRecoveryScore": round(avg_score, 4) if avg_score is not None else None,
+        "avgComponentScores": avg_components or None,
+        "avgRecoveryMinutes": round(avg_recovery_min, 1) if avg_recovery_min is not None else None,
+        "recoveryTimedCount": len(recovery_durations_min),
+        "scoredCount": len(scored),
+    }
+
+
 def list_active_incidents(db: Database) -> dict[str, Any]:
     docs = list(
         db["incidents"].find(

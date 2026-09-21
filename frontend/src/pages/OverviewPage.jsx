@@ -102,10 +102,6 @@ export default function OverviewPage() {
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 scrollbar sm:px-6 lg:px-8">
         <div className="flex flex-col gap-5 pb-6">
         <MetricsBar
-          hubsCount={ctx.hubs.length}
-          nodesCount={ctx.graph?.nodes?.length ?? ctx.health?.graph?.nodeCount ?? null}
-          edgesCount={ctx.graph?.edges?.length ?? ctx.health?.graph?.edgeCount ?? null}
-          vehiclesCount={ctx.vehicles.length}
           shipmentsCount={ctx.shipments.length}
           inTransitCount={kpis.inTransit}
           deliveredCount={kpis.delivered}
@@ -113,6 +109,15 @@ export default function OverviewPage() {
           misplacedCount={kpis.misplaced}
           loading={ctx.listsLoading || ctx.graphLoading}
           error={ctx.listsError || ctx.graphError}
+          optimizationScore={ctx.incidentStats?.avgRecoveryScore ?? null}
+          avgComponentScores={ctx.incidentStats?.avgComponentScores ?? null}
+          resolvedCount={ctx.incidentStats?.resolvedCount ?? null}
+          activeRecoveryCount={ctx.incidentStats?.activeCount ?? null}
+          resolutionRate={ctx.incidentStats?.resolutionRate ?? null}
+          avgRecoveryMinutes={ctx.incidentStats?.avgRecoveryMinutes ?? null}
+          totalIncidents={ctx.incidentStats?.totalIncidents ?? null}
+          statsLoading={ctx.incidentStatsLoading}
+          statsError={ctx.incidentStatsError}
         />
 
         {ctx.showAlert ? (

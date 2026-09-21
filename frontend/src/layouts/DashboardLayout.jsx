@@ -6,6 +6,7 @@ import {
   getGraph,
   getHealth,
   getHubs,
+  getIncidentStats,
   getShipment,
   getShipments,
   getVehicle,
@@ -34,6 +35,10 @@ export default function DashboardLayout() {
   const [shipments, setShipments] = useState([])
   const [listsLoading, setListsLoading] = useState(true)
   const [listsError, setListsError] = useState(null)
+
+  const [incidentStats, setIncidentStats] = useState(null)
+  const [incidentStatsLoading, setIncidentStatsLoading] = useState(true)
+  const [incidentStatsError, setIncidentStatsError] = useState(null)
 
   const [searchQuery, setSearchQuery] = useState('')
   const [searchHint, setSearchHint] = useState('')
@@ -118,8 +123,26 @@ export default function DashboardLayout() {
     setListsLoading(false)
   }, [])
 
+  const loadIncidentStats = useCallback(async () => {
+    setIncidentStatsLoading(true)
+    try {
+      const data = await getIncidentStats()
+      setIncidentStats(data)
+      setIncidentStatsError(null)
+    } catch (err) {
+      setIncidentStats(null)
+      setIncidentStatsError(errMsg(err, 'Failed to load optimization stats'))
+    } finally {
+      setIncidentStatsLoading(false)
+    }
+  }, [])
+
+  const refreshDashboardData = useCallback(async () => {
+    await Promise.all([loadDashboardLists(), loadIncidentStats()])
+  }, [loadDashboardLists, loadIncidentStats])
+
   const recovery = useRecoveryData({
-    onDashboardRefresh: loadDashboardLists,
+    onDashboardRefresh: refreshDashboardData,
     onLoadVehicle: loadVehicle,
     onFocusNode: setFocusNodeId,
     onHint: setSearchHint,
@@ -192,6 +215,7 @@ export default function DashboardLayout() {
     const [_, incidentList] = await Promise.all([
       loadDashboardLists(),
       refreshActiveIncidents(),
+      loadIncidentStats(),
     ]);
     if (incidentList?.length && !selectedShipment) {
       const targetId = incidentList[0].shipmentId || incidentList[0].trackingNumber;
@@ -199,7 +223,7 @@ export default function DashboardLayout() {
         await loadShipment(targetId);
       }
     }
-  }, [loadDashboardLists, refreshActiveIncidents, selectedShipment, loadShipment]);
+  }, [loadDashboardLists, refreshActiveIncidents, loadIncidentStats, selectedShipment, loadShipment]);
 
   useEffect(() => {
     refreshHealth()
@@ -376,6 +400,9 @@ export default function DashboardLayout() {
       shipments,
       listsLoading,
       listsError,
+      incidentStats,
+      incidentStatsLoading,
+      incidentStatsError,
       selectedVehicle,
       vehicleLoading,
       vehicleError,
@@ -431,6 +458,9 @@ export default function DashboardLayout() {
       shipments,
       listsLoading,
       listsError,
+      incidentStats,
+      incidentStatsLoading,
+      incidentStatsError,
       selectedVehicle,
       vehicleLoading,
       vehicleError,

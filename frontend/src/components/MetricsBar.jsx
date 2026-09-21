@@ -1,6 +1,7 @@
-import { GitBranch, MapPin, Network, Package, Truck } from 'lucide-react'
+import { CheckCircle2, Clock, Gauge, Percent } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { KpiCard } from '@/components/ops/KpiCard'
+import ScoreHoverValue from '@/components/recovery/ScoreHoverValue'
 
 function formatValue(value, loading) {
   if (loading) return null
@@ -13,11 +14,21 @@ function pad2(n) {
   return String(n).padStart(2, '0')
 }
 
+/** Score components are normalized ~0-1; render as a human-readable percentage. */
+function formatPercent(ratio, loading) {
+  if (loading) return null
+  if (ratio == null || Number.isNaN(ratio)) return '—'
+  return `${Math.round(Math.min(Math.max(ratio, 0), 1) * 100)}%`
+}
+
+function formatMinutes(minutes, loading) {
+  if (loading) return null
+  if (minutes == null || Number.isNaN(minutes)) return '—'
+  if (minutes < 60) return `${Math.round(minutes)}m`
+  return `${(minutes / 60).toFixed(1)}h`
+}
+
 export default function MetricsBar({
-  hubsCount,
-  nodesCount,
-  edgesCount,
-  vehiclesCount,
   shipmentsCount,
   inTransitCount,
   deliveredCount,
@@ -25,6 +36,16 @@ export default function MetricsBar({
   misplacedCount,
   loading,
   error,
+  // Optimization KPIs — sourced from GET /api/incidents/stats
+  optimizationScore,
+  resolvedCount,
+  activeRecoveryCount,
+  resolutionRate,
+  avgRecoveryMinutes,
+  totalIncidents,
+  avgComponentScores,
+  statsLoading,
+  statsError,
 }) {
   const hasShipmentBreakdown =
     inTransitCount != null ||
@@ -49,7 +70,6 @@ export default function MetricsBar({
             value={formatValue(shipmentsCount, loading)}
             sub="Tracked packages"
             loading={loading}
-            icon={<Package className="size-5" strokeWidth={2.2} />}
           />
           <KpiCard
             label="In transit"
@@ -83,44 +103,62 @@ export default function MetricsBar({
         </div>
       ) : null}
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-5">
+      {statsError ? (
+        <Alert variant="destructive">
+          <AlertDescription>{statsError}</AlertDescription>
+        </Alert>
+      ) : null}
+
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <KpiCard
-          label="Hubs"
-          value={formatValue(hubsCount, loading)}
-          sub="Operational locations"
-          loading={loading}
-          icon={<MapPin className="size-4" />}
+          featured
+          tone="accent"
+          label="Optimization score"
+          value={
+            statsLoading ? null : (
+              <ScoreHoverValue
+                scoreLabel={formatPercent(optimizationScore, false)}
+                score={optimizationScore}
+                componentScores={avgComponentScores}
+              />
+            )
+          }
+          sub={
+            totalIncidents
+              ? `Avg across ${totalIncidents} recovery plan${totalIncidents === 1 ? '' : 's'} — hover for factors`
+              : 'Avg recovery plan fit'
+          }
+          loading={statsLoading}
+          icon={<Gauge className="size-5" strokeWidth={2.2} />}
         />
         <KpiCard
-          label="Nodes"
-          value={formatValue(nodesCount, loading)}
-          sub="Telangana network"
-          loading={loading}
-          icon={<Network className="size-4" />}
+          label="Misplaced solved"
+          value={formatValue(resolvedCount, statsLoading)}
+          sub="Recoveries completed"
+          loading={statsLoading}
+          tone="ok"
+          icon={<CheckCircle2 className="size-4" />}
         />
         <KpiCard
-          label="Edges"
-          value={formatValue(edgesCount, loading)}
-          sub="Directed legs"
-          loading={loading}
-          icon={<GitBranch className="size-4" />}
+          label="Resolution rate"
+          value={formatPercent(resolutionRate, statsLoading)}
+          sub={
+            activeRecoveryCount
+              ? `${activeRecoveryCount} still in progress`
+              : 'Solved vs. total incidents'
+          }
+          loading={statsLoading}
+          tone="default"
+          icon={<Percent className="size-4" />}
         />
         <KpiCard
-          label="Fleet"
-          value={formatValue(vehiclesCount, loading)}
-          sub="Active vehicles"
-          loading={loading}
-          icon={<Truck className="size-4" />}
+          label="Avg pickup time"
+          value={formatMinutes(avgRecoveryMinutes, statsLoading)}
+          sub="Detection to driver pickup"
+          loading={statsLoading}
+          tone="default"
+          icon={<Clock className="size-4" />}
         />
-        {!hasShipmentBreakdown ? (
-          <KpiCard
-            label="Shipments"
-            value={formatValue(shipmentsCount, loading)}
-            sub="Tracked packages"
-            loading={loading}
-            icon={<Package className="size-4" />}
-          />
-        ) : null}
       </div>
     </section>
   )

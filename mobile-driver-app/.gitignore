@@ -2,7 +2,12 @@ node_modules/
 .expo/
 dist/
 web-build/
+# Environment files
 .env
+.env.*
+.env*.local
+!.env.example
+!.env.*.example
 *.log
 .DS_Store
 

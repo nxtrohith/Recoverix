@@ -228,6 +228,20 @@ export interface ActiveIncidentsResponse {
   incidents: Incident[];
 }
 
+/** GET /api/incidents/stats — feeds the Overview page optimization cards. */
+export interface IncidentStats {
+  totalIncidents: number;
+  resolvedCount: number;
+  activeCount: number;
+  resolutionRate?: number | null;
+  avgRecoveryScore?: number | null;
+  avgComponentScores?: ComponentScores | null;
+  /** Detection → pickup confirmed (excludes manual "resolve" close-out timing). */
+  avgRecoveryMinutes?: number | null;
+  recoveryTimedCount?: number;
+  scoredCount: number;
+}
+
 export interface IncidentByShipmentResponse extends Incident {
   lifecycleStatus?: LifecycleStatus | null;
 }

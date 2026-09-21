@@ -4,8 +4,16 @@ dist/
 coverage/
 *.log
 .DS_Store
+# Environment files
 .env
-frontend/.env
+.env.*
+.env*.local
+*.env
+*.env.*
+!.env.example
+!.env.*.example
+!**/.env.example
+!**/.env.*.example
 delhivery_data.csv
 
 # Python / uv

@@ -157,6 +157,7 @@ to FastAPI transparently.
 | `POST` | `/api/recovery/graph/refresh` | Rebuild in-memory NetworkX graph from MongoDB |
 | `POST` | `/api/incidents/simulate` | Simulate MISPLACED_SHIPMENT on an existing shipment |
 | `GET` | `/api/incidents/active` | Active incidents for dashboard alerts |
+| `GET` | `/api/incidents/stats` | Aggregate optimization KPIs (solved count, resolution rate, avg recovery score + component breakdown) across all incidents — feeds the Overview page optimization cards |
 | `GET` | `/api/incidents/by-shipment/:shipmentId` | Latest incident for a shipment |
 
 Recovery response `status` values: `RECOVERY_PLAN_AVAILABLE` | `NO_FEASIBLE_RECOVERY`.

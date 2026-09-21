@@ -120,6 +120,15 @@ export function getActiveIncidents() {
 }
 
 /**
+ * Aggregate recovery-optimization KPIs (solved count, resolution rate,
+ * average score + component breakdown) across all incidents.
+ * @returns {Promise<import('../types/api.ts').IncidentStats>}
+ */
+export function getIncidentStats() {
+  return request('/api/incidents/stats');
+}
+
+/**
  * Latest incident for a shipment (active or resolved).
  * @returns {Promise<import('../types/api.ts').IncidentByShipmentResponse>}
  */

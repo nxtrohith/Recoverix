@@ -21,6 +21,7 @@ Endpoints
   POST /api/recovery/graph/refresh
   POST /api/incidents/simulate
   GET  /api/incidents/active
+  GET  /api/incidents/stats
   GET  /api/incidents/by-shipment/{shipment_id}
 
 Layer:
@@ -76,6 +77,7 @@ from graph.graph_cache import cache_status, get_db, get_graph, refresh_graph
 from graph.incident_service import (
     assign_recovery,
     confirm_recovery_pickup,
+    get_incident_stats,
     get_recovery_call_status,
     list_active_incidents,
     resolve_recovery,
@@ -736,6 +738,17 @@ def get_active_incidents() -> dict[str, Any]:
     """Return open / recovery-required / assigned incidents for the dashboard."""
     db = get_db()
     return list_active_incidents(db)
+
+
+@app.get(
+    "/api/incidents/stats",
+    summary="Aggregate recovery optimization KPIs",
+    tags=["incidents"],
+)
+def get_incident_stats_endpoint() -> dict[str, Any]:
+    """Solved/active counts, resolution rate, and average recovery score for the overview dashboard."""
+    db = get_db()
+    return get_incident_stats(db)
 
 
 @app.get(
